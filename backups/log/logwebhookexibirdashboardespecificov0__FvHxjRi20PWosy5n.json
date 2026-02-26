@@ -1,0 +1,193 @@
+{
+  "updatedAt": "2025-11-27T10:43:11.375Z",
+  "createdAt": "2025-10-29T13:06:34.631Z",
+  "id": "FvHxjRi20PWosy5n",
+  "name": "LOG_Webhook_exibir_dashboard_especifico_v0",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "powerbi-dashboard",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "2c91260a-cf0f-4abe-90d3-7152893c0699",
+      "name": "Webhook PowerBI",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -112,
+        32
+      ],
+      "webhookId": "c84d4576-d7ee-458a-afb8-57619adfa24c"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT link_dashboard,dashboard_name FROM dashboards_n8n WHERE id={{$json.query?.id||7}};",
+        "options": {}
+      },
+      "id": "be840904-c4d6-49a5-83db-ea47382194f9",
+      "name": "Consultar Banco",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        176,
+        32
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "8jfEsb8k358usGVL",
+          "name": "banco logbit labs"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const link=$json.link_dashboard||\"\";const nome=$json.dashboard_name||\"Dashboard Power BI\";if(!link){return[{html:`<html lang='pt-br'><head><meta charset='UTF-8'><title>Dashboard não encontrado</title><style>body{font-family:Arial;background:#f8d7da;color:#721c24;text-align:center;padding-top:100px}.box{background:#fff3cd;border:1px solid #f5c6cb;display:inline-block;padding:20px 40px;border-radius:8px}</style></head><body><div class='box'><h2>Dashboard não encontrado</h2><p>Verifique se o ID informado existe na tabela <b>dashboards_n8n</b>.</p></div></body></html>`}];}return[{html:`<!DOCTYPE html><html lang='pt-br'><head><meta charset='UTF-8'><title>${nome}</title><style>body{margin:0;padding:0;overflow:hidden;background-color:#fff;}h2{text-align:center;font-family:Arial;margin-top:40px;color:#333;}iframe{border:none;width:100%;height:85vh;display:block;margin:0 auto;}div.footer{text-align:center;font-size:13px;color:#666;margin-top:10px;}</style></head><body><h2>${nome}</h2><iframe src='${link}' allowFullScreen='true'></iframe><div class='footer'>Microsoft Power BI</div></body></html>`}];"
+      },
+      "id": "3b558a76-cd7b-4f21-b5a5-221912623151",
+      "name": "Gerar HTML PowerBI",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{$json[\"html\"]}}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html"
+              }
+            ]
+          }
+        }
+      },
+      "id": "a9f57963-787d-48d8-b6f5-03a221995c57",
+      "name": "Exibir Página",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        768,
+        32
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook PowerBI": {
+      "main": [
+        [
+          {
+            "node": "Consultar Banco",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar Banco": {
+      "main": [
+        [
+          {
+            "node": "Gerar HTML PowerBI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar HTML PowerBI": {
+      "main": [
+        [
+          {
+            "node": "Exibir Página",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "25274029-46de-4298-9e75-ef2e0bdb7162",
+  "activeVersionId": null,
+  "versionCounter": 11,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-10-29T13:06:34.631Z",
+      "createdAt": "2025-10-29T13:06:34.631Z",
+      "role": "workflow:owner",
+      "workflowId": "FvHxjRi20PWosy5n",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T15:11:41.884Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
