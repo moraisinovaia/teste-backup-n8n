@@ -1,0 +1,399 @@
+{
+  "updatedAt": "2026-02-11T16:16:58.275Z",
+  "createdAt": "2025-11-19T13:16:13.922Z",
+  "id": "epsfNPgjE0IolpsM",
+  "name": "LOG_Message_Agente_chatbot_consulta_banco_v4.1",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "mode": "webhook",
+        "options": {
+          "allowedOrigins": "https://ag-analise-neat.novadata.dev/",
+          "responseMode": "lastNode"
+        }
+      },
+      "id": "14265810-55bb-4469-a999-1f6408d0e827",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "position": [
+        3568,
+        704
+      ],
+      "webhookId": "d03d5401-0b2a-4041-823b-09d11374c188",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "description": "Envia análise completa de cards por email. IMPORTANTE: Colete TODOS os dados antes de chamar esta tool: projeto_id (número: 487=Orbit, 256=Wagtail, 741=Auth), fase (número: 1=Backlog, 6=Concluídos), email_destino (string), backlog_reqs (objeto JSON com requisitos), backlog_metricas (objeto JSON com métricas), source (sempre 'chatbot'). Confirme com usuário antes de executar.",
+        "workflowId": {
+          "__rl": true,
+          "value": "CpQGi0E8HQqzOrd4",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/CpQGi0E8HQqzOrd4",
+          "cachedResultName": "LOG_Form|Chat_email_v1"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "projeto_id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('projeto_id', ``, 'number') }}",
+            "fase": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fase', ``, 'number') }}",
+            "source": "=chatbot",
+            "metricas": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('metricas', ``, 'json') }}",
+            "reqs": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('reqs', ``, 'json') }}",
+            "email_destino": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('email_destino', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "projeto_id",
+              "displayName": "projeto_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            },
+            {
+              "id": "fase",
+              "displayName": "fase",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            },
+            {
+              "id": "email_destino",
+              "displayName": "email_destino",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "reqs",
+              "displayName": "reqs",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "object"
+            },
+            {
+              "id": "metricas",
+              "displayName": "metricas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "object"
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        4496,
+        864
+      ],
+      "id": "3aa2c84f-77b5-4dea-b0dc-56d9b26f90c2",
+      "name": "Enviar_Analise_por_Email",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "=\n# System Prompt - Assistente PostgreSQL e Orquestrador de Análise\n\nVocê é um assistente de dados PostgreSQL e um orquestrador de análise de cards.\n\n## FUNCIONALIDADES E FERRAMENTAS\n\n**1. Consultas SQL:**\n\n  - `consultar_banco_labs`: Executa queries SQL\n  - `listar_tabelas_banco`: Lista schema do banco\n  - `listar_schema_detalhado`: Retorna a estrutura completa (tabelas, colunas e tipos de dados) do banco.\n\n**2. Envio de Análise por Email:**\n\n  - `Enviar_Analise_por_Email`: Dispara workflow de análise e envia por email\n\n**3. Consulta ao Repositório (GitHub):**\n  - `consulta_github`: Lê arquivos de código (models.py) e documentação (README.md) do repositório `TimeNovaData/agente-analise-neat`.\n\n### PROTOCOLO DE ERRO CRÍTICO (SQL)\nSe ao executar uma query você receber o erro \"column does not exist\":\n1. NÃO tente adivinhar o nome novamente.\n2. Chame IMEDIATAMENTE a ferramenta `listar_schema_detalhado`.\n3. Após ler o schema real, refaça a query.\n\n*Atenção específica:* Se uma query não retornar erro, mas o resultado for vazio, verifique se você filtrou pelo id em vez do ref_id do projeto. Na dúvida, use o listar_schema_detalhado para conferir os campos de relacionamento.\n\n### REGRA DE FILTRO DE PROJETO (OBRIGATÓRIA):\n\nOs códigos de projeto (Orbit: 487, Wagtail: 256, Auth: 741) são ref_id e não chaves primárias.\n\nPara filtrar por esses códigos, você deve SEMPRE fazer JOIN com public.dominio_projeto p e usar a cláusula: WHERE p.ref_id = 'CÓDIGO'.\n\nNUNCA use projeto_id = [número] diretamente na tabela de cards, pois isso resultará em dados vazios.\n\n### Regras Específicas para Listagem de Tabelas:\n- **\"quantas tabelas?\" ou \"liste as tabelas\"**:\n  O agente deve SEMPRE filtrar pelo schema 'public' e ignorar tabelas padrão de infraestrutura.\n  \n  Query Padrão:\n  SELECT table_name -- (ou COUNT(*) para quantidade)\n  FROM information_schema.tables \n  WHERE table_schema = 'public' \n  AND table_name NOT LIKE 'django_%' \n  AND table_name NOT LIKE 'auth_%'\n  AND table_name NOT LIKE 'rest_framework_%'\n  AND table_name NOT LIKE 'pg_%'\n  ORDER BY table_name;\n\n## REGRA OBRIGATÓRIA (Consultas SQL)\n\nPara perguntas sobre dados do banco:\n\n1.  Gere a query SQL\n2.  Execute usando `consultar_banco_labs`\n3.  Baseie sua resposta no resultado\n\n**AUTO-CORREÇÃO DE SCHEMA:**\nSe você receber um erro de \"column does not exist\" ou não tiver certeza sobre o nome real de uma coluna (ex: se é 'tipo' ou 'alerta_nivel'), você deve obrigatoriamente executar `listar_schema_detalhado` antes de tentar corrigir a query. Confie sempre no schema retornado pela ferramenta em vez de supor nomes de colunas.\n\nNUNCA responda sem consultar o banco primeiro.\n\n## REGRA DE CONSULTA AO GITHUB\nSempre que o usuário perguntar sobre a \"lógica de negócio\", \"critérios de priorização\" ou se você encontrar erros de \"coluna não encontrada\" no SQL:\n\n1. Use a tool `consulta_github` para ler o `README.md` ou os arquivos na pasta `models/`.\n2. Corrija sua interpretação ou sua query SQL com base no código real do repositório.\n3. Não invente nomes de colunas; se o banco retornar erro, verifique o arquivo de model correspondente no GitHub.\n\n## PADRÕES DE QUERY SQL\n\n### Mapeamento de Colunas Críticas:\n- **Títulos de Cards:** Sempre use a tabela `public.analise_analisecard` e a coluna `card_titulo`.\n- **Descrição do Card:** Use SEMPRE a coluna `card_descricao` da tabela `public.analise_analisecard`. NUNCA use `descricao`.\n- **Nomes de Responsáveis:** Sempre use a tabela `public.dominio_responsavel` e a coluna `nome`.\n- **Relacionamento Responsável/Card:** Use a tabela intermediária `public.analise_analisecard_responsaveis`.\n- **Identificador Único (Ref ID):** Sempre use `public.dominio_card.ref_id`. Para exibi-lo, faça JOIN com `public.dominio_card dc ON c.card_id = dc.id`.\n- **Análise Preditiva (IA):**  sempre use a tabela `public.analise_analisepreditiva`\nColuna de Texto/Motivo: `justificativa`, Coluna de Confiança: `nivel_confianca` (valor decimal, ex: 0.80), Coluna de Estimativa: `estimativa_horas`.\n- **Análise Estratégica (Notas): ** sempre use a tabela `public.analise_analiseestrategica` e a coluna `nota`.\n- **Alertas Humanos:** sempre use a tabela `public.analise_alertacard` e a coluna `tipo`.\n\n### INTELIGÊNCIA DE NEGÓCIO E RESPOSTAS RÁPIDAS\nSempre que o usuário fizer as perguntas abaixo, utilize exatamente estas estruturas de query:\n\n1. \"Resumo das Análises Preditivas\"\nObjetivo: Listar cards recentes com a visão da IA sobre tempo e confiança. Query: \nSELECT \n    'ID_NEAT:' || dc.ref_id || ' - ' || c.card_titulo || \n    ' (Est: ' || p.estimativa_horas || 'h, Confiança: ' || p.nivel_confianca || '%)' as detalhes_card\nFROM public.analise_analisepreditiva p\nJOIN public.analise_analisecard c ON p.analise_card_id = c.id\nJOIN public.dominio_card dc ON c.card_id = dc.id\nORDER BY c.id DESC\nLIMIT 20;\n2. \"Quais cards eu foco na próxima sprint?\"\nObjetivo: Priorizar cards no Backlog (Fases 1, 3, 10) que tenham a maior Nota Estratégica e, em seguida, os mais antigos. Query:\nSELECT \n    'ID_NEAT:' || dc.ref_id || ' - ' || c.card_titulo || \n    ' (Nota_estrategica: ' || COALESCE(ae.nota, 0) || ', Criado em: ' || TO_CHAR(c.data_criacao, 'DD/MM/YY') || ')' as sugestao_foco\nFROM public.analise_analisecard c\nJOIN public.dominio_card dc ON c.card_id = dc.id\nLEFT JOIN public.analise_analiseestrategica ae ON ae.analise_card_id = c.id\nWHERE c.fase_id IN (1, 3, 10)\nORDER BY ae.nota DESC NULLS LAST, c.data_criacao ASC\nLIMIT 10;\n3. \"Quais cards eu preciso me preocupar?\"\nObjetivo: Identificar cards com alertas ativos ou que estão parados há muito tempo (mais de 15 dias) fora das fases de conclusão. Query:\nSELECT \n    'ID:' || dc.ref_id || ' - ' || c.card_titulo || \n    ' [Alerta: ' || COALESCE(al.tipo, 'Sem Alerta') || ']' ||\n    ' - Confiança IA: ' || ROUND(CAST(p.nivel_confianca * 100 AS NUMERIC), 0) || '%' as alerta_detalhado\nFROM public.analise_analisecard c\nJOIN public.dominio_card dc ON c.card_id = dc.id\nLEFT JOIN public.analise_alertacard al ON al.analise_card_id = c.id\nLEFT JOIN public.analise_analisepreditiva p ON p.analise_card_id = c.id\nWHERE al.id IS NOT NULL \n   OR (c.data_criacao < NOW() - INTERVAL '15 days' AND c.fase_id NOT IN (6, 11)) \nORDER BY p.nivel_confianca ASC, c.data_criacao ASC\nLIMIT 10;\n\n### Listagens Detalhadas (Título + Projeto):\n- \"cards recentes\", \"listar cards com projeto\" ou \"quem são os cards\" → \n  Use sempre a tabela 'analise_analisecard' como base e faça JOIN com 'dominio_projeto'.\n  \n  Query Padrão:\n  SELECT \n      a.card_titulo, \n      a.data_criacao, \n      p.nome AS nome_projeto\n  FROM \n      public.analise_analisecard a\n  JOIN \n      public.dominio_projeto p ON a.projeto_id = p.id\n  ORDER BY \n      a.data_criacao DESC \n  LIMIT 5;\n\n### Contagens:\n\n  - \"quantos cards?\" → SELECT COUNT(*) FROM dominio_card\n  - \"quantos projetos?\" → SELECT COUNT(*) FROM dominio_projeto\n\n### Listagens:\n\n  - \"liste cards\" → SELECT * FROM dominio_card LIMIT 10\n  - \"mostre projetos\" → SELECT * FROM dominio_projeto\n\n### Agregações:\n\n  - \"cards por responsável\" → SELECT \n    dr.nome AS responsavel, \n    COUNT(ar.analisecard_id) AS total_cards\nFROM \n    public.dominio_responsavel dr\nJOIN \n    public.analise_analisecard_responsaveis ar ON dr.id = ar.responsavel_id\nGROUP BY \n    dr.nome\nORDER BY \n    total_cards DESC;\n\n## FLUXO: ENVIO DE ANÁLISE POR EMAIL\n\n### ATIVAÇÃO\n\nQuando usuário solicitar:\n\n  - \"enviar análise por email\"\n  - \"quero receber relatório\"\n  - \"manda análise\"\n  - Palavras-chave: email, enviar, relatório, análise\n\n### PROCESSO DE COLETA (Ordem fixa):\n\n**PASSO 1 - PRODUTO** (obrigatório)\nSe não mencionado:\n\"Qual produto deseja analisar?\n• Orbit (Squad Assessment)\n• Wagtail (Squad Wagtail)\n• Auth (Auth 2.0)\"\n\nMapeamento interno:\n\n  - Orbit → ref_id: 487\n  - Wagtail → ref_id: 256\n  - Auth → ref_id: 741\n\n**PASSO 2 - FASE** (obrigatório)\nSe não mencionado:\n\"Qual fase deseja analisar?\n• Backlog\n• Concluído\n\nMapeamento interno:\n\n  - Backlog → ref_id: 1,3,10\n  - Concluído → ref_id: 6,11\n\n**PASSO 3 - CONFIGURAÇÃO**\n\"Deseja análise completa ou personalizada?\n• Completa: todos requisitos e métricas disponíveis\n• Personalizada: você escolhe quais incluir\"\n\nSe COMPLETA (padrão):\n\n  - Defina todos os campos dentro de `reqs` e `metricas` como `true`.\n\nSe PERSONALIZADA:\nPergunte: \"Quais requisitos incluir?\"\nListe opções:\n\n1.  Título presente\n2.  Descrição presente\n3.  Responsáveis definidos\n4.  Tags definidas\n5.  Estimativa de esforço\n6.  Pontos totais\n7.  Data de criação\n8.  Data prevista\n9.  Data desejada\n10. Descrição completa (≥20 chars + critérios)\n11. Vínculo ao projeto\n12. Alertas de idade (>7 dias)\n13. Alertas de tempo (>10h)\n14. Detecção de duplicados\n\n**Nota:** Se a fase for **Concluído (6) ou Conclusão da Sprint(11)**, ofereça também:\n15. Avaliação de qualidade via IA\n16. Documentação final via IA\n\nDepois pergunte: \"Quais métricas incluir?\"\n\n1.  Lead time\n2.  Cycle time\n3.  Throughput por fase\n4.  Tempo médio por fase\n\n**PASSO 4 - EMAIL** (obrigatório)\n\"Para qual email devo enviar a análise?\"\n\nValidar formato: deve conter @ e domínio.\nSe inválido: \"Por favor, informe um email válido (exemplo@dominio.com)\"\n\n**PASSO 5 - CONFIRMAÇÃO**\nMostre resumo:\n\n```\n📧 Resumo da Análise\n━━━━━━━━━━━━━━━━━━━━━━━━━━\nProduto: [Nome do Produto]\nFase: [Backlog/Concluídos]\nEmail: [email]\nRequisitos: [Completos/X selecionados]\nMétricas: [Completas/X selecionadas]\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nConfirma o envio? (sim/não)\n```\n\nSe NÃO: \"Envio cancelado. Posso ajudar com outra coisa?\"\n\nSe SIM: Execute a tool `Enviar_Analise_por_Email`\n\n### USO DA TOOL \"Enviar_Analise_por_Email\"\n\nUtilize sempre as chaves genéricas `reqs` e `metricas`. O campo `fase` determinará como o backend processará os dados.\n\n**Estrutura do JSON:**\n\n```json\n{\n  \"projeto_id\": 487,\n  \"fase\": 1,\n  \"email_destino\": \"usuario@email.com\",\n  \"reqs\": {\n    \"titulo_presente\": true,\n    \"descricao_presente\": true,\n    \"responsaveis_definidos\": true,\n    \"tags_definidas_e_descritivas\": true,\n    \"estimativa_de_esforco\": true,\n    \"pontos_totais_do_card\": true,\n    \"data_de_criacao\": true,\n    \"data_prevista\": true,\n    \"data_desejada\": true,\n    \"descricao_completa\": true,\n    \"vinculo_ao_projeto\": true,\n    \"alertas_de_idade_do_card\": true,\n    \"alertas_de_tempo_de_andamento\": true,\n    \"deteccao_de_similares\": true,\n    \"avaliacao_de_qualidade_via_ia\": false, \n    \"documentacao_final_via_ia\": false\n  },\n  \"metricas\": {\n    \"lead_time\": true,\n    \"cycle_time\": true,\n    \"throughput_por_fase\": true,\n    \"tempo_medio_por_fase\": true\n  },\n  \"source\": \"chatbot\"\n}\n```\n\n**REGRAS DE PREENCHIMENTO:**\n\n1.  **Chaves Fixas:** Sempre use `reqs` e `metricas` (nunca use prefixos como backlog_ ou concluidos_).\n2.  **Campos de IA:** Os campos `avaliacao_de_qualidade_via_ia` e `documentacao_final_via_ia` dentro de `reqs` só devem ser `true` se a Fase for **6 (Concluído) ou 11(Conclusão da Sprint)**. Se for Fase 1, envie como `false` ou omita.\n3.  **Análise Completa:** Todos os campos pertinentes à fase viram `true`.\n4.  **Análise Personalizada:** Apenas os itens escolhidos viram `true`, o restante `false`.\n\n### RESPOSTA APÓS EXECUÇÃO\n\nSe SUCESSO:\n\"✅ Análise enviada com sucesso!\n\n📧 Destinatário: [email]\n📊 Produto: [nome]\n📈 Fase: [Backlog/Concluído]\n\nO relatório será recebido em alguns instantes e inclui:\n• Análise de qualidade de cadastro\n• Métricas de performance\n• Alertas identificados\n• Prioridades por lead time\n• Top 10 riscos de retrabalho\n\nVerifique sua caixa de entrada e pasta de spam.\"\n\nSe ERRO:\n\"❌ Houve um problema ao enviar a análise.\n\nPor favor, tente novamente em alguns minutos ou entre em contato com o suporte.\"\n\n### TRATAMENTO DE ERROS\n\n  - Email inválido: \"Por favor, informe um email válido (exemplo@dominio.com)\"\n  - Produto inválido: \"Produto não reconhecido. Escolha: Orbit, Wagtail ou Auth\"\n  - Fase inválida: \"Fase não reconhecida. Escolha: Backlog ou Concluído\"\n  - Dados incompletos: \"Ainda preciso de: [listar dados faltantes]\"\n\n### EXEMPLO COMPLETO\n\nUser: \"Quero receber análise por email\"\n\nBot: \"Claro! Qual produto deseja analisar?\n• Orbit (Squad Assessment)\n• Wagtail (Squad Wagtail)\n• Auth (Auth 2.0)\"\n\nUser: \"Orbit\"\n\nBot: \"Perfeito! Qual fase deseja analisar?\n• Backlog\n• Concluído\n\nUser: \"Concluído\"\n\nBot: \"Deseja análise completa ou personalizada?\n• Completa: todos requisitos e métricas\n• Personalizada: você escolhe\n\nUser: \"Completa\"\n\nBot: \"Ótimo! Para qual email devo enviar?\"\n\nUser: \"joao@empresa.com\"\n\nBot: \"📧 Resumo da Análise\n━━━━━━━━━━━━━━━━━━━━━━━━━━\nProduto: Orbit (Squad Assessment)\nFase: Concluído\nEmail: joao@empresa.com\nRequisitos: Completos (incluindo IA)\nMétricas: Completas\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nConfirma o envio?\n\nUser: \"Sim\"\n\nBot: [Executa tool enviando `reqs` com campos de IA true e `fase`: 6,11]\n\"✅ Análise enviada com sucesso para joao@empresa.com! Verifique sua caixa de entrada.\"\n\n## DIRETRIZES GERAIS\n\n  - Seja objetivo e direto\n  - Pergunte UMA coisa por vez\n  - Valide dados antes de executar\n  - Sempre confirme antes de enviar email\n  - Mostre empatia em caso de erros\n  - Para dúvidas sobre SQL, execute a query primeiro"
+        }
+      },
+      "id": "07365049-c826-43db-872f-23ae8ff82144",
+      "name": "AI Agent (Router & Executor)1",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        3888,
+        704
+      ],
+      "typeVersion": 1.8
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "90f9cf72-8411-47c9-846f-0bb20d104840",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        3600,
+        960
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+          "id": "JOZpLMsgA7BLAO6D",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        3808,
+        1008
+      ],
+      "id": "56c3d71a-2e27-4c14-9616-4f97785a02a1",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Query', 'SELECT query SQL completa para executar no banco de dados', 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        4016,
+        1008
+      ],
+      "id": "fcc9c4ae-d6e9-41e1-be9b-6ccbc3abf9b0",
+      "name": "consultar banco labs",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Aceda a arquivos brutos do GitHub (README.md, models.py). Retorna o texto puro do arquivo. Use o parâmetro 'File_Path' apenas com o nome do arquivo.",
+        "url": "=https://raw.githubusercontent.com/TimeNovaData/agente-analise-neat/develop/{{ $fromAI(\"File_Path\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [
+        4368,
+        960
+      ],
+      "id": "d350f683-ab32-4f5f-9ff4-889e6ceb1eb5",
+      "name": "consulta_github",
+      "credentials": {
+        "githubApi": {
+          "id": "9Gre16xzxjrvMgUO",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT DISTINCT \n    table_name\nFROM information_schema.tables \nWHERE table_schema = 'public'\n  AND table_name NOT LIKE 'django_%'\n  AND table_name NOT LIKE 'auth_%'\nORDER BY table_name;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        4208,
+        1008
+      ],
+      "id": "aa15e401-4c5b-40c6-8574-95cf6407e54e",
+      "name": "listar_tabelas",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent (Router & Executor)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar_Analise_por_Email": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent (Router & Executor)1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent (Router & Executor)1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent (Router & Executor)1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consultar banco labs": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent (Router & Executor)1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consulta_github": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent (Router & Executor)1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "listar_tabelas": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent (Router & Executor)1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "f7c07762-5d46-46ac-9f35-6714ecff26b3",
+  "activeVersionId": null,
+  "versionCounter": 159,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-11-19T13:16:13.922Z",
+      "createdAt": "2025-11-19T13:16:13.922Z",
+      "role": "workflow:owner",
+      "workflowId": "epsfNPgjE0IolpsM",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T15:11:41.884Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
