@@ -1,0 +1,831 @@
+{
+  "updatedAt": "2026-01-26T15:38:10.145Z",
+  "createdAt": "2026-01-26T15:24:37.987Z",
+  "id": "spvjACorQnYO0kPL",
+  "name": "UNI_Schedule_Notif_sem_atendimento_generate_v3",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "url": "={{ $('get sess').item.json.baseUrl }}atendimento/reunioes_realizadas/?&user={{ $json.id }}&tem_atendimento=true",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Referer",
+              "value": "={{ $('get sess').item.json.baseUrl }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Cookie",
+              "value": "=csrftoken={{ $('get sess').item.json.csrfFieldName }}; sessionid={{ $('get sess').item.json.sessionId }}"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "off"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -512,
+        192
+      ],
+      "id": "c9c7cf7d-81fc-4061-97ff-e5f93f901a8f",
+      "name": "60 Fetch User Reunioes (Pf)",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "edcb3f17-564d-4ce9-a7ce-f385a2f18347",
+              "name": "officer_id",
+              "value": "={{ $(' loop officers pf').item.json.user_id }}",
+              "type": "string"
+            },
+            {
+              "id": "1cbbc4eb-9581-48c8-a05c-4344c216f9bc",
+              "name": "officer_name",
+              "value": "={{ $(' loop officers pf').item.json.username }}",
+              "type": "string"
+            },
+            {
+              "id": "e9650b0c-5c6f-4950-9214-f4a58f56f17b",
+              "name": "meses_clientes_sem_reuniao",
+              "value": "={{ $(' loop officers pf').item.json.meses_clientes_sem_reuniao }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -512,
+        0
+      ],
+      "id": "9726d454-8451-4de6-ba35-f68abf932c69",
+      "name": "80 Build Notification Seed (Pf)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7b00aef4-e19e-4914-ba13-604de94cecc1",
+              "name": "count_clientes_sem_reuniao",
+              "value": "={{ $json.count_clientes_sem_reuniao }}",
+              "type": "number"
+            },
+            {
+              "id": "84435b5d-1fe6-4cda-840e-de2386e57983",
+              "name": "meses_clientes_sem_reuniao",
+              "value": "={{ $json.meses_clientes_sem_reuniao }}",
+              "type": "array"
+            },
+            {
+              "id": "eebc4f29-aa43-4e3e-83c9-ab8161fe4b4b",
+              "name": "user_id",
+              "value": "={{ $(' loop officers pf').item.json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "49646e48-77e2-489e-bd1f-72cdff780a1c",
+              "name": "username",
+              "value": "={{ $(' loop officers pf').item.json.username }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -288,
+        264
+      ],
+      "id": "e27c8501-c4fc-45c3-8590-b86c869119f6",
+      "name": "70 Format Loop Output (Pf)"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('get sess').item.json.baseUrl }}atendimento/reunioes_realizadas_sai/?&user={{$json.id}}&tem_atendimento=true&ano_inicio=2014&ano_fim=2026&mes_inicio_ano_inicial=1&mes_fim_ano_inicial=12&mes_inicio_ano_final=1&mes_fim_ano_final=12",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Referer",
+              "value": "={{ $('get sess').item.json.baseUrl }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Cookie",
+              "value": "=csrftoken={{ $('get sess').item.json.csrfFieldName }}; sessionid={{ $('get sess').item.json.sessionId }}"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "off"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -512,
+        696
+      ],
+      "id": "ddfe36b9-7d77-44d5-a250-614fc5638063",
+      "name": "260 Fetch User Reunioes (Fund)",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "edcb3f17-564d-4ce9-a7ce-f385a2f18347",
+              "name": "officer_id",
+              "value": "={{ $('loop officers fund').item.json.user_id }}",
+              "type": "string"
+            },
+            {
+              "id": "1cbbc4eb-9581-48c8-a05c-4344c216f9bc",
+              "name": "officer_name",
+              "value": "={{ $('loop officers fund').item.json.username }}",
+              "type": "string"
+            },
+            {
+              "id": "e9650b0c-5c6f-4950-9214-f4a58f56f17b",
+              "name": "meses_clientes_sem_reuniao",
+              "value": "={{ $('loop officers fund').item.json.meses_clientes_sem_reuniao }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -512,
+        504
+      ],
+      "id": "ab351fdf-b779-41cc-bf35-f0dc3c5934f1",
+      "name": "280 Build Notification Seed (Fund)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7b00aef4-e19e-4914-ba13-604de94cecc1",
+              "name": "count_clientes_sem_reuniao",
+              "value": "={{ $json.count_clientes_sem_reuniao }}",
+              "type": "number"
+            },
+            {
+              "id": "84435b5d-1fe6-4cda-840e-de2386e57983",
+              "name": "meses_clientes_sem_reuniao",
+              "value": "={{ $json.meses_clientes_sem_reuniao }}",
+              "type": "array"
+            },
+            {
+              "id": "eebc4f29-aa43-4e3e-83c9-ab8161fe4b4b",
+              "name": "user_id",
+              "value": "={{ $('loop officers fund').item.json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "49646e48-77e2-489e-bd1f-72cdff780a1c",
+              "name": "username",
+              "value": "={{ $('loop officers fund').item.json.username }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -288,
+        768
+      ],
+      "id": "a0243261-26b4-487a-b99a-c56dfc405345",
+      "name": "270 Format Loop Output (Fund)"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/data/files/uni/notifs/input/{{$('writeReunioesBinary(PF)').item.binary.sem_atendimento_pf.fileName}}.{{$('writeReunioesBinary(PF)').item.binary.sem_atendimento_pf.fileExtension}}",
+        "dataPropertyName": "sem_atendimento_pf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        0
+      ],
+      "id": "f7032632-caf9-4ea9-b777-52ac8aa3f532",
+      "name": "100 Write JSON File (Pf)"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/data/files/uni/notifs/input/{{$('writeReunioesBinary(Fund)').item.binary.sem_atendimento_fund.fileName}}.{{$('writeReunioesBinary(Fund)').item.binary.sem_atendimento_fund.fileExtension}}",
+        "dataPropertyName": "sem_atendimento_fund",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        504
+      ],
+      "id": "21d87e4c-8765-45d3-90e8-eb2e64e62a9a",
+      "name": "300 Write JSON File (Fund)"
+    },
+    {
+      "parameters": {
+        "command": "python /data/repos/uni/unifinance_notificacoes/cli_gatilhos.py sem_atendimento_fund /data/files/uni/notifs/input/reunioes_fund.json --saida /data/files/uni/notifs/output --format json"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        160,
+        504
+      ],
+      "id": "dd261ef7-9d66-4345-9662-8c3bb0b22bc4",
+      "name": "310 Execute Python Trigger (Fund)",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "command": "python /data/repos/uni/unifinance_notificacoes/cli_gatilhos.py sem_atendimento_pf /data/files/uni/notifs/input/reunioes_pf.json --saida /data/files/uni/notifs/output --format json"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        160,
+        0
+      ],
+      "id": "d4ce7334-a1a8-4c15-af97-4b1ff8e6edf9",
+      "name": "110 Execute Python Trigger (Pf)",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "binaryPropertyName": "sem_atendimento_fund",
+        "options": {
+          "fileName": "reunioes_fund"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -288,
+        504
+      ],
+      "id": "fb1c8c0b-d08d-4e74-a4f3-449dc070047b",
+      "name": "writeReunioesBinary(Fund)"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "binaryPropertyName": "sem_atendimento_pf",
+        "options": {
+          "fileName": "reunioes_pf"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -288,
+        0
+      ],
+      "id": "a938c48f-f04e-485d-8631-32b44070944d",
+      "name": "writeReunioesBinary(PF)"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1632,
+        456
+      ],
+      "id": "28bf271e-89a2-43a4-b910-3750c5bd8c7c",
+      "name": "each hour"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "PlS62KJilKsPGxO2",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/PlS62KJilKsPGxO2",
+          "cachedResultName": "UNI_Workflow_Util_fetch_sess_v2"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "baseUrl": "https://hub-unifinance.novadata.dev/",
+            "loginPath": "login/",
+            "csrfFieldName": "csrftoken"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "baseUrl",
+              "displayName": "baseUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "loginPath",
+              "displayName": "loginPath",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "csrfFieldName",
+              "displayName": "csrfFieldName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -1408,
+        456
+      ],
+      "id": "4d566237-1edb-4ac8-96d8-a0d94707455b",
+      "name": "get sess"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -736,
+        192
+      ],
+      "id": "d7e943ff-8ff6-4ad9-af6c-9c0b9755cbdd",
+      "name": " loop officers pf"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -736,
+        696
+      ],
+      "id": "1f12e7b8-b1da-44b5-9aa0-c0bbc0e29d00",
+      "name": "loop officers fund"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('get sess').item.json.baseUrl }}clientes/todos_usuarios_sai/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Referer",
+              "value": "={{ $('get sess').item.json.baseUrl }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Cookie",
+              "value": "=csrftoken={{ $('get sess').item.json.csrfCookie }}; sessionid={{ $('get sess').item.json.sessionId }}"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "off"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1184,
+        696
+      ],
+      "id": "a9e5472c-8284-4883-b657-05405c8a0f36",
+      "name": "fetchUsuariosSai"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('get sess').item.json.baseUrl }}clientes/todos_usuarios_sap/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Referer",
+              "value": "={{ $('get sess').item.json.baseUrl }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Cookie",
+              "value": "=csrftoken={{ $('get sess').item.json.csrfCookie }}; sessionid={{ $('get sess').item.json.sessionId }}"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "off"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1184,
+        192
+      ],
+      "id": "77729e9d-09bf-4c0e-b5b0-dba7a2a763c8",
+      "name": "fetchUsuariosSap"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "todos_usuarios",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        696
+      ],
+      "id": "013d65a1-4dd5-4235-85c3-97385efc5fad",
+      "name": "separaUsuariosSai"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "todos_usuarios",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        192
+      ],
+      "id": "8f2d2f47-8ef3-4374-8818-cc7bf4858b54",
+      "name": "separaUsuariosSap"
+    }
+  ],
+  "connections": {
+    "60 Fetch User Reunioes (Pf)": {
+      "main": [
+        [
+          {
+            "node": "70 Format Loop Output (Pf)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "80 Build Notification Seed (Pf)": {
+      "main": [
+        [
+          {
+            "node": "writeReunioesBinary(PF)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "70 Format Loop Output (Pf)": {
+      "main": [
+        [
+          {
+            "node": " loop officers pf",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "260 Fetch User Reunioes (Fund)": {
+      "main": [
+        [
+          {
+            "node": "270 Format Loop Output (Fund)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "280 Build Notification Seed (Fund)": {
+      "main": [
+        [
+          {
+            "node": "writeReunioesBinary(Fund)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "270 Format Loop Output (Fund)": {
+      "main": [
+        [
+          {
+            "node": "loop officers fund",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "100 Write JSON File (Pf)": {
+      "main": [
+        [
+          {
+            "node": "110 Execute Python Trigger (Pf)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "300 Write JSON File (Fund)": {
+      "main": [
+        [
+          {
+            "node": "310 Execute Python Trigger (Fund)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "writeReunioesBinary(Fund)": {
+      "main": [
+        [
+          {
+            "node": "300 Write JSON File (Fund)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "writeReunioesBinary(PF)": {
+      "main": [
+        [
+          {
+            "node": "100 Write JSON File (Pf)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "each hour": {
+      "main": [
+        [
+          {
+            "node": "get sess",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get sess": {
+      "main": [
+        [
+          {
+            "node": "fetchUsuariosSap",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "fetchUsuariosSai",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " loop officers pf": {
+      "main": [
+        [
+          {
+            "node": "80 Build Notification Seed (Pf)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "60 Fetch User Reunioes (Pf)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "loop officers fund": {
+      "main": [
+        [
+          {
+            "node": "280 Build Notification Seed (Fund)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "260 Fetch User Reunioes (Fund)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fetchUsuariosSai": {
+      "main": [
+        [
+          {
+            "node": "separaUsuariosSai",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fetchUsuariosSap": {
+      "main": [
+        [
+          {
+            "node": "separaUsuariosSap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "separaUsuariosSai": {
+      "main": [
+        [
+          {
+            "node": "loop officers fund",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "separaUsuariosSap": {
+      "main": [
+        [
+          {
+            "node": " loop officers pf",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "3f071238-de9e-41af-a19b-47ef97fcb2b3",
+  "activeVersionId": null,
+  "versionCounter": 7,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T15:24:37.987Z",
+      "createdAt": "2026-01-26T15:24:37.987Z",
+      "role": "workflow:owner",
+      "workflowId": "spvjACorQnYO0kPL",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T15:11:41.884Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
