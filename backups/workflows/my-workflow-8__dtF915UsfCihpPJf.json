@@ -1,0 +1,129 @@
+{
+  "updatedAt": "2026-02-26T11:33:36.281Z",
+  "createdAt": "2026-02-26T11:33:34.741Z",
+  "id": "dtF915UsfCihpPJf",
+  "name": "My workflow 8",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "events": [
+          "update",
+          "init",
+          "activate"
+        ]
+      },
+      "type": "n8n-nodes-base.n8nTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "35d6c006-57fc-4e7e-8d1e-925ce036b41c",
+      "name": "n8n Trigger"
+    }
+  ],
+  "connections": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "83e9e6a9-39c1-4474-8cb5-bc40b10b405f",
+  "activeVersionId": "83e9e6a9-39c1-4474-8cb5-bc40b10b405f",
+  "versionCounter": 4,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-26T11:33:34.741Z",
+      "createdAt": "2026-02-26T11:33:34.741Z",
+      "role": "workflow:owner",
+      "workflowId": "dtF915UsfCihpPJf",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T10:16:57.321Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-02-26T11:33:34.741Z",
+    "createdAt": "2026-02-26T11:33:34.741Z",
+    "versionId": "83e9e6a9-39c1-4474-8cb5-bc40b10b405f",
+    "workflowId": "dtF915UsfCihpPJf",
+    "nodes": [
+      {
+        "parameters": {
+          "events": [
+            "update",
+            "init",
+            "activate"
+          ]
+        },
+        "type": "n8n-nodes-base.n8nTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          0
+        ],
+        "id": "35d6c006-57fc-4e7e-8d1e-925ce036b41c",
+        "name": "n8n Trigger"
+      }
+    ],
+    "connections": {},
+    "authors": "Novadata Desenvolvimento",
+    "name": null,
+    "description": null
+  }
+}
