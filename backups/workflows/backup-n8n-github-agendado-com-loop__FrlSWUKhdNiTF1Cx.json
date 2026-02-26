@@ -1,0 +1,1055 @@
+{
+  "updatedAt": "2026-02-26T12:33:49.616Z",
+  "createdAt": "2026-02-19T20:26:03.813Z",
+  "id": "FrlSWUKhdNiTF1Cx",
+  "name": "Backup n8n → GitHub (Agendado com Loop)",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "0d1d9bd6-d5bd-4620-b8cb-cf11c943e4c5",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        5968,
+        2192
+      ],
+      "notes": "Executa o backup a cada 1 hora. Ajuste conforme necessidade."
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst dateStr = now.toISOString().replace('T', ' ').substring(0, 19);\nreturn [{ json: { commitDate: dateStr } }];"
+      },
+      "id": "32015fb2-ac58-4902-850c-48e2c7672bf7",
+      "name": "Gerar Data/Hora",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6192,
+        2192
+      ],
+      "notes": "Gera timestamp para a mensagem de commit."
+    },
+    {
+      "parameters": {
+        "filters": {},
+        "requestOptions": {}
+      },
+      "id": "a4262324-0bf3-4737-b550-0b0af5a20ee1",
+      "name": "Listar Todos os Workflows",
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        6416,
+        2192
+      ],
+      "credentials": {
+        "n8nApi": {
+          "id": "JLNWcgSoTOoMux4V",
+          "name": "n8n account"
+        }
+      },
+      "notes": "Busca todos os workflows da instância n8n."
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "639bded3-9cc9-4c4c-8bb2-1092ea505e31",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        6624,
+        2192
+      ],
+      "notes": "Processa um workflow por vez para evitar rate limit do GitHub."
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "workflowId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "requestOptions": {}
+      },
+      "id": "b668baca-9aa7-45b3-9938-9c16de695514",
+      "name": "Buscar Workflow Completo",
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        6896,
+        2352
+      ],
+      "credentials": {
+        "n8nApi": {
+          "id": "JLNWcgSoTOoMux4V",
+          "name": "n8n account"
+        }
+      },
+      "notes": "Busca o JSON completo de cada workflow."
+    },
+    {
+      "parameters": {
+        "jsCode": "const workflow = $input.first().json;\nconst name = workflow.name || 'sem-nome';\n\nconst cleanName = name\n  .toLowerCase()\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .replace(/[^a-z0-9\\s-]/g, '')\n  .replace(/\\s+/g, '-')\n  .replace(/-+/g, '-')\n  .replace(/^-|-$/g, '');\n\nconst filePath = `backups/workflows/${cleanName}__${workflow.id}.json`;\nconst content = JSON.stringify(workflow, null, 2);\n\nreturn [{\n  json: {\n    filePath,\n    content,\n    workflowName: workflow.name,\n    workflowId: workflow.id\n  }\n}];"
+      },
+      "id": "ed4b4821-202c-48bf-bfad-15d0aa35b2a2",
+      "name": "Preparar Arquivo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7072,
+        2352
+      ],
+      "notes": "Gera nome do arquivo (nome + ID) e formata o JSON."
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "value": "moraisinovaia",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "teste-backup-n8n",
+          "mode": "list",
+          "cachedResultName": "teste-backup-n8n",
+          "cachedResultUrl": "https://github.com/moraisinovaia/teste-backup-n8n"
+        },
+        "filePath": "={{ $json.filePath }}",
+        "asBinaryProperty": false,
+        "additionalParameters": {}
+      },
+      "id": "696672d2-30ba-45d1-a2d8-9927ad311877",
+      "name": "Verificar se Arquivo Existe",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [
+        7296,
+        2352
+      ],
+      "webhookId": "fc8790d4-4bfa-478c-b24e-05d2616ad7e0",
+      "credentials": {
+        "githubApi": {
+          "id": "jArmW5kmeNI4BAo6",
+          "name": "GitHub gab"
+        }
+      },
+      "continueOnFail": true,
+      "notes": "Tenta buscar o arquivo no GitHub. Se não existir, continua sem erro."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "file-exists-check",
+              "leftValue": "={{ $json.sha }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "70d2a7fb-21db-4755-b6c7-3b86bd07e2e2",
+      "name": "Arquivo Já Existe?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        7504,
+        2352
+      ],
+      "notes": "Se retornou SHA = atualiza. Se não = cria novo."
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "edit",
+        "owner": {
+          "__rl": true,
+          "value": "moraisinovaia",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "teste-backup-n8n",
+          "mode": "list",
+          "cachedResultName": "teste-backup-n8n",
+          "cachedResultUrl": "https://github.com/moraisinovaia/teste-backup-n8n"
+        },
+        "filePath": "={{ $('Preparar Arquivo').first().json.filePath }}",
+        "fileContent": "={{ $('Preparar Arquivo').first().json.content }}",
+        "commitMessage": "=✏️ Atualizado: {{ $('Preparar Arquivo').first().json.workflowName }} ({{ $('Gerar Data/Hora').first().json.commitDate }})"
+      },
+      "id": "eeb39ac7-dadd-42da-be1b-e375e6f92c12",
+      "name": "Atualizar Arquivo (Edit)",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [
+        7728,
+        2240
+      ],
+      "webhookId": "41cf8dbb-96fd-4688-8d0f-fba5c376eaee",
+      "credentials": {
+        "githubApi": {
+          "id": "jArmW5kmeNI4BAo6",
+          "name": "GitHub gab"
+        }
+      },
+      "notes": "Atualiza o arquivo existente no repositório."
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "value": "moraisinovaia",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "teste-backup-n8n",
+          "mode": "list",
+          "cachedResultName": "teste-backup-n8n",
+          "cachedResultUrl": "https://github.com/moraisinovaia/teste-backup-n8n"
+        },
+        "filePath": "={{ $('Preparar Arquivo').first().json.filePath }}",
+        "fileContent": "={{ $('Preparar Arquivo').first().json.content }}",
+        "commitMessage": "=🆕 Criado: {{ $('Preparar Arquivo').first().json.workflowName }} ({{ $('Gerar Data/Hora').first().json.commitDate }})"
+      },
+      "id": "83d7e551-5c6f-4f8a-93a2-8d1ddb1e1877",
+      "name": "Criar Arquivo (Create)",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [
+        7728,
+        2464
+      ],
+      "webhookId": "b5c5e7bd-ce17-4156-9819-22ffc33b1c70",
+      "credentials": {
+        "githubApi": {
+          "id": "jArmW5kmeNI4BAo6",
+          "name": "GitHub gab"
+        }
+      },
+      "notes": "Cria arquivo novo para workflows sem backup."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-status",
+              "name": "status",
+              "value": "={{ $json.content ? '✅ Backup OK' : '⚠️ Verificar' }}",
+              "type": "string"
+            },
+            {
+              "id": "set-workflow",
+              "name": "workflow",
+              "value": "={{ $('Preparar Arquivo').first().json.workflowName }}",
+              "type": "string"
+            },
+            {
+              "id": "set-path",
+              "name": "caminho",
+              "value": "={{ $('Preparar Arquivo').first().json.filePath }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4ff681e9-2f57-491a-862d-267ae2df5d52",
+      "name": "Log do Backup",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        7952,
+        2352
+      ],
+      "notes": "Registra o resultado do backup."
+    },
+    {
+      "parameters": {},
+      "id": "1c22717f-414f-4e6e-a701-a1fa865175f5",
+      "name": "Aguardar 1s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        8176,
+        2352
+      ],
+      "webhookId": "wait-between-loops",
+      "notes": "Pequena pausa entre cada workflow para não sobrecarregar a API do GitHub."
+    },
+    {
+      "parameters": {
+        "content": "## 📦 Backup Agendado com Loop → GitHub\n\n**O que faz?**\nA cada 1 hora, busca TODOS os workflows e faz backup no GitHub, processando um por vez (evita rate limit).\n\n---\n\n**Fluxo:**\n\n1️⃣ **Schedule Trigger** → Dispara a cada 1h\n2️⃣ **Gerar Data/Hora** → Timestamp pro commit\n3️⃣ **Listar Workflows** → Busca todos via API\n4️⃣ **Loop** → Processa 1 por vez\n5️⃣ **Buscar JSON Completo** → Pega dados completos\n6️⃣ **Preparar Arquivo** → Limpa nome + formata\n7️⃣ **Verificar GitHub** → Já existe?\n8️⃣ **Criar ou Atualizar** → Envia pro GitHub\n9️⃣ **Log** → Registra resultado\n🔟 **Aguardar** → Pausa de 1s → Volta pro Loop\n\n⚙️ Ajuste o intervalo no Schedule Trigger.\n📌 Tenha ao menos 1 arquivo no repo antes de rodar.",
+        "height": 660,
+        "width": 560,
+        "color": 4
+      },
+      "id": "ed3e08b8-b601-4a24-8973-2dbfee76a5fc",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5664,
+        1888
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        6832,
+        2112
+      ],
+      "id": "18fdf3a0-d1fd-4b8b-a4f2-ecac314b23ef",
+      "name": "No Operation, do nothing"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Gerar Data/Hora",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar Data/Hora": {
+      "main": [
+        [
+          {
+            "node": "Listar Todos os Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listar Todos os Workflows": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Buscar Workflow Completo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Workflow Completo": {
+      "main": [
+        [
+          {
+            "node": "Preparar Arquivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Arquivo": {
+      "main": [
+        [
+          {
+            "node": "Verificar se Arquivo Existe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar se Arquivo Existe": {
+      "main": [
+        [
+          {
+            "node": "Arquivo Já Existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Arquivo Já Existe?": {
+      "main": [
+        [
+          {
+            "node": "Atualizar Arquivo (Edit)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Criar Arquivo (Create)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar Arquivo (Edit)": {
+      "main": [
+        [
+          {
+            "node": "Log do Backup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar Arquivo (Create)": {
+      "main": [
+        [
+          {
+            "node": "Log do Backup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log do Backup": {
+      "main": [
+        [
+          {
+            "node": "Aguardar 1s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguardar 1s": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {
+    "node:Schedule Trigger": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "8698d511-75a0-4716-86fa-da3cd42b8288",
+  "activeVersionId": "8698d511-75a0-4716-86fa-da3cd42b8288",
+  "versionCounter": 20,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-19T20:26:03.813Z",
+      "createdAt": "2026-02-19T20:26:03.813Z",
+      "role": "workflow:owner",
+      "workflowId": "FrlSWUKhdNiTF1Cx",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T10:16:57.321Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-02-26T12:33:49.620Z",
+    "createdAt": "2026-02-26T12:33:49.620Z",
+    "versionId": "8698d511-75a0-4716-86fa-da3cd42b8288",
+    "workflowId": "FrlSWUKhdNiTF1Cx",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "hours"
+              }
+            ]
+          }
+        },
+        "id": "0d1d9bd6-d5bd-4620-b8cb-cf11c943e4c5",
+        "name": "Schedule Trigger",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          5968,
+          2192
+        ],
+        "notes": "Executa o backup a cada 1 hora. Ajuste conforme necessidade."
+      },
+      {
+        "parameters": {
+          "jsCode": "const now = new Date();\nconst dateStr = now.toISOString().replace('T', ' ').substring(0, 19);\nreturn [{ json: { commitDate: dateStr } }];"
+        },
+        "id": "32015fb2-ac58-4902-850c-48e2c7672bf7",
+        "name": "Gerar Data/Hora",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          6192,
+          2192
+        ],
+        "notes": "Gera timestamp para a mensagem de commit."
+      },
+      {
+        "parameters": {
+          "filters": {},
+          "requestOptions": {}
+        },
+        "id": "a4262324-0bf3-4737-b550-0b0af5a20ee1",
+        "name": "Listar Todos os Workflows",
+        "type": "n8n-nodes-base.n8n",
+        "typeVersion": 1,
+        "position": [
+          6416,
+          2192
+        ],
+        "credentials": {
+          "n8nApi": {
+            "id": "JLNWcgSoTOoMux4V",
+            "name": "n8n account"
+          }
+        },
+        "notes": "Busca todos os workflows da instância n8n."
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "id": "639bded3-9cc9-4c4c-8bb2-1092ea505e31",
+        "name": "Loop Over Items",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          6624,
+          2192
+        ],
+        "notes": "Processa um workflow por vez para evitar rate limit do GitHub."
+      },
+      {
+        "parameters": {
+          "operation": "get",
+          "workflowId": {
+            "__rl": true,
+            "value": "={{ $json.id }}",
+            "mode": "id"
+          },
+          "requestOptions": {}
+        },
+        "id": "b668baca-9aa7-45b3-9938-9c16de695514",
+        "name": "Buscar Workflow Completo",
+        "type": "n8n-nodes-base.n8n",
+        "typeVersion": 1,
+        "position": [
+          6896,
+          2352
+        ],
+        "credentials": {
+          "n8nApi": {
+            "id": "JLNWcgSoTOoMux4V",
+            "name": "n8n account"
+          }
+        },
+        "notes": "Busca o JSON completo de cada workflow."
+      },
+      {
+        "parameters": {
+          "jsCode": "const workflow = $input.first().json;\nconst name = workflow.name || 'sem-nome';\n\nconst cleanName = name\n  .toLowerCase()\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .replace(/[^a-z0-9\\s-]/g, '')\n  .replace(/\\s+/g, '-')\n  .replace(/-+/g, '-')\n  .replace(/^-|-$/g, '');\n\nconst filePath = `backups/workflows/${cleanName}__${workflow.id}.json`;\nconst content = JSON.stringify(workflow, null, 2);\n\nreturn [{\n  json: {\n    filePath,\n    content,\n    workflowName: workflow.name,\n    workflowId: workflow.id\n  }\n}];"
+        },
+        "id": "ed4b4821-202c-48bf-bfad-15d0aa35b2a2",
+        "name": "Preparar Arquivo",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          7072,
+          2352
+        ],
+        "notes": "Gera nome do arquivo (nome + ID) e formata o JSON."
+      },
+      {
+        "parameters": {
+          "resource": "file",
+          "operation": "get",
+          "owner": {
+            "__rl": true,
+            "value": "moraisinovaia",
+            "mode": "name"
+          },
+          "repository": {
+            "__rl": true,
+            "value": "teste-backup-n8n",
+            "mode": "list",
+            "cachedResultName": "teste-backup-n8n",
+            "cachedResultUrl": "https://github.com/moraisinovaia/teste-backup-n8n"
+          },
+          "filePath": "={{ $json.filePath }}",
+          "asBinaryProperty": false,
+          "additionalParameters": {}
+        },
+        "id": "696672d2-30ba-45d1-a2d8-9927ad311877",
+        "name": "Verificar se Arquivo Existe",
+        "type": "n8n-nodes-base.github",
+        "typeVersion": 1,
+        "position": [
+          7296,
+          2352
+        ],
+        "webhookId": "fc8790d4-4bfa-478c-b24e-05d2616ad7e0",
+        "credentials": {
+          "githubApi": {
+            "id": "jArmW5kmeNI4BAo6",
+            "name": "GitHub gab"
+          }
+        },
+        "continueOnFail": true,
+        "notes": "Tenta buscar o arquivo no GitHub. Se não existir, continua sem erro."
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "id": "file-exists-check",
+                "leftValue": "={{ $json.sha }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "exists"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "70d2a7fb-21db-4755-b6c7-3b86bd07e2e2",
+        "name": "Arquivo Já Existe?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          7504,
+          2352
+        ],
+        "notes": "Se retornou SHA = atualiza. Se não = cria novo."
+      },
+      {
+        "parameters": {
+          "resource": "file",
+          "operation": "edit",
+          "owner": {
+            "__rl": true,
+            "value": "moraisinovaia",
+            "mode": "name"
+          },
+          "repository": {
+            "__rl": true,
+            "value": "teste-backup-n8n",
+            "mode": "list",
+            "cachedResultName": "teste-backup-n8n",
+            "cachedResultUrl": "https://github.com/moraisinovaia/teste-backup-n8n"
+          },
+          "filePath": "={{ $('Preparar Arquivo').first().json.filePath }}",
+          "fileContent": "={{ $('Preparar Arquivo').first().json.content }}",
+          "commitMessage": "=✏️ Atualizado: {{ $('Preparar Arquivo').first().json.workflowName }} ({{ $('Gerar Data/Hora').first().json.commitDate }})"
+        },
+        "id": "eeb39ac7-dadd-42da-be1b-e375e6f92c12",
+        "name": "Atualizar Arquivo (Edit)",
+        "type": "n8n-nodes-base.github",
+        "typeVersion": 1,
+        "position": [
+          7728,
+          2240
+        ],
+        "webhookId": "41cf8dbb-96fd-4688-8d0f-fba5c376eaee",
+        "credentials": {
+          "githubApi": {
+            "id": "jArmW5kmeNI4BAo6",
+            "name": "GitHub gab"
+          }
+        },
+        "notes": "Atualiza o arquivo existente no repositório."
+      },
+      {
+        "parameters": {
+          "resource": "file",
+          "owner": {
+            "__rl": true,
+            "value": "moraisinovaia",
+            "mode": "name"
+          },
+          "repository": {
+            "__rl": true,
+            "value": "teste-backup-n8n",
+            "mode": "list",
+            "cachedResultName": "teste-backup-n8n",
+            "cachedResultUrl": "https://github.com/moraisinovaia/teste-backup-n8n"
+          },
+          "filePath": "={{ $('Preparar Arquivo').first().json.filePath }}",
+          "fileContent": "={{ $('Preparar Arquivo').first().json.content }}",
+          "commitMessage": "=🆕 Criado: {{ $('Preparar Arquivo').first().json.workflowName }} ({{ $('Gerar Data/Hora').first().json.commitDate }})"
+        },
+        "id": "83d7e551-5c6f-4f8a-93a2-8d1ddb1e1877",
+        "name": "Criar Arquivo (Create)",
+        "type": "n8n-nodes-base.github",
+        "typeVersion": 1,
+        "position": [
+          7728,
+          2464
+        ],
+        "webhookId": "b5c5e7bd-ce17-4156-9819-22ffc33b1c70",
+        "credentials": {
+          "githubApi": {
+            "id": "jArmW5kmeNI4BAo6",
+            "name": "GitHub gab"
+          }
+        },
+        "notes": "Cria arquivo novo para workflows sem backup."
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "set-status",
+                "name": "status",
+                "value": "={{ $json.content ? '✅ Backup OK' : '⚠️ Verificar' }}",
+                "type": "string"
+              },
+              {
+                "id": "set-workflow",
+                "name": "workflow",
+                "value": "={{ $('Preparar Arquivo').first().json.workflowName }}",
+                "type": "string"
+              },
+              {
+                "id": "set-path",
+                "name": "caminho",
+                "value": "={{ $('Preparar Arquivo').first().json.filePath }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "4ff681e9-2f57-491a-862d-267ae2df5d52",
+        "name": "Log do Backup",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          7952,
+          2352
+        ],
+        "notes": "Registra o resultado do backup."
+      },
+      {
+        "parameters": {},
+        "id": "1c22717f-414f-4e6e-a701-a1fa865175f5",
+        "name": "Aguardar 1s",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          8176,
+          2352
+        ],
+        "webhookId": "wait-between-loops",
+        "notes": "Pequena pausa entre cada workflow para não sobrecarregar a API do GitHub."
+      },
+      {
+        "parameters": {
+          "content": "## 📦 Backup Agendado com Loop → GitHub\n\n**O que faz?**\nA cada 1 hora, busca TODOS os workflows e faz backup no GitHub, processando um por vez (evita rate limit).\n\n---\n\n**Fluxo:**\n\n1️⃣ **Schedule Trigger** → Dispara a cada 1h\n2️⃣ **Gerar Data/Hora** → Timestamp pro commit\n3️⃣ **Listar Workflows** → Busca todos via API\n4️⃣ **Loop** → Processa 1 por vez\n5️⃣ **Buscar JSON Completo** → Pega dados completos\n6️⃣ **Preparar Arquivo** → Limpa nome + formata\n7️⃣ **Verificar GitHub** → Já existe?\n8️⃣ **Criar ou Atualizar** → Envia pro GitHub\n9️⃣ **Log** → Registra resultado\n🔟 **Aguardar** → Pausa de 1s → Volta pro Loop\n\n⚙️ Ajuste o intervalo no Schedule Trigger.\n📌 Tenha ao menos 1 arquivo no repo antes de rodar.",
+          "height": 660,
+          "width": 560,
+          "color": 4
+        },
+        "id": "ed3e08b8-b601-4a24-8973-2dbfee76a5fc",
+        "name": "Sticky Note",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          5664,
+          1888
+        ]
+      },
+      {
+        "parameters": {},
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          6832,
+          2112
+        ],
+        "id": "18fdf3a0-d1fd-4b8b-a4f2-ecac314b23ef",
+        "name": "No Operation, do nothing"
+      }
+    ],
+    "connections": {
+      "Schedule Trigger": {
+        "main": [
+          [
+            {
+              "node": "Gerar Data/Hora",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gerar Data/Hora": {
+        "main": [
+          [
+            {
+              "node": "Listar Todos os Workflows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Listar Todos os Workflows": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Items",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Loop Over Items": {
+        "main": [
+          [
+            {
+              "node": "No Operation, do nothing",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Buscar Workflow Completo",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Buscar Workflow Completo": {
+        "main": [
+          [
+            {
+              "node": "Preparar Arquivo",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Preparar Arquivo": {
+        "main": [
+          [
+            {
+              "node": "Verificar se Arquivo Existe",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Verificar se Arquivo Existe": {
+        "main": [
+          [
+            {
+              "node": "Arquivo Já Existe?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Arquivo Já Existe?": {
+        "main": [
+          [
+            {
+              "node": "Atualizar Arquivo (Edit)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Criar Arquivo (Create)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Atualizar Arquivo (Edit)": {
+        "main": [
+          [
+            {
+              "node": "Log do Backup",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Criar Arquivo (Create)": {
+        "main": [
+          [
+            {
+              "node": "Log do Backup",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Log do Backup": {
+        "main": [
+          [
+            {
+              "node": "Aguardar 1s",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aguardar 1s": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Items",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Novadata Desenvolvimento",
+    "name": null,
+    "description": null
+  }
+}
