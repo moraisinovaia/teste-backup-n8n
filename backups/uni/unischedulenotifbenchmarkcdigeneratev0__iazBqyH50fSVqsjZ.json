@@ -1,0 +1,554 @@
+{
+  "updatedAt": "2025-11-10T11:50:38.849Z",
+  "createdAt": "2025-11-04T11:49:08.325Z",
+  "id": "iazBqyH50fSVqsjZ",
+  "name": "UNI_Schedule_Notif_benchmark_cdi_generate_v0",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "PlS62KJilKsPGxO2",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/PlS62KJilKsPGxO2",
+          "cachedResultName": "UNI_Workflow_Util_fetch_sess_v2"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "baseUrl": "https://hub.unifinance.com.br/",
+            "loginPath": "login/",
+            "csrfFieldName": "csrftoken"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "baseUrl",
+              "displayName": "baseUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "loginPath",
+              "displayName": "loginPath",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "csrfFieldName",
+              "displayName": "csrfFieldName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -512,
+        160
+      ],
+      "id": "bb7f59fb-9775-4073-b638-defc94de38cd",
+      "name": "get sess"
+    },
+    {
+      "parameters": {
+        "url": "https://hub.unifinance.com.br/api/clientepf/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Referer",
+              "value": "={{ $('get sess').item.json.baseUrl }}/"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Cookie",
+              "value": "=csrftoken={{ $('get sess').item.json.csrfCookie }}; sessionid={{ $('get sess').item.json.sessionId }}"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "responseContainsNextURL",
+              "nextURL": "={{ $response.body.next }}",
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{$response.body.next==null}}"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -336,
+        160
+      ],
+      "id": "2227d5c2-4f3f-4d28-bf99-161010e48b53",
+      "name": "fetch clientes pf"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/data/files/uni/notifs/input/{{$('pf benchmark binary').item.binary.benchmark_cdi_pf.fileName}}.{{$('pf benchmark binary').item.binary.benchmark_cdi_pf.fileExtension}}",
+        "dataPropertyName": "benchmark_cdi_pf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1088,
+        576
+      ],
+      "id": "882bcda0-b021-4c8d-a331-44569b694290",
+      "name": "save binary in notif/input"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "binaryPropertyName": "benchmark_cdi_pf",
+        "options": {
+          "fileName": "benchmark_cdi_pf"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        576
+      ],
+      "id": "8b76c59c-26b4-478c-8715-38f49b343311",
+      "name": "pf benchmark binary"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "247b3e4b-df59-41e2-abda-e5d3c7ee31d8",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "=todos",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        32,
+        160
+      ],
+      "id": "5a1d605c-97b2-4ea3-89a8-3cbe89ddc555",
+      "name": "status true/benchmark"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "results",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        160
+      ],
+      "id": "a9147f61-9b36-4640-b421-090e67ebfc2d",
+      "name": "pf array"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "clientes",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        464,
+        -32
+      ],
+      "id": "2e0eacc6-e5dc-47ab-af78-5f7312e2b9e6",
+      "name": "clientes",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "bm_cdi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        464,
+        160
+      ],
+      "id": "0849f389-36eb-4607-8327-67d21840408f",
+      "name": "bm_cdi"
+    },
+    {
+      "parameters": {
+        "url": "=https://hub.unifinance.com.br/atendimento/informacoes_modal_cliente_pf/?cliente_pf={{ $json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Referer",
+              "value": "={{ $('get sess').item.json.baseUrl }}/"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Cookie",
+              "value": "=csrftoken={{ $('get sess').item.json.csrfCookie }}; sessionid={{ $('get sess').item.json.sessionId }}"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "off"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        160
+      ],
+      "id": "be2b26f8-9227-44e5-ac1d-c4250e4b3624",
+      "name": "fetch informacoes_modal_cliente_pf",
+      "retryOnFail": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "cliente_pf_id",
+              "field2": "id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        448,
+        576
+      ],
+      "id": "92fa0824-5e54-4556-9903-757133a7f55d",
+      "name": "Left Join com usuario_responsavel"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "id",
+              "field2": "cliente_pf_id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        672,
+        144
+      ],
+      "id": "92e2287d-bc1f-4b0f-9999-80eb21facf3c",
+      "name": "Left Join clientes com bm_cdi",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"clientepf_id\": \"{{ $json.id }}\",\n  \"clientepf_nome\": \"{{ $json.nome }}\",\n  \"rentabilidade\": {\n    \"rentabilidade_diaria\": \"{{ $json.rentabilidade_diaria }}\",\n    \"rentabilidade_diaria_anterior\": \"{{ $json.rentabilidade_diaria_anterior }}\",\n    \"rentabilidade_6_meses\": \"{{ $json.rentabilidade_6_meses }}\",\n    \"rentabilidade_12_meses\": \"{{ $json.rentabilidade_12_meses }}\",\n    \"rentabilidade_24_meses\": \"{{ $json.rentabilidade_24_meses }}\",\n    \"rentabilidade_36_meses\": \"{{ $json.rentabilidade_36_meses }}\",\n    \"rentabilidade_ultimo_mes\": \"{{ $json.rentabilidade_ultimo_mes }}\",\n    \"rentabilidade_desde_inicio\": \"{{ $json.rentabilidade_desde_inicio }}\"\n  },\n  \"bm_cdi\": {\n    \"chave\": \"{{ $json.chave }}\",\n    \"rentabilidade_bm_ano\": \"{{ $json.rentabilidade_bm_ano }}\",\n    \"rentabilidade_bm_6_meses\": \"{{ $json.rentabilidade_bm_6_meses }}\",\n    \"rentabilidade_bm_12_meses\": \"{{ $json.rentabilidade_bm_12_meses }}\",\n    \"rentabilidade_bm_24_meses\": \"{{ $json.rentabilidade_bm_24_meses }}\",\n    \"rentabilidade_bm_36_meses\": \"{{ $json.rentabilidade_bm_36_meses }}\",\n    \"rentabilidade_bm_ultimo_mes\": \"{{ $json.rentabilidade_bm_ultimo_mes }}\",\n    \"rentabilidade_bm_inicio\": \"{{ $json.rentabilidade_bm_inicio }}\"\n  },\n  \"usuario_responsavel\": {\n    \"id\": \"{{ $json.usuario_id }}\",\n    \"nome\": \"{{ $json.usuario_responsavel }}\"\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        576
+      ],
+      "id": "5a8c5b94-ac5b-4c87-96af-8374baf8d696",
+      "name": "Organizando Campos Necessários"
+    },
+    {
+      "parameters": {
+        "command": "python /data/repos/uni/unifinance_notificacoes/cli_gatilhos.py benchmark_cdi_pf /data/files/uni/notifs/input/benchmark_cdi_pf.json --saida /data/files/uni/notifs/output/ -f json\n"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        576
+      ],
+      "id": "7d5aa041-bccb-4f25-8e8e-f224e40fb941",
+      "name": "roda gatilho benchmark_cdi_pf"
+    }
+  ],
+  "connections": {
+    "get sess": {
+      "main": [
+        [
+          {
+            "node": "fetch clientes pf",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fetch clientes pf": {
+      "main": [
+        [
+          {
+            "node": "pf array",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "save binary in notif/input": {
+      "main": [
+        [
+          {
+            "node": "roda gatilho benchmark_cdi_pf",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "pf benchmark binary": {
+      "main": [
+        [
+          {
+            "node": "save binary in notif/input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "status true/benchmark": {
+      "main": [
+        [
+          {
+            "node": "fetch informacoes_modal_cliente_pf",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Left Join com usuario_responsavel",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "pf array": {
+      "main": [
+        [
+          {
+            "node": "status true/benchmark",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "clientes": {
+      "main": [
+        [
+          {
+            "node": "Left Join clientes com bm_cdi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "bm_cdi": {
+      "main": [
+        [
+          {
+            "node": "Left Join clientes com bm_cdi",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "fetch informacoes_modal_cliente_pf": {
+      "main": [
+        [
+          {
+            "node": "clientes",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "bm_cdi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Left Join com usuario_responsavel": {
+      "main": [
+        [
+          {
+            "node": "Organizando Campos Necessários",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Left Join clientes com bm_cdi": {
+      "main": [
+        [
+          {
+            "node": "Left Join com usuario_responsavel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Organizando Campos Necessários": {
+      "main": [
+        [
+          {
+            "node": "pf benchmark binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "063bbc33-aa86-4066-93ae-d219b8cfc643",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-11-04T11:49:08.325Z",
+      "createdAt": "2025-11-04T11:49:08.325Z",
+      "role": "workflow:owner",
+      "workflowId": "iazBqyH50fSVqsjZ",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T15:11:41.884Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
