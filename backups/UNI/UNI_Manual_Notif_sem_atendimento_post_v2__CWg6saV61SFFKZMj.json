@@ -1,0 +1,514 @@
+{
+  "updatedAt": "2026-01-26T15:40:01.410Z",
+  "createdAt": "2025-10-14T19:40:15.660Z",
+  "id": "CWg6saV61SFFKZMj",
+  "name": "UNI_Manual_Notif_sem_atendimento_post_v2",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "destinationKey": "sem_atendimento_pf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        208,
+        240
+      ],
+      "id": "fb88e1eb-0fa9-4fce-853f-804d481f25a6",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0f89c47f-b2fb-46f5-ab57-0123216e7c2d",
+              "name": "sem_atendimento_pf",
+              "value": "={{ $json.sem_atendimento_pf.itens.notificacoes }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        432,
+        240
+      ],
+      "id": "6d70bb9d-7072-4cea-8c57-b51366695fab",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "destinationKey": "sem_atendimento_fund",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        208,
+        48
+      ],
+      "id": "fef881ed-2ac8-4d56-b6c3-1b9aaff9a52b",
+      "name": "Extract from File1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0f89c47f-b2fb-46f5-ab57-0123216e7c2d",
+              "name": "sem_atendimento_fund",
+              "value": "={{ $json.sem_atendimento_fund.itens.notificacoes }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        432,
+        48
+      ],
+      "id": "a3cc8ac5-a3f9-4b8d-a822-2e0fbf7877b2",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -464,
+        144
+      ],
+      "id": "db6ce254-3b9c-4cb8-b1d9-f48ce9b093fd",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "sem_atendimento_fund",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        656,
+        48
+      ],
+      "id": "ab4b2b9e-8d20-4884-bcb5-6c78e5f0b34b",
+      "name": "Split Out",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "sem_atendimento_pf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        656,
+        240
+      ],
+      "id": "8f9120c4-53bd-486f-8d6c-954a3732342f",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "PlS62KJilKsPGxO2",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/PlS62KJilKsPGxO2",
+          "cachedResultName": "UNI_Workflow_Util_fetch_sess_v2"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "baseUrl": "https://hub-unifinance.novadata.dev/",
+            "loginPath": "login/",
+            "csrfFieldName": "csrftoken"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "baseUrl",
+              "displayName": "baseUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "loginPath",
+              "displayName": "loginPath",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "csrfFieldName",
+              "displayName": "csrfFieldName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -240,
+        144
+      ],
+      "id": "b9135102-c342-4ba6-ae8f-4903273d81fe",
+      "name": "get sess"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/data/files/uni/notifs/output/sem_atendimento_pf.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        240
+      ],
+      "id": "fe0bd1ab-7699-4b06-a79a-38f87cf331ee",
+      "name": "Read/Write Files from Disk PF"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/data/files/uni/notifs/output/sem_atendimento_fund.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        48
+      ],
+      "id": "5c2c7e1a-1ba6-4aeb-a790-fc9c154317a1",
+      "name": "Read/Write Files from Disk Fund"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('get sess').item.json.baseUrl }}api/notificacao/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Referer",
+              "value": "={{ $('get sess').item.json.baseUrl }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Cookie",
+              "value": "=csrftoken={{ $('get sess').item.json.csrfCookie }}; sessionid={{ $('get sess').item.json.sessionId }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "={{ $('get sess').item.json.csrfCookie }}"
+            },
+            {}
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n\"titulo\": \"Fundação sem registro de atendimento recente\",\n\"descricao\": \"<p>A Fundação <strong>{{ $json.nome_alvo.toTitleCase() }}</strong>, com a política <strong>{{ $json.politica.replaceAll('_',' ').toUpperCase() }}</strong>, está há <strong>{{ $json.dias_sem_atendimento }}</strong> dias sem atendimento. É recomendável entrar em contato e agendar uma nova reunião conforme a política de relacionamento.</p>\",\n\"destinatario\": {{ $json.responsavel_id }},\n\"tipo_notificacao\": \"Fundação sem atendimento recente\",\n\"fundacao_id\": {{ $json.id_alvo }},\n\"nome_fundacao\": \"{{ $json.nome_completo_alvo }}\",\n\"sigla_fundacao\": \"{{ $json.nome_alvo }}\"\n}",
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "off"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        48
+      ],
+      "id": "5725b96b-443e-48f0-b1e2-9021f27f8320",
+      "name": "test",
+      "executeOnce": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('get sess').item.json.baseUrl }}api/notificacao/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Referer",
+              "value": "={{ $('get sess').item.json.baseUrl }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Cookie",
+              "value": "=csrftoken={{ $('get sess').item.json.csrfCookie }}; sessionid={{ $('get sess').item.json.sessionId }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "={{ $('get sess').item.json.csrfCookie }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n\"titulo\": \"Fundação sem registro de atendimento recente\",\n\"descricao\": \"<p>A Fundação <strong>{{ $json.nome_alvo.toTitleCase() }}</strong>, com a política <strong>{{ $json.politica.replaceAll('_',' ').toUpperCase() }}</strong>, está há <strong>{{ $json.dias_sem_atendimento }}</strong> dias sem atendimento. É recomendável entrar em contato e agendar uma nova reunião conforme a política de relacionamento.</p>\",\n\"destinatario\": {{ $json.responsavel_id }},\n\"tipo_notificacao\": \"Fundação sem atendimento recente\",\n\"cliente_pf_id\": {{ $json.id_alvo }},\n\"nome_cliente_pf\": \"{{ $json.nome_alvo }}\"\n}",
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "off"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        240
+      ],
+      "id": "cee2f5eb-1ec2-45b2-b67c-b5e84b05e92f",
+      "name": "test1",
+      "executeOnce": false,
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "get sess",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "test",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get sess": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk Fund",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read/Write Files from Disk PF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk PF": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk Fund": {
+      "main": [
+        [
+          {
+            "node": "Extract from File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "test1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "test1": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "b3e7300c-93b4-4da9-952e-eb0e328984b7",
+  "activeVersionId": null,
+  "versionCounter": 2,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-10-14T19:40:15.660Z",
+      "createdAt": "2025-10-14T19:40:15.660Z",
+      "role": "workflow:owner",
+      "workflowId": "CWg6saV61SFFKZMj",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T15:11:41.884Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
