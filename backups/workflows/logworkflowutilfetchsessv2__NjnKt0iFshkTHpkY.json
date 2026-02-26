@@ -1,0 +1,381 @@
+{
+  "updatedAt": "2025-12-17T12:36:20.695Z",
+  "createdAt": "2025-10-16T20:42:42.438Z",
+  "id": "NjnKt0iFshkTHpkY",
+  "name": "LOG_Workflow_Util_fetch_sess_v2",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "baseUrl"
+            },
+            {
+              "name": "loginPath"
+            },
+            {
+              "name": "csrfFieldName"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "341da9bd-1d3b-4b39-adfa-94a9f79b6398",
+      "name": "Receive Initial Vars"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7da404e6-6a92-4de7-bbfd-a2092b61c7d2",
+              "name": "baseUrl",
+              "value": "={{ $('Receive Initial Vars').item.json.baseUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "7acd18d1-71fd-40b2-bade-6734b658b7b6",
+              "name": "loginPath",
+              "value": "={{ $('Receive Initial Vars').item.json.loginPath }}",
+              "type": "string"
+            },
+            {
+              "id": "08f05bcd-64e7-447e-97e9-c9a633858c04",
+              "name": "csrfFieldName",
+              "value": "={{ $('Receive Initial Vars').item.json.csrfFieldName }}",
+              "type": "string"
+            },
+            {
+              "id": "2288f452-aac7-4af5-ad04-3b2e8149e885",
+              "name": "csrfCookie",
+              "value": "={{ $('Extract CSRF & prepare referer').item.json.csrfCookie }}",
+              "type": "string"
+            },
+            {
+              "id": "e3a86304-8837-48c3-96ee-9f01e5c2a0ec",
+              "name": "sessionId",
+              "value": "={{ $json.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "8526fe5d-318e-4acb-ad50-d8cbe6483c15",
+              "name": "cookieJar",
+              "value": "={{ $('Login/POST').item.json.headers['set-cookie'] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "39505cd3-0de9-4b52-9745-ff14c4779e5a",
+      "name": "Return variables"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.baseUrl + $json.loginPath }}",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          },
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "bb250bdc-9103-476b-ba98-0733ef235319",
+      "name": "Login/GET"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Receive Initial Vars').item.json.baseUrl + $('Receive Initial Vars').item.json.loginPath}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Referer",
+              "value": "={{ $('Receive Initial Vars').item.json.baseUrl + $('Receive Initial Vars').item.json.loginPath}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "={{ $json.csrfCookie }}"
+            },
+            {
+              "name": "Cookie",
+              "value": "={{ (() => {\n  const raw = $json.cookieJar; // pode ser array, string ou \"string de array\"\n  const list = Array.isArray(raw)\n    ? raw\n    : (typeof raw === 'string' && raw.trim().startsWith('[') ? JSON.parse(raw) : [String(raw)]);\n  const joined = list.join('; ');                 // junta múltiplos Set-Cookie, se houver\n  const m = joined.match(/(?:^|;\\s*)csrftoken=([^;]+)/i);\n  return m ? `csrftoken=${m[1]}` : '';\n})() }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "={{ $('Receive Initial Vars').item.json.csrfFieldName || 'csrfmiddlewaretoken' }}",
+              "value": "={{ $json.csrfCookie }}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "746af8cb-219e-41ea-a4a7-fd9793506db8",
+      "name": "Login/POST",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "UlVHCShsNGyUjGAY",
+          "name": "LOG_NEAT_mk"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3a485387-9217-499b-b59a-ff4df4053587",
+              "name": "sessionId",
+              "value": "={{ (() => {\n  const h = $json.headers || {};\n  const sc = h['set-cookie'] ?? h['Set-Cookie'];\n  const list = Array.isArray(sc) ? sc : (sc ? [sc] : []);\n  const raw = list.join('\\n');                         // vários Set-Cookie\n  const m = raw.match(/(?:^|\\n|,)\\s*sessionid=([^;,\\s]+)/i);\n  return m ? m[1] : '';                                // só o valor\n})() }}",
+              "type": "string"
+            },
+            {
+              "id": "1c2d03bf-3347-44eb-8628-76caded67195",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        832,
+        0
+      ],
+      "id": "f456d0be-8b86-4a86-9510-b94dd70e0e8d",
+      "name": "Extract session id"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "90334a0b-381f-4601-a964-c968af41ef41",
+              "name": "referer",
+              "value": "={{ $('Receive Initial Vars').item.json.baseUrl + $('Receive Initial Vars').item.json.loginPath }}",
+              "type": "string"
+            },
+            {
+              "id": "77abafa2-2628-4e2d-ac7f-0c62b9bf3477",
+              "name": "csrfCookie",
+              "value": "={{\n  (() => {\n    const raw = $json.headers?.['set-cookie'];\n    const line = (Array.isArray(raw) ? raw : [raw]).find(c => String(c).includes('csrftoken=')) || '';\n    const token = String(line).match(/csrftoken=([^;]+)/)?.[1] || '';\n    return token.trim();\n  })()\n}}",
+              "type": "string"
+            },
+            {
+              "id": "e559b1e2-aab2-4c11-bd9a-02534485eced",
+              "name": "cookieJar",
+              "value": "={{ $json.headers[\"set-cookie\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "f612fcbe-715a-4ee3-9620-b4c9d0defa4a",
+      "name": "Extract CSRF & prepare referer"
+    }
+  ],
+  "connections": {
+    "Receive Initial Vars": {
+      "main": [
+        [
+          {
+            "node": "Login/GET",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Login/GET": {
+      "main": [
+        [
+          {
+            "node": "Extract CSRF & prepare referer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Login/POST": {
+      "main": [
+        [
+          {
+            "node": "Extract session id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract session id": {
+      "main": [
+        [
+          {
+            "node": "Return variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract CSRF & prepare referer": {
+      "main": [
+        [
+          {
+            "node": "Login/POST",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "Receive Initial Vars": [
+      {
+        "json": {
+          "baseUrl": "https://hub.novadata.com.br",
+          "loginPath": "/login/",
+          "csrfFieldName": "csrftoken"
+        }
+      }
+    ]
+  },
+  "versionId": "f09b2a80-751b-4525-9ae4-12f444b92aec",
+  "activeVersionId": null,
+  "versionCounter": 13,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-10-16T20:42:42.438Z",
+      "createdAt": "2025-10-16T20:42:42.438Z",
+      "role": "workflow:owner",
+      "workflowId": "NjnKt0iFshkTHpkY",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T10:16:57.321Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
