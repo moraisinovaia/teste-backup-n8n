@@ -1,0 +1,185 @@
+{
+  "updatedAt": "2026-01-21T18:00:34.247Z",
+  "createdAt": "2026-01-21T17:51:02.287Z",
+  "id": "rbI6gkixSvrCi0Bw",
+  "name": "WF__LoginNeat",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.baseUrl + '/api/token/' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"username\": \"gabriela.morais\",\n  \"password\": \"8CzZCp3c8Tck1DAT\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        192,
+        0
+      ],
+      "id": "6c3d8bff-45a9-4890-b0d0-dd676517b567",
+      "name": "Fazer Login"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cb165403-272d-4115-a54d-ba3555fdd225",
+              "name": "accessToken",
+              "value": "={{ $json.access }}",
+              "type": "string"
+            },
+            {
+              "id": "386035a8-7e29-404d-9959-c38acff219ec",
+              "name": "refreshToken",
+              "value": "={{ $json.refresh }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        400,
+        0
+      ],
+      "id": "c89a7f94-24d0-4cac-8111-77aaf674c8de",
+      "name": "Preparar Token"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "baseUrl"
+            },
+            {
+              "name": "loginPath"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "755a6fec-04af-460c-9d56-2f701e136acc",
+      "name": "recebeChamada"
+    }
+  ],
+  "connections": {
+    "Fazer Login": {
+      "main": [
+        [
+          {
+            "node": "Preparar Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "recebeChamada": {
+      "main": [
+        [
+          {
+            "node": "Fazer Login",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "recebeChamada": [
+      {
+        "json": {
+          "baseUrl": "https://hub.novadata.com.br",
+          "loginPath": "/login/"
+        }
+      }
+    ]
+  },
+  "versionId": "07875ebf-2523-4f28-996f-3fdd1d1c7f2d",
+  "activeVersionId": null,
+  "versionCounter": 4,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-01-21T17:51:02.287Z",
+      "createdAt": "2026-01-21T17:51:02.287Z",
+      "role": "workflow:owner",
+      "workflowId": "rbI6gkixSvrCi0Bw",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T10:16:57.321Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
