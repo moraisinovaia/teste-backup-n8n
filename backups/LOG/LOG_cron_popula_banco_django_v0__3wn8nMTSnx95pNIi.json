@@ -1,0 +1,4161 @@
+{
+  "updatedAt": "2026-01-27T20:38:49.331Z",
+  "createdAt": "2025-12-12T10:26:07.653Z",
+  "id": "3wn8nMTSnx95pNIi",
+  "name": "LOG_cron_popula_banco_django_v0",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO alerta_card_tipo (tipo)\nVALUES\n    ('sem_titulo'),\n    ('sem_descricao'),\n    ('sem_responsaveis'),\n    ('sem_tags'),\n    ('sem_data_criacao'),\n    ('sem_estimativa_esforco'),\n    ('sem_data_prevista'),\n    ('sem_data_desejada'),\n    ('sem_pontos'),\n    ('sem_vinculo_projeto'),\n    ('descricao_curta'),\n    ('sem_criterios_aceite'),\n    ('tags_pouco_descritivas'),\n    ('data_prevista_antes_criacao'),\n    ('data_conclusao_antes_criacao'),\n    ('card_antigo_sem_priorizacao')\nON CONFLICT (tipo) DO NOTHING;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2096,
+        928
+      ],
+      "id": "9be9609f-8260-49a8-9e6a-c3ac0a3b7d0a",
+      "name": "tabela alerta card tipo",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO alerta_projeto_tipo (tipo)\nVALUES ('Similaridade título')\nON CONFLICT (tipo) DO UPDATE\nSET tipo = EXCLUDED.tipo  \nRETURNING id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2080,
+        1120
+      ],
+      "id": "bd42877e-ad0d-4e94-8ea2-d1f9b91d6ae7",
+      "name": "tabela alerta projeto tipo",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a617d073-6e37-48a9-afb2-498d6737169b",
+              "name": "alerta projeto tipo id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1856,
+        1120
+      ],
+      "id": "acb4548d-fd15-44a0-a546-9d1b769f032b",
+      "name": "alerta projeto tipo id",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = [];\n\nfor (const item of $input.all()) {\n  // Caminho até o array de similaridades\n  const similaridades = item.json?.data?.resultado?.alertas_gerais?.[0]?.similaridade_titulo;\n\n  if (Array.isArray(similaridades)) {\n    // Para cada similaridade (cada objeto com cards + grau_de_similaridade)\n    for (const sim of similaridades) {\n      // Garante que cada saida seja um item completo\n      output.push({\n        json: {\n          cards: sim.cards,\n          grau_de_similaridade: sim.grau_de_similaridade\n        }\n      });\n    }\n  }\n}\n\nreturn output;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2064,
+        1344
+      ],
+      "id": "f88138e2-e4e4-4b1e-8e3f-dc365f159ad3",
+      "name": "split alertas similaridade titulo",
+      "alwaysOutputData": true,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1632,
+        1216
+      ],
+      "id": "f343fe5a-34ed-4f71-ab08-46c7ea795c0f",
+      "name": "Merge",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1392,
+        1216
+      ],
+      "id": "0ad927ff-ff83-489b-9548-0501498106d8",
+      "name": "Loop Over Items",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "alertas_projeto",
+          "mode": "list",
+          "cachedResultName": "alertas_projeto"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "relatorio_uuid": "={{ $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.meta.uuid }}",
+            "alerta_projeto_tipo_id": "={{ $json['alerta projeto tipo id'] }}",
+            "dados": "={{ JSON.stringify(\n    {\n        \"cards\": $json.cards,\n        \"grau_de_similaridade\": $json.grau_de_similaridade\n    }\n) }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "relatorio_uuid",
+              "displayName": "relatorio_uuid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "alerta_projeto_tipo_id",
+              "displayName": "alerta_projeto_tipo_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "dados",
+              "displayName": "dados",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1152,
+        1232
+      ],
+      "id": "42501979-016e-4a12-8509-5d8b2172bf7c",
+      "name": "tabela alertas projeto",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b5321157-300b-47c4-9177-a14f29bade2e",
+              "name": "alertas projeto id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -944,
+        1232
+      ],
+      "id": "feed724f-dd01-4740-97f2-30dec319d1d8",
+      "name": "alertas projeto id",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data.resultado.cards",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -2496,
+        -1008
+      ],
+      "id": "8d994562-6f67-45e6-8b56-2f5c437556df",
+      "name": "Split Card Healthchecks"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1680,
+        64
+      ],
+      "id": "54c5ee78-454d-4047-80c0-30dccdb3f7ab",
+      "name": "Loop Over Items2",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "analise_card",
+          "mode": "list",
+          "cachedResultName": "analise_card"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "em_andamento": "={{ $('Loop Over Items2').item.json.em_andamento }}",
+            "fase": "={{ $('Loop Over Items2').item.json.fase }}",
+            "orcado": "={{ $('Loop Over Items2').item.json.orcado }}",
+            "tempo_decorrido": "={{ $('Loop Over Items2').item.json.tempo_decorrido }}",
+            "pontos_totais": "={{ $('Loop Over Items2').item.json.pontos_totais }}",
+            "lead_time": "={{ $('Loop Over Items2').item.json.lead_time }}",
+            "cycle_time": "={{ $('Loop Over Items2').item.json.cycle_time }}",
+            "avaliacao": "={{ $('Loop Over Items2').item.json.avaliacao_ia }}",
+            "data_prevista": "={{ $('Loop Over Items2').item.json.datas.prevista }}",
+            "data_desejada": "={{ $('Loop Over Items2').item.json.datas.desejada }}",
+            "data_conclusao": "={{ $('Loop Over Items2').item.json.datas.conclusao }}",
+            "data_inicio_doing": "={{ $('Loop Over Items2').item.json.datas.inicio_doing }}",
+            "data_criacao_banco": "={{$now}}",
+            "nota_avaliacao": "={{ $('Loop Over Items2').item.json.avaliacao_ia.nota }}",
+            "relatorio_uuid": "={{ $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.meta.uuid }}",
+            "card_id": "={{ $('Loop Over Items2').item.json.id }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "card_id",
+              "displayName": "card_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fase",
+              "displayName": "fase",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "orcado",
+              "displayName": "orcado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tempo_decorrido",
+              "displayName": "tempo_decorrido",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "em_andamento",
+              "displayName": "em_andamento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pontos_totais",
+              "displayName": "pontos_totais",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "lead_time",
+              "displayName": "lead_time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "cycle_time",
+              "displayName": "cycle_time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data_criacao_banco",
+              "displayName": "data_criacao_banco",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "avaliacao",
+              "displayName": "avaliacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data_prevista",
+              "displayName": "data_prevista",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data_desejada",
+              "displayName": "data_desejada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data_conclusao",
+              "displayName": "data_conclusao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data_inicio_doing",
+              "displayName": "data_inicio_doing",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nota_avaliacao",
+              "displayName": "nota_avaliacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "relatorio_uuid",
+              "displayName": "relatorio_uuid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "embedding_avaliacao",
+              "displayName": "embedding_avaliacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1232,
+        96
+      ],
+      "id": "9cea44f0-04c0-4149-a8f4-d12bbbd5d53f",
+      "name": "tabela analise card",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const mapaTipos = {\n    \"sem_titulo\": 2, \"sem_descricao\": 3, \"sem_responsaveis\": 4, \"sem_tags\": 5, \n    \"sem_data_criacao\": 6, \"sem_estimativa_esforco\": 7, \"sem_data_prevista\": 8, \n    \"sem_data_desejada\": 9, \"sem_pontos\": 10, \"sem_vinculo_projeto\": 11, \n    \"descricao_curta\": 12, \"sem_criterios_aceite\": 13, \"tags_pouco_descritivas\": 14, \n    \"data_prevista_antes_criacao\": 15, \"data_conclusao_antes_criacao\": 16, \n    \"card_antigo_sem_priorizacao\": 17\n};\n\nconst itemsDeSaida = [];\n\n// Loop sobre todos os itens de entrada (cada card no Loop Over Items8)\nfor (const item of $input.all()) {\n    \n    // Acessa o objeto de alertas de validação.\n    const alertasValidacao = item.json.alertas_validacao;\n    \n    // Obtém o ID do card original (chave de correspondência futura no Merge)\n    const cardId = item.json.id; \n    \n    // Verifica se o objeto de alertas existe\n    if (typeof alertasValidacao === 'object' && alertasValidacao !== null) {\n\n        // Itera sobre as chaves (os nomes dos alertas)\n        for (const tipoAlerta in alertasValidacao) {\n            \n            // Verifica se a chave existe no objeto E no nosso mapa de IDs\n            if (alertasValidacao.hasOwnProperty(tipoAlerta) && mapaTipos.hasOwnProperty(tipoAlerta)) {\n                \n                const statusAtivo = alertasValidacao[tipoAlerta];\n\n                // Busca o ID do tipo de alerta\n                const alertaTipoId = mapaTipos[tipoAlerta];\n\n                // Cria um novo item para cada par chave-valor\n                itemsDeSaida.push({\n                    json: {\n                        // IDs PRINCIPAIS PARA A INSERÇÃO\n                        alerta_card_tipo_id: alertaTipoId,\n                        ativo: statusAtivo, \n                        dados: JSON.stringify({ [tipoAlerta]: statusAtivo }),\n                        \n                        // CHAVE DE CORRESPONDÊNCIA PARA O MERGE\n                        card_referencia_id: cardId, \n                        tipo_alerta: tipoAlerta\n                    }\n                });\n            }\n        }\n    }\n}\n\nreturn itemsDeSaida;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1184,
+        -144
+      ],
+      "id": "e2700a2f-c8ce-4b74-8131-08dbb81550e0",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cb653848-be08-455b-8d79-1e15ab6aec62",
+              "name": "analise card id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "e5888aaa-8656-4b7a-af3b-b001c5270879",
+              "name": "card_referencia_id",
+              "value": "={{ $json.id_card }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1040,
+        96
+      ],
+      "id": "3e77c3c4-2c1f-4d74-ad2a-6d0581c2166b",
+      "name": "analise card id",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "card_referencia_id",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -512,
+        -144
+      ],
+      "id": "f3291b9c-5ee2-417b-b611-88671813ed41",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "alertas_card",
+          "mode": "list",
+          "cachedResultName": "alertas_card"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ativo": "={{ $json.ativo }}",
+            "analise_card_id": "={{ $json['analise card id'] }}",
+            "dados": "={{ $json.dados }}",
+            "alerta_card_tipo_id": "={{ $json.alerta_card_tipo_id }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "analise_card_id",
+              "displayName": "analise_card_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ativo",
+              "displayName": "ativo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "dados",
+              "displayName": "dados",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "alerta_card_tipo_id",
+              "displayName": "alerta_card_tipo_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -288,
+        -144
+      ],
+      "id": "a7edcffe-b890-4628-bfb0-830e515cda20",
+      "name": "tabela alertas card",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "45a55509-6b29-4d6f-b889-482db85324c1",
+              "name": "alertas card id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -64,
+        -144
+      ],
+      "id": "45bad24c-1d1f-4ebd-91c8-3a631929cc0e",
+      "name": "alertas card id"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "analise_estrategica",
+          "mode": "list",
+          "cachedResultName": "analise_estrategica"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "analise_card_id": "={{ $json['analise card id'] }}",
+            "alinhado": "={{ $('Loop Over Items2').item.json.analise_estrategica_ia.alinhamento_estrategico.alinhado }}",
+            "justificativa": "={{ $('Loop Over Items2').item.json.analise_estrategica_ia.alinhamento_estrategico.justificativa }}",
+            "score": "={{ $('Loop Over Items2').item.json.analise_estrategica_ia.alinhamento_estrategico.pontuacao }}",
+            "pontuacao_valor": "={{ $('Loop Over Items2').item.json.analise_estrategica_ia.alinhamento_estrategico.pontuacao_num }}",
+            "alinhado_status": "={{ $('Loop Over Items2').item.json.analise_estrategica_ia.alinhamento_estrategico.alinhado_bool }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "analise_card_id",
+              "displayName": "analise_card_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "alinhado",
+              "displayName": "alinhado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "justificativa",
+              "displayName": "justificativa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "alinhado_status",
+              "displayName": "alinhado_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "pontuacao_valor",
+              "displayName": "pontuacao_valor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "embedding_justificativa",
+              "displayName": "embedding_justificativa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -352,
+        80
+      ],
+      "id": "e1d02802-a723-47bb-bd90-00cb44313bdd",
+      "name": "tabela analise estrategica",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "708c48ae-5623-4f75-923b-8db91e0d3579",
+              "name": "analise estrategica id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -128,
+        80
+      ],
+      "id": "367405cb-08c4-4f0f-8a51-b170e523ac66",
+      "name": "analise estrategica id"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "health_score",
+          "mode": "list",
+          "cachedResultName": "health_score"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "analise_card_id": "={{ $json['analise card id'] }}",
+            "nota_qualidade": "={{ $('Loop Over Items2').item.json.health_score.nota_qualidade }}",
+            "nota_estrategica": "={{ $('Loop Over Items2').item.json.health_score.nota_estrategica }}",
+            "health_score_final": "={{ $('Loop Over Items2').item.json.health_score.health_score_final }}",
+            "justificativa": "={{ $('Loop Over Items2').item.json.health_score.justificativa }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "analise_card_id",
+              "displayName": "analise_card_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nota_qualidade",
+              "displayName": "nota_qualidade",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nota_estrategica",
+              "displayName": "nota_estrategica",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "health_score_final",
+              "displayName": "health_score_final",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "justificativa",
+              "displayName": "justificativa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "embedding_justificativa",
+              "displayName": "embedding_justificativa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -352,
+        272
+      ],
+      "id": "d24bba99-8095-4e15-905d-373b45a3e99a",
+      "name": "tabela health score",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cda8c9a9-f0fc-44a6-818c-f8da319bf726",
+              "name": "health score id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "0170e486-0458-42fd-bdfb-a575a5fabf34",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -128,
+        272
+      ],
+      "id": "2e460b25-586a-4097-a001-d1efc38a231a",
+      "name": "health score id"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "61c7c8ff-b016-48f0-a364-bbf59325d69f",
+              "leftValue": "={{ $('Loop Over Items2').item.json.fase }}",
+              "rightValue": "Concluído",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -368,
+        496
+      ],
+      "id": "bad2c7af-a438-4514-87dc-259a5c816a7c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "documentacao_ia",
+          "mode": "list",
+          "cachedResultName": "documentacao_ia"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "analise_card_id": "={{ $('analise card id').item.json['analise card id'] }}",
+            "conteudo": "={{ $('Loop Over Items2').item.json.documentacao_ia }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "analise_card_id",
+              "displayName": "analise_card_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "conteudo",
+              "displayName": "conteudo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "embedding",
+              "displayName": "embedding",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -112,
+        480
+      ],
+      "id": "79f4004d-cf37-41e9-91d5-93b34bdc9cf9",
+      "name": "tabela documentacao ia",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "127a92af-1089-4903-bf4f-a886878aacdb",
+              "name": "documentacao ia id",
+              "value": "=",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        112,
+        480
+      ],
+      "id": "cfb1ae77-7f11-4f6c-872b-102d58f1be27",
+      "name": "documentacao ia id"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "responsaveis",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -1776,
+        -1152
+      ],
+      "id": "2d7c20c4-ab9e-4659-abbb-6d21973a635a",
+      "name": "Split Out responsaveis",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1552,
+        -1152
+      ],
+      "id": "6ae641be-8f33-436e-9ce3-85efac4943a5",
+      "name": "Loop Over Items3",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e12e9e96-d6f2-438e-8b2a-756916950961",
+              "name": "responsavel id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        -1008
+      ],
+      "id": "59201abc-8355-430b-a6ee-c01cb2d6a00d",
+      "name": "responsavel id",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const tagsDict = {\n  1: \"Bug\",\n  2: \"Pendente Requisitos\",\n  3: \"MVP\",\n  4: \"Front\",\n  5: \"Back\",\n  6: \"Design\",\n  7: \"Produto\",\n  8: \"Feature\",\n  9: \"Infraestrutura\",\n  10: \"QA\",\n  11: \"Prioridade\",\n  12: \"Reprovado\",\n  13: \"Em Orçamento\",\n  14: \"Retrabalho\",\n  15: \"Computar\",\n  16: \"Não Computar\",\n  17: \"BI\",\n  18: \"3\",\n  19: \"2\",\n  20: \"1\",\n  21: \"irreproduzível\"\n};\n\nreturn $input.all().map(item => {\n  const tags = (item.json.tags || []).map(id => ({\n    id,\n    nome: tagsDict[id] || `Tag ${id} desconhecida`\n  }));\n  item.json.tags = tags;\n  return item;\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1936,
+        672
+      ],
+      "id": "03711396-2639-4fb3-8942-cc80433df8f6",
+      "name": "nome tags"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "tags",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -1728,
+        672
+      ],
+      "id": "e29c31b8-dc46-469b-b348-0ed8b8d72e86",
+      "name": "Split Out tags"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1504,
+        672
+      ],
+      "id": "c0f80ce5-a4bd-4999-8583-ea11617aafcf",
+      "name": "Loop Over Items4"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tags",
+          "mode": "list",
+          "cachedResultName": "tags"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "nome": "={{ $json.nome }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nome",
+              "displayName": "nome",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "embedding_nome",
+              "displayName": "embedding_nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1248,
+        688
+      ],
+      "id": "43c5685d-d0d1-4d40-8a6b-36c3c261bbd7",
+      "name": "tabela tags",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "93833e32-d8e6-4bf2-a607-d2a65e9aa1c0",
+              "name": "tag id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1056,
+        688
+      ],
+      "id": "9ab85e75-1483-4151-b95e-5aca3b7db649",
+      "name": "tag id"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "card_tags",
+          "mode": "list",
+          "cachedResultName": "card_tags"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "tag_id": "={{ $json['tag id'] }}",
+            "card_id": "={{ $('nome tags').item.json.id }}"
+          },
+          "matchingColumns": [
+            "card_id",
+            "tag_id"
+          ],
+          "schema": [
+            {
+              "id": "card_id",
+              "displayName": "card_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "tag_id",
+              "displayName": "tag_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -832,
+        688
+      ],
+      "id": "e88e63ad-6c23-46f9-a851-1115d8b9b57d",
+      "name": "tabela card tags",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 30 0 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -3296,
+        -1184
+      ],
+      "id": "c6a75805-14f6-4b62-9eb5-ad32649bfff1",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "0KkK1Qgl3hvhrtvf",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/0KkK1Qgl3hvhrtvf",
+          "cachedResultName": "LOG_Workf_agente_analise_cards_v3"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "projeto": 741,
+            "fase": 1
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "projeto",
+              "displayName": "projeto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "fase",
+              "displayName": "fase",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -3040,
+        -1184
+      ],
+      "id": "870d0cd7-c406-401e-a71c-6d8d7318569a",
+      "name": "Call 'LOG_Workf_Agente_analise_cards_v2'"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6d423a5c-7652-459c-a578-23fb1a3ade2c",
+              "name": "analise projeto id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1856,
+        -1232
+      ],
+      "id": "cfa5319c-63c2-4638-93e3-ce19327b6b7c",
+      "name": "analise projeto id"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://agente-analise-neat:8000/api/collections/analise_projeto/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "csrftoken=906JHStR0xI1MOLNeeoFl53p1vguRIYt; sessionid=hwgg67xacq7o3b8v9zcm92f5ee5kurtr"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "906JHStR0xI1MOLNeeoFl53p1vguRIYt"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "produto_id",
+              "value": "={{ ({\n  \"Orbit\": 1,\n  \"Auth\": 3,\n  \"Wagtail\": 2\n})[$('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.projeto.produto_nome] || 0 }}"
+            },
+            {
+              "name": "analise_id",
+              "value": "={{ $json['analise id'] }}"
+            },
+            {
+              "name": "total_cards",
+              "value": "={{ $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.total_cards }}"
+            },
+            {
+              "name": "duracao_medio_dias",
+              "value": "={{ $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.metrica_qualidade.tempo_medio_por_fase_dia }}"
+            },
+            {
+              "name": "duracao_medio_horas",
+              "value": "25"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1552,
+        -1232
+      ],
+      "id": "7c0be87d-32bc-45dc-80b9-9e4459ccf719",
+      "name": "Analise projeto"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://agente-analise-neat:8000/api/collections/analise/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "csrftoken=906JHStR0xI1MOLNeeoFl53p1vguRIYt; sessionid=hwgg67xacq7o3b8v9zcm92f5ee5kurtr"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "906JHStR0xI1MOLNeeoFl53p1vguRIYt"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "uuid",
+              "value": "={{ $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.meta.uuid }}"
+            },
+            {
+              "name": "versao_schema",
+              "value": "={{ $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.meta.versao_schema }}"
+            },
+            {
+              "name": "gerado_em",
+              "value": "={{ $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.meta.gerado_em }}"
+            },
+            {
+              "name": "data_criacao_banco",
+              "value": "={{$now}}"
+            },
+            {
+              "name": "fonte",
+              "value": "={{ $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.meta.fonte }}"
+            },
+            {
+              "name": "card_id",
+              "value": "={{ $json['card id'] }}"
+            },
+            {
+              "name": "projeto_id",
+              "value": "={{ $json['projeto id'] }}"
+            },
+            {
+              "name": "fase_id",
+              "value": "={{ $json['fase id'] }}"
+            },
+            {
+              "name": "fase_ref_id",
+              "value": "={{ ({\n 1: 1,\n  2: 6\n})[$json['fase id']] || 0 }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1072,
+        -1232
+      ],
+      "id": "e4f5f88c-c89f-489d-8f18-637161c0f253",
+      "name": "Analise"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1760,
+        -768
+      ],
+      "id": "56a94795-2ae3-4d9c-98c2-97576932fca8",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://agente-analise-neat:8000/api/collections/okr/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "csrftoken=906JHStR0xI1MOLNeeoFl53p1vguRIYt; sessionid=hwgg67xacq7o3b8v9zcm92f5ee5kurtr"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "906JHStR0xI1MOLNeeoFl53p1vguRIYt"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "conteudo",
+              "value": "={{ $json.data.okrs['obj estrategico orbit'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2288,
+        -2112
+      ],
+      "id": "6e94694b-ebab-43a2-a043-f874aa80e2b1",
+      "name": "okr"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "49176293-7444-4e28-8557-0b472c1ec853",
+              "name": "okr_id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2080,
+        -2112
+      ],
+      "id": "f37acb12-94d6-4dee-b5c8-c04d422ad944",
+      "name": "ork id"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=http://agente-analise-neat:8000/api/collections/produto/{{ ({   \"ORBIT\": 1,   \"AUTH\": 3,   \"WAGTAIL\": 2 })[$('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.projeto.produto_nome .toUpperCase()] || 0 }}/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "csrftoken=906JHStR0xI1MOLNeeoFl53p1vguRIYt; sessionid=hwgg67xacq7o3b8v9zcm92f5ee5kurtr"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "906JHStR0xI1MOLNeeoFl53p1vguRIYt"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "nome",
+              "value": "={{ $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.projeto.produto_nome }}"
+            },
+            {
+              "name": "okr_id",
+              "value": "={{ $('ork id').item.json.okr_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1376,
+        -2208
+      ],
+      "id": "3783e708-cd39-4112-aa80-997d38a77886",
+      "name": "Put Produto"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://agente-analise-neat:8000/api/collections/produto/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "csrftoken=906JHStR0xI1MOLNeeoFl53p1vguRIYt; sessionid=hwgg67xacq7o3b8v9zcm92f5ee5kurtr"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "906JHStR0xI1MOLNeeoFl53p1vguRIYt"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "nome",
+              "value": "={{ $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.projeto.produto_nome }}"
+            },
+            {
+              "name": "okr_id",
+              "value": "={{ $('ork id').item.json.okr_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1392,
+        -2032
+      ],
+      "id": "bdca1889-aa0a-48a5-9758-39ecaa62fa7f",
+      "name": "Post Produto"
+    },
+    {
+      "parameters": {
+        "url": "=http://agente-analise-neat:8000/api/collections/produto/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "csrftoken=906JHStR0xI1MOLNeeoFl53p1vguRIYt; sessionid=hwgg67xacq7o3b8v9zcm92f5ee5kurtr"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1840,
+        -2112
+      ],
+      "id": "82a4ba5f-db89-4cf1-a8f1-750b58052e2f",
+      "name": "Get Produto"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4c913866-4101-40ae-ba90-afbb6fb0d0f0",
+              "leftValue": "={{ $json.results[0].id }}",
+              "rightValue": "={{ ({   \"ORBIT\": 1,   \"AUTH\": 3,   \"WAGTAIL\": 2 })[$('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.projeto.produto_nome .toUpperCase()] || 0 }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1600,
+        -2112
+      ],
+      "id": "83bf6e77-9a39-4945-83a3-431be30cad28",
+      "name": "Produto Existe?"
+    },
+    {
+      "parameters": {
+        "url": "=http://agente-analise-neat:8000/api/collections/projeto/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "csrftoken=906JHStR0xI1MOLNeeoFl53p1vguRIYt; sessionid=hwgg67xacq7o3b8v9zcm92f5ee5kurtr"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2320,
+        -1872
+      ],
+      "id": "e31035b8-8623-48f2-bcfe-2cea2fde1f7a",
+      "name": "Get Projeto"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4c913866-4101-40ae-ba90-afbb6fb0d0f0",
+              "leftValue": "={{ $json.results[0].produto_id }}",
+              "rightValue": "={{ ({\n  487: 1,\n  256: 2,\n  741: 3\n})[$('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.projeto.id] || $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.projeto.id }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2144,
+        -1856
+      ],
+      "id": "398f9067-597c-4639-9731-61a584f6b1f9",
+      "name": "Projeto Existe?"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=http://agente-analise-neat:8000/api/collections/projeto/{{ ({\n  \"Orbit\": 1,\n  \"Auth\": 4,\n  \"Wagtail\": 3\n})[$('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.projeto.produto_nome] || 0 }}/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "csrftoken=906JHStR0xI1MOLNeeoFl53p1vguRIYt; sessionid=hwgg67xacq7o3b8v9zcm92f5ee5kurtr"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "906JHStR0xI1MOLNeeoFl53p1vguRIYt"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "nome",
+              "value": "={{ $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.projeto.nome }}"
+            },
+            {
+              "name": "=ref_id",
+              "value": "={{ $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.projeto.id }}"
+            },
+            {
+              "name": "produto_id",
+              "value": "={{ ({\n  \"Orbit\": 1,\n  \"Auth\": 3,\n  \"Wagtail\": 2\n})[$('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.projeto.produto_nome] || 0 }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1904,
+        -1920
+      ],
+      "id": "545458c0-d1cc-45fe-83d9-d6790932861b",
+      "name": "Put Projeto"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://agente-analise-neat:8000/api/collections/projeto/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "csrftoken=906JHStR0xI1MOLNeeoFl53p1vguRIYt; sessionid=hwgg67xacq7o3b8v9zcm92f5ee5kurtr"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "906JHStR0xI1MOLNeeoFl53p1vguRIYt"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "nome",
+              "value": "={{ $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.projeto.nome }}"
+            },
+            {
+              "name": "=ref_id",
+              "value": "={{ $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.projeto.id }}"
+            },
+            {
+              "name": "produto_id",
+              "value": "={{ ({\n  \"Orbit\": 1,\n  \"Auth\": 3,\n  \"Wagtail\": 2\n})[$('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.projeto.produto_nome] || 0 }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1904,
+        -1728
+      ],
+      "id": "ce42e51f-9ad7-4bb2-90ec-5045b63dfda7",
+      "name": "Post Projeto"
+    },
+    {
+      "parameters": {
+        "url": "=http://agente-analise-neat:8000/api/collections/card/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "csrftoken=906JHStR0xI1MOLNeeoFl53p1vguRIYt; sessionid=hwgg67xacq7o3b8v9zcm92f5ee5kurtr"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1504,
+        -752
+      ],
+      "id": "f38434f4-06b4-4069-b860-14766389d5ed",
+      "name": "Get Card"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4c913866-4101-40ae-ba90-afbb6fb0d0f0",
+              "leftValue": "={{ $json.results }}",
+              "rightValue": "={{ $json.ref_id }}",
+              "operator": {
+                "type": "array",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1232,
+        -752
+      ],
+      "id": "7ae64b4f-5b14-4275-b5de-f55fa15fb52c",
+      "name": "Card Existe?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://agente-analise-neat:8000/api/collections/card/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "csrftoken=906JHStR0xI1MOLNeeoFl53p1vguRIYt; sessionid=hwgg67xacq7o3b8v9zcm92f5ee5kurtr"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "906JHStR0xI1MOLNeeoFl53p1vguRIYt"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=ref_id",
+              "value": "={{ $('Split Card Healthchecks').item.json.id }}"
+            },
+            {
+              "name": "Projeto_id",
+              "value": "={{ ({\n  741: 4,\n  256: 3,\n  487: 1\n})[$('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.projeto.id] || 0 }}"
+            },
+            {
+              "name": "hash_cache",
+              "value": "=teste"
+            },
+            {
+              "name": "data_criacao",
+              "value": "={{$now}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -656,
+        -592
+      ],
+      "id": "132d845d-7a0a-4268-9064-f80419865252",
+      "name": "Post Card"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=http://agente-analise-neat:8000/api/collections/card/{{ $json['card id'] }}/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "csrftoken=906JHStR0xI1MOLNeeoFl53p1vguRIYt; sessionid=hwgg67xacq7o3b8v9zcm92f5ee5kurtr"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "906JHStR0xI1MOLNeeoFl53p1vguRIYt"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=ref_id",
+              "value": "={{ $json['card ref id'] }}"
+            },
+            {
+              "name": "Projeto_id",
+              "value": "={{ $json['projeto id'] }}"
+            },
+            {
+              "name": "hash_cache",
+              "value": "={{ $json['hash cache'] }}"
+            },
+            {
+              "name": "data_criacao",
+              "value": "={{ $json.data_criacao }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -400,
+        -784
+      ],
+      "id": "5acd3fcc-8cc2-43cb-8605-f9ebf63bb0f1",
+      "name": "Put Card"
+    },
+    {
+      "parameters": {
+        "batchSize": 4,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        832,
+        -1248
+      ],
+      "id": "dcccdfca-edce-47ae-ad0e-f7c06cb2f228",
+      "name": "Loop Over Items5"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "results",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -912,
+        -784
+      ],
+      "id": "fe3df3e3-21b0-4ad5-857d-2df7c7c7dd04",
+      "name": "Split results card"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "edd22385-8ffd-4b59-8ccd-7aa57c046e84",
+              "name": "card id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "03bfaed7-a537-41fd-b384-63f9f9071057",
+              "name": "card ref id",
+              "value": "={{ $json.ref_id }}",
+              "type": "number"
+            },
+            {
+              "id": "81893d4e-f4f3-4784-bb0d-e079c68a4289",
+              "name": "projeto id",
+              "value": "={{ $json.Projeto_id }}",
+              "type": "number"
+            },
+            {
+              "id": "d23e46bb-0a91-4653-81ff-57cb07cf817b",
+              "name": "hash cache",
+              "value": "={{ $json.hash_cache }}",
+              "type": "string"
+            },
+            {
+              "id": "613fe5c7-68f7-4378-9a57-eeb1ef1190e2",
+              "name": "data_criacao",
+              "value": "={{ $json.data_criacao }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -640,
+        -784
+      ],
+      "id": "3aba4902-c8d6-4985-91cd-90f62cf34526",
+      "name": "card"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "edd22385-8ffd-4b59-8ccd-7aa57c046e84",
+              "name": "card id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "f15592d8-de5f-4527-9cac-c5fa8ce80142",
+              "name": "projeto id",
+              "value": "={{ $json.Projeto_id }}",
+              "type": "number"
+            },
+            {
+              "id": "1e22c1ee-4dfc-429b-a37d-7ce44c6ed069",
+              "name": "card titulo",
+              "value": "={{ $('Split Card Healthchecks').item.json.titulo }}",
+              "type": "string"
+            },
+            {
+              "id": "a7988da3-a184-40d6-9673-bc8fa8c8549e",
+              "name": "card descricao",
+              "value": "={{ $('Split Card Healthchecks').item.json.descricao }}",
+              "type": "string"
+            },
+            {
+              "id": "019b2caf-c35e-4aee-ac6d-52c220e5e7dc",
+              "name": "orcado",
+              "value": "={{ $('Split Card Healthchecks').item.json.orcado }}",
+              "type": "string"
+            },
+            {
+              "id": "e7a882a6-e118-479f-8dcd-64ac12fd2315",
+              "name": "tempo decorrido",
+              "value": "={{ $('Split Card Healthchecks').item.json.tempo_decorrido }}",
+              "type": "string"
+            },
+            {
+              "id": "3f604f01-c460-483f-b089-05fa4b0f06d7",
+              "name": "em andamento",
+              "value": "={{ $('Split Card Healthchecks').item.json.em_andamento }}",
+              "type": "boolean"
+            },
+            {
+              "id": "fd8c3ea0-fe44-4141-a929-ed32dee89a40",
+              "name": "pontos totais",
+              "value": "={{ $('Split Card Healthchecks').item.json.pontos_totais }}",
+              "type": "string"
+            },
+            {
+              "id": "2e4ace01-5cf7-48f2-ab3a-03c135fc6903",
+              "name": "dias ate conclusao",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "2e9d6748-ab83-4fe3-8fcb-564103203ddb",
+              "name": "data prevista",
+              "value": "={{ $('Split Card Healthchecks').item.json.datas.prevista }}",
+              "type": "string"
+            },
+            {
+              "id": "a722d27f-458f-47a6-aed4-870c33982fb6",
+              "name": "data desejada",
+              "value": "={{ $('Split Card Healthchecks').item.json.datas.desejada }}",
+              "type": "string"
+            },
+            {
+              "id": "7b9fba1a-23c5-45cd-8944-834c17bee363",
+              "name": "data conclusao",
+              "value": "={{ $('Split Card Healthchecks').item.json.datas.conclusao }}",
+              "type": "string"
+            },
+            {
+              "id": "15f3ed94-e2bf-4f70-80ea-3c4b8795777e",
+              "name": "data inicio doing",
+              "value": "={{ $('Split Card Healthchecks').item.json.datas.inicio_doing }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -128,
+        -592
+      ],
+      "id": "8999c504-27e0-4279-9f25-465f72936905",
+      "name": "cards"
+    },
+    {
+      "parameters": {
+        "url": "=http://agente-analise-neat:8000/api/collections/fase/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "csrftoken=906JHStR0xI1MOLNeeoFl53p1vguRIYt; sessionid=hwgg67xacq7o3b8v9zcm92f5ee5kurtr"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2528,
+        -1424
+      ],
+      "id": "d17f9755-73dd-49e1-a587-5d195808fea7",
+      "name": "Get Fase"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4c913866-4101-40ae-ba90-afbb6fb0d0f0",
+              "leftValue": "={{ $json.results[0].nome }}",
+              "rightValue": "={{ $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.fase }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2336,
+        -1424
+      ],
+      "id": "33755b4a-e132-4e24-a23f-629d9f19efdf",
+      "name": "Fase Existe?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0ea32a16-0077-40b5-a01f-95c2d2825b78",
+              "name": "fase id",
+              "value": "={{ $json.results[0].id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2048,
+        -1520
+      ],
+      "id": "d49d880b-2faa-420c-b6d2-ec09878078f0",
+      "name": "fase id"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=http://agente-analise-neat:8000/api/collections/fase/{{ $json['fase id'] }}/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "csrftoken=906JHStR0xI1MOLNeeoFl53p1vguRIYt; sessionid=hwgg67xacq7o3b8v9zcm92f5ee5kurtr"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "906JHStR0xI1MOLNeeoFl53p1vguRIYt"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "nome",
+              "value": "={{ $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.fase }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1824,
+        -1520
+      ],
+      "id": "a3378d88-9f81-4eb3-9aed-10a7ef9983c7",
+      "name": "Put fase"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=http://agente-analise-neat:8000/api/collections/fase/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "csrftoken=906JHStR0xI1MOLNeeoFl53p1vguRIYt; sessionid=hwgg67xacq7o3b8v9zcm92f5ee5kurtr"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "906JHStR0xI1MOLNeeoFl53p1vguRIYt"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "nome",
+              "value": "={{ $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.fase }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2048,
+        -1344
+      ],
+      "id": "7df610b9-d02f-4890-8a4f-6a7c687709d9",
+      "name": "Post fase"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "79f65d1d-f27d-454f-9015-3bd60060d059",
+              "name": "fase id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1280,
+        -1456
+      ],
+      "id": "cd0ded68-8a97-4f30-a265-ce9112e6f02e",
+      "name": "fase"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        544,
+        -1280
+      ],
+      "id": "b12066d5-533b-43fe-8412-e4a23108ab09",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cb653848-be08-455b-8d79-1e15ab6aec62",
+              "name": "analise card id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "e5888aaa-8656-4b7a-af3b-b001c5270879",
+              "name": "card_referencia_id",
+              "value": "={{ $json.id_card }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2480,
+        -1232
+      ],
+      "id": "c03e070b-4b8b-4cc4-8ca0-f2c78d090a33",
+      "name": "analise card id1",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://agente-analise-neat:8000/api/collections/analise_card/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "csrftoken=906JHStR0xI1MOLNeeoFl53p1vguRIYt; sessionid=hwgg67xacq7o3b8v9zcm92f5ee5kurtr"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "906JHStR0xI1MOLNeeoFl53p1vguRIYt"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "projeto_id",
+              "value": "={{ ({\n  487: 1,\n  256: 2,\n  741: 3\n})[$('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.projeto.id] || $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.projeto.id }}"
+            },
+            {
+              "name": "analise_id",
+              "value": "={{ $('analise id').item.json['analise id'] }}"
+            },
+            {
+              "name": "fase_id",
+              "value": "={{ $('Loop Over Items5').item.json['fase id'] }}"
+            },
+            {
+              "name": "fase_ref_id",
+              "value": "={{ ({\n 1: 1,\n  2: 6\n})[$('Loop Over Items5').item.json['fase id']] || 0 }}"
+            },
+            {
+              "name": "card_id",
+              "value": "={{ $('Loop Over Items5').item.json['card id'] }}"
+            },
+            {
+              "name": "card_titulo",
+              "value": "={{ $('Loop Over Items5').item.json['card titulo'] }}"
+            },
+            {
+              "name": "card_descricao",
+              "value": "={{ $('Loop Over Items5').item.json['card descricao'] }}"
+            },
+            {
+              "name": "orcado",
+              "value": "={{ $('Loop Over Items5').item.json.orcado }}"
+            },
+            {
+              "name": "tempo_decorrido",
+              "value": "={{ $('Loop Over Items5').item.json['tempo decorrido'] }}"
+            },
+            {
+              "name": "em_andamento",
+              "value": "={{ $('Loop Over Items5').item.json['em andamento'] }}"
+            },
+            {
+              "name": "pontos_totais",
+              "value": "={{ $('Loop Over Items5').item.json['pontos totais'] }}"
+            },
+            {
+              "name": "dias_ate_conclusao",
+              "value": "={{ $('Loop Over Items5').item.json['dias ate conclusao'] }}"
+            },
+            {
+              "name": "data_prevista",
+              "value": "={{ $('Loop Over Items5').item.json['data prevista'] }}"
+            },
+            {
+              "name": "data_desejada",
+              "value": "={{ $('Loop Over Items5').item.json['data desejada'] }}"
+            },
+            {
+              "name": "data_conclusao",
+              "value": "={{ $('Loop Over Items5').item.json['data conclusao'] }}"
+            },
+            {
+              "name": "data_inicio_doing",
+              "value": "={{ $('Loop Over Items5').item.json['data inicio doing'] }}"
+            },
+            {
+              "name": "resultado_json",
+              "value": "{{ teste }} "
+            },
+            {
+              "name": "=responsavel"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2144,
+        -1232
+      ],
+      "id": "144e2680-f42e-48db-8311-0f4e38df5167",
+      "name": "Analise card",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8ea49685-4dc5-4100-a056-5e0dd5a7c1aa",
+              "name": "analise id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1280,
+        -1232
+      ],
+      "id": "13c9ed1a-390e-4fac-8a05-189ecc5bffd7",
+      "name": "analise id"
+    },
+    {
+      "parameters": {
+        "url": "=http://agente-analise-neat:8000/api/collections/responsavel/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "csrftoken=906JHStR0xI1MOLNeeoFl53p1vguRIYt; sessionid=hwgg67xacq7o3b8v9zcm92f5ee5kurtr"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1280,
+        -1136
+      ],
+      "id": "53dfc35e-93de-4345-83c7-f3d249318abe",
+      "name": "Get Responsavel",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4c913866-4101-40ae-ba90-afbb6fb0d0f0",
+              "leftValue": "={{ $json.results }}",
+              "rightValue": "={{ $('Split Card Healthchecks').item.json.responsaveis }}",
+              "operator": {
+                "type": "array",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "2426ba98-18a6-4071-adf4-74a371ace13d",
+              "leftValue": "={{ $json.count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -784,
+        -1136
+      ],
+      "id": "4d508890-52d8-4873-b774-4e26f431bb27",
+      "name": "Responsável Existe?",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://agente-analise-neat:8000/api/collections/responsavel/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "csrftoken=906JHStR0xI1MOLNeeoFl53p1vguRIYt; sessionid=hwgg67xacq7o3b8v9zcm92f5ee5kurtr"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "906JHStR0xI1MOLNeeoFl53p1vguRIYt"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ref_id",
+              "value": "={{ $('Loop Over Items3').item.json.id }}"
+            },
+            {
+              "name": "nome",
+              "value": "={{ $('Loop Over Items3').item.json.nome }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -336,
+        -1008
+      ],
+      "id": "a32d1ce1-4b93-48f5-8099-9b0cbc5781df",
+      "name": "Post Responsavel",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=http://agente-analise-neat:8000/api/collections/responsavel/{{ $json['responsavel id'] }}/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "csrftoken=906JHStR0xI1MOLNeeoFl53p1vguRIYt; sessionid=hwgg67xacq7o3b8v9zcm92f5ee5kurtr"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "906JHStR0xI1MOLNeeoFl53p1vguRIYt"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ref_id",
+              "value": "={{ $('Split results responsavel').item.json.ref_id }}"
+            },
+            {
+              "name": "nome",
+              "value": "={{ $('Split results responsavel').item.json.nome }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -80,
+        -1184
+      ],
+      "id": "da4b659c-08a0-4db5-908b-487ef4321887",
+      "name": "Put Responsavel",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "da5edfbf-8f2d-45d1-9ac6-8c3cfc358202",
+              "name": "responsavel id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -288,
+        -1184
+      ],
+      "id": "0f5e27db-30c8-429f-bdfa-055e5a6a8c09",
+      "name": "responsavel id2",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "results",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -528,
+        -1184
+      ],
+      "id": "cd0b09de-78cc-43fa-8d76-7c4f2a69ecdc",
+      "name": "Split results responsavel",
+      "disabled": true
+    }
+  ],
+  "connections": {
+    "tabela alerta projeto tipo": {
+      "main": [
+        [
+          {
+            "node": "alerta projeto tipo id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "alerta projeto tipo id": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "split alertas similaridade titulo": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "tabela alertas projeto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela alertas projeto": {
+      "main": [
+        [
+          {
+            "node": "alertas projeto id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "alertas projeto id": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Card Healthchecks": {
+      "main": [
+        [
+          {
+            "node": "Split Out responsaveis",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "nome tags",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items2": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "tabela analise card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela analise card": {
+      "main": [
+        [
+          {
+            "node": "analise card id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "analise card id": {
+      "main": [
+        [
+          {
+            "node": "tabela analise estrategica",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "tabela health score",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "tabela alertas card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela alertas card": {
+      "main": [
+        [
+          {
+            "node": "alertas card id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela analise estrategica": {
+      "main": [
+        [
+          {
+            "node": "analise estrategica id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela health score": {
+      "main": [
+        [
+          {
+            "node": "health score id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "tabela documentacao ia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela documentacao ia": {
+      "main": [
+        [
+          {
+            "node": "documentacao ia id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out responsaveis": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items3": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Get Responsavel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "responsavel id": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "nome tags": {
+      "main": [
+        [
+          {
+            "node": "Split Out tags",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out tags": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items4": {
+      "main": [
+        [],
+        [
+          {
+            "node": "tabela tags",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela tags": {
+      "main": [
+        [
+          {
+            "node": "tag id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tag id": {
+      "main": [
+        [
+          {
+            "node": "tabela card tags",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela card tags": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Call 'LOG_Workf_Agente_analise_cards_v2'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'LOG_Workf_Agente_analise_cards_v2'": {
+      "main": [
+        [
+          {
+            "node": "Split Card Healthchecks",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "split alertas similaridade titulo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "tabela alerta projeto tipo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "tabela alerta card tipo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "okr",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Projeto",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Fase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analise projeto": {
+      "main": [
+        [
+          {
+            "node": "analise projeto id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analise": {
+      "main": [
+        [
+          {
+            "node": "analise id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Get Card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "okr": {
+      "main": [
+        [
+          {
+            "node": "ork id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ork id": {
+      "main": [
+        [
+          {
+            "node": "Get Produto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Produto": {
+      "main": [
+        [
+          {
+            "node": "Produto Existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Produto Existe?": {
+      "main": [
+        [
+          {
+            "node": "Put Produto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post Produto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Projeto": {
+      "main": [
+        [
+          {
+            "node": "Projeto Existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Projeto Existe?": {
+      "main": [
+        [
+          {
+            "node": "Put Projeto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post Projeto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Card": {
+      "main": [
+        [
+          {
+            "node": "Card Existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Card Existe?": {
+      "main": [
+        [
+          {
+            "node": "Split results card",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post Card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Card": {
+      "main": [
+        [
+          {
+            "node": "cards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Put Card": {
+      "main": [
+        [
+          {
+            "node": "cards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items5": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Analise",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "analise projeto id": {
+      "main": [
+        [
+          {
+            "node": "Analise card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split results card": {
+      "main": [
+        [
+          {
+            "node": "card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "card": {
+      "main": [
+        [
+          {
+            "node": "Put Card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cards": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get Fase": {
+      "main": [
+        [
+          {
+            "node": "Fase Existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fase Existe?": {
+      "main": [
+        [
+          {
+            "node": "fase id",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post fase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fase id": {
+      "main": [
+        [
+          {
+            "node": "Put fase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Put fase": {
+      "main": [
+        [
+          {
+            "node": "fase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post fase": {
+      "main": [
+        [
+          {
+            "node": "fase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fase": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "analise card id1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analise card": {
+      "main": [
+        [
+          {
+            "node": "analise card id1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "analise id": {
+      "main": [
+        [
+          {
+            "node": "Analise projeto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Responsavel": {
+      "main": [
+        [
+          {
+            "node": "Responsável Existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responsável Existe?": {
+      "main": [
+        [
+          {
+            "node": "Split results responsavel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post Responsavel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Responsavel": {
+      "main": [
+        [
+          {
+            "node": "responsavel id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Put Responsavel": {
+      "main": [
+        [
+          {
+            "node": "responsavel id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "responsavel id2": {
+      "main": [
+        [
+          {
+            "node": "Put Responsavel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split results responsavel": {
+      "main": [
+        [
+          {
+            "node": "responsavel id2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {
+    "node:Schedule Trigger": {
+      "recurrenceRules": []
+    },
+    "node:Schedule Trigger1": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {
+    "Call 'LOG_Workf_Agente_analise_cards_v2'": [
+      {
+        "json": {
+          "data": {
+            "meta": {
+              "versao_schema": "2.0.0",
+              "gerado_em": "2025-12-12T14:15:50.221969+00:00",
+              "fonte": "pipeline_agente.py",
+              "uuid": "a083b3d7-c335-4e9c-8945-f41cc6a84b50"
+            },
+            "okrs": {
+              "obj estrategico orbit": {
+                "objetivos": [
+                  "Otimizar desempenho e performance da plataforma",
+                  "Flexibilizar funcionalidades e meios de gestão dentro do Orbit"
+                ],
+                "motivos": [
+                  "Torna a experiência do usuário - e projeto - positiva com o produto, aumentando a taxa de engajamento e permanência na plataforma. Confiança na solução",
+                  "Permite uma gestão direta do projeto mais user friendly; permite maior adaptação das funcionalidades; facilita a adesão de usuários externos, diminuindo o tempo de set-up e menos adaptações"
+                ],
+                "krs": [
+                  "KR1: Manter NPS > 50 (+10% em relação a meta do ano passado), com pelo menos 70 respostas (15% dos  usuários do Orbit)",
+                  "KR2: Reduzir o tempo de resposta dos tipos de páginas para até 10s",
+                  "KR3: Reduzir o número de horas gastas com Incêdios em 20%",
+                  "KR1: Ter pelo menos 3 funcionalidades geridas pelo front",
+                  "KR2: Ter 100% dos projetos internos organizados na nova estrutura de usuários",
+                  "KR3: Flexibilizar pelo menos 3 funcionalidades que estão fixas no código "
+                ]
+              }
+            },
+            "resultado": {
+              "projeto": {
+                "id": 741,
+                "nome": "MVP Auth 2.0",
+                "produto_nome": "Auth"
+              },
+              "fase": "Backlog",
+              "total_cards": 4,
+              "metrica_qualidade": {
+                "throughput": 4,
+                "tempo_medio_por_fase_dia": 120
+              },
+              "alertas_gerais": [],
+              "cards": [
+                {
+                  "id": 12932,
+                  "titulo": "[ENTREGÁVEIS] - Release 3 - v1 (Início cadastros Django)",
+                  "descricao": "",
+                  "fase": "Backlog",
+                  "responsaveis": [
+                    {
+                      "id": 105,
+                      "nome": "Everton Leite"
+                    },
+                    {
+                      "id": 120,
+                      "nome": "Daniel Portilho"
+                    }
+                  ],
+                  "orcado": "00:00:00",
+                  "tempo_decorrido": "00:00:00",
+                  "em_andamento": false,
+                  "datas": {
+                    "criacao": "2025-08-13T14:48:58.980463+00:00",
+                    "prevista": "2025-10-23T00:00:00+00:00",
+                    "desejada": null,
+                    "conclusao": null,
+                    "inicio_doing": null
+                  },
+                  "pontos_totais": null,
+                  "projeto_info": {},
+                  "tags": [],
+                  "lead_time": 120,
+                  "cycle_time": 120,
+                  "alertas_validacao": {
+                    "sem_titulo": false,
+                    "sem_descricao": false,
+                    "sem_responsaveis": false,
+                    "sem_tags": true,
+                    "sem_data_criacao": false,
+                    "sem_estimativa_esforco": true,
+                    "sem_data_prevista": false,
+                    "sem_data_desejada": true,
+                    "sem_pontos": true,
+                    "sem_vinculo_projeto": true,
+                    "descricao_curta": true,
+                    "sem_criterios_aceite": true,
+                    "tags_pouco_descritivas": false,
+                    "data_prevista_antes_criacao": false,
+                    "data_conclusao_antes_criacao": false,
+                    "card_antigo_sem_priorizacao": true,
+                    "backlog_estagnado": {
+                      "bool": true,
+                      "params": {
+                        "dias": 120,
+                        "fase": "Backlog"
+                      }
+                    },
+                    "em_andamento_prolongado": {
+                      "bool": false,
+                      "params": {}
+                    }
+                  },
+                  "avaliacao_ia": {
+                    "nota": 3,
+                    "justificativa": "O card apresenta várias lacunas importantes, como a ausência de descrição, estimativa de esforço, pontos totais e vinculação a um projeto. Além disso, está estagnado no backlog há mais de 120 dias, o que indica falta de priorização e progresso. A falta de tags e critérios de aceite também compromete a clareza e a definição do que é esperado para a entrega."
+                  },
+                  "analise_estrategica_ia": {
+                    "alinhamento_estrategico": {
+                      "alinhado": "não",
+                      "justificativa": "O card não apresenta um vínculo direto com nenhum dos Key Results (KRs) listados. Ele refere-se ao início de cadastros no Django, mas não está claro como isso contribui para os objetivos de otimização de desempenho ou flexibilização de funcionalidades.",
+                      "alinhado_bool": false,
+                      "pontuacao": "2/10",
+                      "pontuacao_num": 2
+                    },
+                    "analise_preditiva": {
+                      "estimativa_horas": 40,
+                      "nivel_confianca": 0.8,
+                      "justificativa": "O tempo ideal de 40 horas considera que a equipe tem experiência com Django e que não haverá problemas com integração ou requisitos não especificados. Este tempo é baseado em uma análise de tarefas comuns para o início de cadastros, como configuração de modelos e criação de interfaces básicas."
+                    }
+                  },
+                  "health_score": {
+                    "nota_qualidade": 3,
+                    "nota_estrategica": 2,
+                    "health_score_final": 2.5,
+                    "justificativa": {
+                      "nota_qualidade": "O card apresenta várias lacunas importantes, como a ausência de descrição, estimativa de esforço, pontos totais e vinculação a um projeto. Além disso, está estagnado no backlog há mais de 120 dias, o que indica falta de priorização e progresso. A falta de tags e critérios de aceite também compromete a clareza e a definição do que é esperado para a entrega.",
+                      "nota_estrategica": "O card não apresenta um vínculo direto com nenhum dos Key Results (KRs) listados. Ele refere-se ao início de cadastros no Django, mas não está claro como isso contribui para os objetivos de otimização de desempenho ou flexibilização de funcionalidades."
+                    }
+                  }
+                },
+                {
+                  "id": 12924,
+                  "titulo": "[FRONT] - Criação das páginas principais",
+                  "descricao": "",
+                  "fase": "Backlog",
+                  "responsaveis": [
+                    {
+                      "id": 105,
+                      "nome": "Everton Leite"
+                    },
+                    {
+                      "id": 120,
+                      "nome": "Daniel Portilho"
+                    }
+                  ],
+                  "orcado": "00:00:00",
+                  "tempo_decorrido": "00:00:00",
+                  "em_andamento": false,
+                  "datas": {
+                    "criacao": "2025-08-13T14:42:18.097995+00:00",
+                    "prevista": "2025-11-14T00:00:00+00:00",
+                    "desejada": null,
+                    "conclusao": null,
+                    "inicio_doing": null
+                  },
+                  "pontos_totais": null,
+                  "projeto_info": {},
+                  "tags": [],
+                  "lead_time": 120,
+                  "cycle_time": 120,
+                  "alertas_validacao": {
+                    "sem_titulo": false,
+                    "sem_descricao": true,
+                    "sem_responsaveis": false,
+                    "sem_tags": true,
+                    "sem_data_criacao": false,
+                    "sem_estimativa_esforco": true,
+                    "sem_data_prevista": false,
+                    "sem_data_desejada": true,
+                    "sem_pontos": true,
+                    "sem_vinculo_projeto": true,
+                    "descricao_curta": false,
+                    "sem_criterios_aceite": false,
+                    "tags_pouco_descritivas": false,
+                    "data_prevista_antes_criacao": false,
+                    "data_conclusao_antes_criacao": false,
+                    "card_antigo_sem_priorizacao": true,
+                    "backlog_estagnado": {
+                      "bool": true,
+                      "params": {
+                        "dias": 120,
+                        "fase": "Backlog"
+                      }
+                    },
+                    "em_andamento_prolongado": {
+                      "bool": false,
+                      "params": {}
+                    }
+                  },
+                  "avaliacao_ia": {
+                    "nota": 3,
+                    "justificativa": "O card apresenta várias lacunas importantes, como a falta de descrição, estimativa de esforço, pontos totais e vínculo com um projeto específico. Além disso, está estagnado no backlog há mais de 120 dias, o que indica uma falta de priorização e planejamento. Essas questões comprometem a clareza e a viabilidade do trabalho a ser realizado."
+                  },
+                  "analise_estrategica_ia": {
+                    "alinhamento_estrategico": {
+                      "alinhado": "não",
+                      "justificativa": "O card não apresenta uma descrição clara do que será realizado, além de estar estagnado no backlog por mais de 120 dias, o que indica falta de priorização. Não há um vínculo direto com os KRs, pois não se sabe como a criação das páginas principais impactará diretamente os resultados esperados.",
+                      "alinhado_bool": false,
+                      "pontuacao": "2/10",
+                      "pontuacao_num": 2
+                    },
+                    "analise_preditiva": {
+                      "estimativa_horas": 40,
+                      "nivel_confianca": 0.8,
+                      "justificativa": "O tempo ideal de 40 horas considera que a equipe de desenvolvimento já possui conhecimento prévio sobre as tecnologias utilizadas e que não haverá impedimentos, como bloqueios de dependências ou revisões extensivas. A criação das páginas principais é uma tarefa que, em um cenário ideal, pode ser realizada de forma eficiente."
+                    }
+                  },
+                  "health_score": {
+                    "nota_qualidade": 3,
+                    "nota_estrategica": 2,
+                    "health_score_final": 2.5,
+                    "justificativa": {
+                      "nota_qualidade": "O card apresenta várias lacunas importantes, como a falta de descrição, estimativa de esforço, pontos totais e vínculo com um projeto específico. Além disso, está estagnado no backlog há mais de 120 dias, o que indica uma falta de priorização e planejamento. Essas questões comprometem a clareza e a viabilidade do trabalho a ser realizado.",
+                      "nota_estrategica": "O card não apresenta uma descrição clara do que será realizado, além de estar estagnado no backlog por mais de 120 dias, o que indica falta de priorização. Não há um vínculo direto com os KRs, pois não se sabe como a criação das páginas principais impactará diretamente os resultados esperados."
+                    }
+                  }
+                },
+                {
+                  "id": 12933,
+                  "titulo": "[ENTREGÁVEIS] - Release 4 - v2 (Operacionar internamente)",
+                  "descricao": "",
+                  "fase": "Backlog",
+                  "responsaveis": [
+                    {
+                      "id": 105,
+                      "nome": "Everton Leite"
+                    },
+                    {
+                      "id": 120,
+                      "nome": "Daniel Portilho"
+                    }
+                  ],
+                  "orcado": "00:00:00",
+                  "tempo_decorrido": "00:00:00",
+                  "em_andamento": false,
+                  "datas": {
+                    "criacao": "2025-08-13T14:50:04.812812+00:00",
+                    "prevista": "2025-11-14T00:00:00+00:00",
+                    "desejada": null,
+                    "conclusao": null,
+                    "inicio_doing": null
+                  },
+                  "pontos_totais": null,
+                  "projeto_info": {},
+                  "tags": [],
+                  "lead_time": 120,
+                  "cycle_time": 120,
+                  "alertas_validacao": {
+                    "sem_titulo": false,
+                    "sem_descricao": true,
+                    "sem_responsaveis": false,
+                    "sem_tags": true,
+                    "sem_data_criacao": false,
+                    "sem_estimativa_esforco": true,
+                    "sem_data_prevista": false,
+                    "sem_data_desejada": true,
+                    "sem_pontos": true,
+                    "sem_vinculo_projeto": true,
+                    "descricao_curta": false,
+                    "sem_criterios_aceite": false,
+                    "tags_pouco_descritivas": false,
+                    "data_prevista_antes_criacao": false,
+                    "data_conclusao_antes_criacao": false,
+                    "card_antigo_sem_priorizacao": true,
+                    "backlog_estagnado": {
+                      "bool": true,
+                      "params": {
+                        "dias": 120,
+                        "fase": "Backlog"
+                      }
+                    },
+                    "em_andamento_prolongado": {
+                      "bool": false,
+                      "params": {}
+                    }
+                  },
+                  "avaliacao_ia": {
+                    "nota": 3,
+                    "justificativa": "O card apresenta várias lacunas importantes, como a falta de descrição, estimativas de esforço e vinculação a um projeto. Além disso, está estagnado no backlog há mais de 120 dias, o que indica uma falta de priorização e clareza sobre sua relevância. Esses fatores comprometem a clareza e a viabilidade do trabalho a ser realizado."
+                  },
+                  "analise_estrategica_ia": {
+                    "alinhamento_estrategico": {
+                      "alinhado": "não",
+                      "justificativa": "O card não apresenta uma descrição clara e não está vinculado a um projeto específico, o que dificulta a identificação de seu impacto direto em qualquer KR. A falta de informações essenciais compromete a avaliação do alinhamento.",
+                      "alinhado_bool": false,
+                      "pontuacao": "2/10",
+                      "pontuacao_num": 2
+                    },
+                    "analise_preditiva": {
+                      "estimativa_horas": 40,
+                      "nivel_confianca": 0.6,
+                      "justificativa": "Considerando um cenário ideal, a execução do card pode ser realizada em 40 horas, assumindo que todas as dependências são atendidas e não há imprevistos. No entanto, a falta de clareza e informações pode aumentar o tempo real de execução."
+                    }
+                  },
+                  "health_score": {
+                    "nota_qualidade": 3,
+                    "nota_estrategica": 2,
+                    "health_score_final": 2.5,
+                    "justificativa": {
+                      "nota_qualidade": "O card apresenta várias lacunas importantes, como a falta de descrição, estimativas de esforço e vinculação a um projeto. Além disso, está estagnado no backlog há mais de 120 dias, o que indica uma falta de priorização e clareza sobre sua relevância. Esses fatores comprometem a clareza e a viabilidade do trabalho a ser realizado.",
+                      "nota_estrategica": "O card não apresenta uma descrição clara e não está vinculado a um projeto específico, o que dificulta a identificação de seu impacto direto em qualquer KR. A falta de informações essenciais compromete a avaliação do alinhamento."
+                    }
+                  }
+                },
+                {
+                  "id": 12935,
+                  "titulo": "[ENTREGÁVEIS] - Release 6 - vF",
+                  "descricao": "",
+                  "fase": "Backlog",
+                  "responsaveis": [
+                    {
+                      "id": 105,
+                      "nome": "Everton Leite"
+                    },
+                    {
+                      "id": 120,
+                      "nome": "Daniel Portilho"
+                    }
+                  ],
+                  "orcado": "00:00:00",
+                  "tempo_decorrido": "00:00:00",
+                  "em_andamento": false,
+                  "datas": {
+                    "criacao": "2025-08-13T14:51:33.645490+00:00",
+                    "prevista": "2025-12-24T00:00:00+00:00",
+                    "desejada": null,
+                    "conclusao": null,
+                    "inicio_doing": null
+                  },
+                  "pontos_totais": null,
+                  "projeto_info": {},
+                  "tags": [],
+                  "lead_time": 120,
+                  "cycle_time": 120,
+                  "alertas_validacao": {
+                    "sem_titulo": false,
+                    "sem_descricao": true,
+                    "sem_responsaveis": false,
+                    "sem_tags": true,
+                    "sem_data_criacao": false,
+                    "sem_estimativa_esforco": true,
+                    "sem_data_prevista": false,
+                    "sem_data_desejada": true,
+                    "sem_pontos": true,
+                    "sem_vinculo_projeto": true,
+                    "descricao_curta": false,
+                    "sem_criterios_aceite": false,
+                    "tags_pouco_descritivas": false,
+                    "data_prevista_antes_criacao": false,
+                    "data_conclusao_antes_criacao": false,
+                    "card_antigo_sem_priorizacao": true,
+                    "backlog_estagnado": {
+                      "bool": true,
+                      "params": {
+                        "dias": 120,
+                        "fase": "Backlog"
+                      }
+                    },
+                    "em_andamento_prolongado": {
+                      "bool": false,
+                      "params": {}
+                    }
+                  },
+                  "avaliacao_ia": {
+                    "nota": 3,
+                    "justificativa": "O card apresenta várias lacunas importantes, como a ausência de descrição, estimativa de esforço e pontos totais. Além disso, está estagnado no backlog há mais de 120 dias, o que indica falta de priorização e clareza sobre o que deve ser entregue. Esses fatores comprometem a visibilidade e a gestão do projeto."
+                  },
+                  "analise_estrategica_ia": {
+                    "alinhamento_estrategico": {
+                      "alinhado": "não",
+                      "justificativa": "O card não apresenta uma descrição clara, estimativa de esforço ou informações sobre como ele se relaciona com os KRs definidos. A ausência de detalhes impede a identificação de um vínculo direto com qualquer KR específico.",
+                      "alinhado_bool": false,
+                      "pontuacao": "0/10",
+                      "pontuacao_num": 0
+                    },
+                    "analise_preditiva": {
+                      "estimativa_horas": 0,
+                      "nivel_confianca": 0,
+                      "justificativa": "Sem uma descrição ou informações sobre o que o card envolve, não é possível estimar um tempo ideal. A falta de clareza sobre os entregáveis impede qualquer cálculo de tempo realista."
+                    }
+                  },
+                  "health_score": {
+                    "nota_qualidade": 3,
+                    "nota_estrategica": 0,
+                    "health_score_final": 1.5,
+                    "justificativa": {
+                      "nota_qualidade": "O card apresenta várias lacunas importantes, como a ausência de descrição, estimativa de esforço e pontos totais. Além disso, está estagnado no backlog há mais de 120 dias, o que indica falta de priorização e clareza sobre o que deve ser entregue. Esses fatores comprometem a visibilidade e a gestão do projeto.",
+                      "nota_estrategica": "O card não apresenta uma descrição clara, estimativa de esforço ou informações sobre como ele se relaciona com os KRs definidos. A ausência de detalhes impede a identificação de um vínculo direto com qualquer KR específico."
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "binary": {},
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "versionId": "3d24a328-9d99-4875-9ab5-c970bd9a2c06",
+  "activeVersionId": null,
+  "versionCounter": 213,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-12-12T10:26:07.653Z",
+      "createdAt": "2025-12-12T10:26:07.653Z",
+      "role": "workflow:owner",
+      "workflowId": "3wn8nMTSnx95pNIi",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T15:11:41.884Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2025-12-09T14:51:13.845Z",
+      "createdAt": "2025-11-12T13:11:13.945Z",
+      "id": "bkmQ0coj68vI5t8e",
+      "name": "Teste"
+    }
+  ],
+  "activeVersion": null
+}
