@@ -1,0 +1,823 @@
+{
+  "updatedAt": "2026-02-23T16:44:50.417Z",
+  "createdAt": "2026-02-19T10:30:54.687Z",
+  "id": "5nzwKlxLFtcPSpi6",
+  "name": "LOG_MSG_Agente_chatbot_consulta_banco_v6",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "description": "Nome da Ferramenta: catSeguro\n\nDescrição:\nUse esta ferramenta para ler o conteúdo textual de um ou mais arquivos dentro do projeto. O sistema de arquivos usa uma raiz virtual `/`. \n\nRegras e Restrições Obrigatórias:\n1. Os caminhos devem começar com `/` e referenciar arquivos dentro das pastas permitidas: `/apps/`, `/docs/` ou `/config/`. Exemplo válido: `/apps/main.py`.\n2. Também é permitido ler os arquivos exatos: `/README.md` e `/AGENTS.md`.\n3. É estritamente proibido usar navegação relativa com `..`.\n4. O acesso a arquivos de ambiente (como `.env`), cache ou dependências é bloqueado.\n\nFormato de Entrada: \nO parâmetro `paths` deve ser sempre uma lista (array) de strings com os caminhos completos dos arquivos que você deseja ler.\nExemplo: {\"paths\": [\"/apps/main.py\", \"/docs/api.md\"]}",
+        "workflowId": {
+          "__rl": true,
+          "value": "L7nXnTbWIsZrw8n2",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/L7nXnTbWIsZrw8n2",
+          "cachedResultName": "LOG_SWF_Cat_seguro_tool"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [
+            "paths"
+          ],
+          "schema": [
+            {
+              "id": "paths",
+              "displayName": "paths",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "array",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        4720,
+        1056
+      ],
+      "id": "9d6154a2-877e-401d-aafa-41c31dfb43ad",
+      "name": "catSeguro"
+    },
+    {
+      "parameters": {
+        "description": "Nome da Ferramenta: lsSeguro\n\nDescrição:\nUse esta ferramenta para fazer uma listagem recursiva (ls -R) de diretórios para descobrir a estrutura de pastas e encontrar arquivos no projeto.\n\nRegras e Restrições Obrigatórias:\n1. Você não pode listar a raiz `/` inteira. Você deve especificar a pasta exata que deseja explorar.\n2. Os caminhos devem começar com `/` e referenciar apenas as pastas permitidas: `/apps/`, `/docs/` ou `/config/`. Exemplo válido: `/apps/components/`.\n3. É estritamente proibido usar navegação relativa com `..`.\n4. Pastas de dependências, cache e versionamento (como `node_modules`, `__pycache__`, `venv` e `.git`) estão ocultas e protegidas por padrão para evitar sobrecarga na sua janela de contexto. Não tente listá-las.\n\nFormato de Entrada: \nO parâmetro `paths` deve ser sempre uma lista (array) de strings com os diretórios que você deseja listar.\nExemplo: {\"paths\": [\"/apps/\", \"/config/\"]}",
+        "workflowId": {
+          "__rl": true,
+          "value": "eXgLaHO4ykKKFb3N",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/eXgLaHO4ykKKFb3N",
+          "cachedResultName": "LOG_SWF_Ls_seguro_tool"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [
+            "path"
+          ],
+          "schema": [
+            {
+              "id": "path",
+              "displayName": "path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "array",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        4848,
+        1056
+      ],
+      "id": "e632b9d1-4c49-4d4c-a6e5-5086d55f0d53",
+      "name": "lsSeguro"
+    },
+    {
+      "parameters": {
+        "public": true,
+        "mode": "webhook",
+        "options": {
+          "allowedOrigins": "https://ag-analise-neat.novadata.dev/",
+          "responseMode": "lastNode"
+        }
+      },
+      "id": "97d1f4e8-f920-401b-9e04-68b5a843e9f6",
+      "name": "recebeMensagem",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "position": [
+        3568,
+        832
+      ],
+      "webhookId": "0e2a5635-fbc8-47b2-9f9f-2dbce85fc8ff",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "fileSelector": "/data/files/logbit/contextoSystemPrompt.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        3792,
+        832
+      ],
+      "id": "7fc84c15-65ee-4cde-ae87-6fea7890b535",
+      "name": "leituraContextoAtual"
+    },
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        4016,
+        832
+      ],
+      "id": "65195ce0-b943-46cb-bc6e-74c72ec1949f",
+      "name": "converteBinarioJSON"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ce2bf24e-8ee0-4f9a-8e91-89b7e7f445ae",
+              "name": "contexto",
+              "value": "={{ $json.data[0].contexto }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4240,
+        832
+      ],
+      "id": "24fefdad-58b4-497b-b88b-78f238868614",
+      "name": "preparaVarContexto"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-5-mini"
+        },
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "67627521-a6ba-4a2f-8fc0-19ec5ef0e88e",
+      "name": "openAI",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        4464,
+        1056
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+          "id": "JOZpLMsgA7BLAO6D",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 15
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        4592,
+        1056
+      ],
+      "id": "febb1f4b-6d12-4405-ab28-85d8bb23cbee",
+      "name": "memoriaSimples"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Query', 'SELECT query SQL completa para executar no banco de dados', 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        4976,
+        1056
+      ],
+      "id": "7be69c29-60dd-4687-90ad-82667fcf0f85",
+      "name": "executaQueryBanco",
+      "credentials": {
+        "postgres": {
+          "id": "MGwyGRSiscdGvAtr",
+          "name": "usuario n8n - labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('recebeMensagem').item.json.chatInput }}",
+        "options": {
+          "systemMessage": "=# 🤖 Assistente de Gestão de Projetos\n\n**Seu Papel:** Apoio gerencial, priorização e inteligência de projeto. Você **NÃO** é desenvolvedor. O acesso ao código-fonte serve *exclusivamente* para entender como cálculos, métricas ou regras de negócio funcionam. Email e GitHub estão indisponíveis (informe isso se solicitado e ofereça buscar dados via SQL ou arquivos locais).\n\n### 🛠️ FERRAMENTAS\n\n* **`executaQueryBanco`**: Executa SQL no banco do Neat.\n* **`lsSeguro` / `catSeguro**`: Lista pastas e lê arquivos locais para entender o processamento dos dados.\n\n---\n\n### 📂 CONTEXTO\n\n*(Consulte estas variáveis antes de qualquer ação)*\n\n* **Dados dos Projetos:** `{{ $json.contexto[1].projetos.toJsonString() }}`\n* **Dados das Fases:** `{{ $json.contexto[2].fases.toJsonString() }}`\n* **Schema do Banco (Tabelas/Colunas Permitidas):** `{{ $json.contexto[3].schema.map(item => item.toJsonString()) }}`\n* **Diretórios dentro de \"apps/\"**: `{{ $json.contexto[0].dirsEmApps }}`"
+        }
+      },
+      "id": "8c62b5fb-c009-4b1f-81ff-efe127c400e5",
+      "name": "chamadaAPIAgente",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        4648,
+        832
+      ],
+      "typeVersion": 1.8
+    },
+    {
+      "parameters": {
+        "resource": "execution",
+        "operation": "get",
+        "executionId": "=",
+        "options": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        3568,
+        1160
+      ],
+      "id": "74581782-7c8b-4bab-a36f-241bb776a000",
+      "name": "Get an execution",
+      "credentials": {
+        "n8nApi": {
+          "id": "I5IelBeIbrcla9DG",
+          "name": "n8n account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "catSeguro": {
+      "ai_tool": [
+        [
+          {
+            "node": "chamadaAPIAgente",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "lsSeguro": {
+      "ai_tool": [
+        [
+          {
+            "node": "chamadaAPIAgente",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "recebeMensagem": {
+      "main": [
+        [
+          {
+            "node": "leituraContextoAtual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "leituraContextoAtual": {
+      "main": [
+        [
+          {
+            "node": "converteBinarioJSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "converteBinarioJSON": {
+      "main": [
+        [
+          {
+            "node": "preparaVarContexto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "preparaVarContexto": {
+      "main": [
+        [
+          {
+            "node": "chamadaAPIAgente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "openAI": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "chamadaAPIAgente",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "memoriaSimples": {
+      "ai_memory": [
+        [
+          {
+            "node": "chamadaAPIAgente",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "executaQueryBanco": {
+      "ai_tool": [
+        [
+          {
+            "node": "chamadaAPIAgente",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "chamadaAPIAgente": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "eab562a3-455a-4580-9537-b6c1c0e86e52",
+  "activeVersionId": "eab562a3-455a-4580-9537-b6c1c0e86e52",
+  "versionCounter": 246,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-19T10:30:54.687Z",
+      "createdAt": "2026-02-19T10:30:54.687Z",
+      "role": "workflow:owner",
+      "workflowId": "5nzwKlxLFtcPSpi6",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T15:11:41.884Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2025-12-09T14:51:13.845Z",
+      "createdAt": "2025-11-12T13:11:13.945Z",
+      "id": "bkmQ0coj68vI5t8e",
+      "name": "Teste"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-23T16:44:50.420Z",
+    "createdAt": "2026-02-23T16:44:50.420Z",
+    "versionId": "eab562a3-455a-4580-9537-b6c1c0e86e52",
+    "workflowId": "5nzwKlxLFtcPSpi6",
+    "nodes": [
+      {
+        "parameters": {
+          "description": "Nome da Ferramenta: catSeguro\n\nDescrição:\nUse esta ferramenta para ler o conteúdo textual de um ou mais arquivos dentro do projeto. O sistema de arquivos usa uma raiz virtual `/`. \n\nRegras e Restrições Obrigatórias:\n1. Os caminhos devem começar com `/` e referenciar arquivos dentro das pastas permitidas: `/apps/`, `/docs/` ou `/config/`. Exemplo válido: `/apps/main.py`.\n2. Também é permitido ler os arquivos exatos: `/README.md` e `/AGENTS.md`.\n3. É estritamente proibido usar navegação relativa com `..`.\n4. O acesso a arquivos de ambiente (como `.env`), cache ou dependências é bloqueado.\n\nFormato de Entrada: \nO parâmetro `paths` deve ser sempre uma lista (array) de strings com os caminhos completos dos arquivos que você deseja ler.\nExemplo: {\"paths\": [\"/apps/main.py\", \"/docs/api.md\"]}",
+          "workflowId": {
+            "__rl": true,
+            "value": "L7nXnTbWIsZrw8n2",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/L7nXnTbWIsZrw8n2",
+            "cachedResultName": "LOG_SWF_Cat_seguro_tool"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [
+              "paths"
+            ],
+            "schema": [
+              {
+                "id": "paths",
+                "displayName": "paths",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "array",
+                "removed": false
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+        "typeVersion": 2.2,
+        "position": [
+          4720,
+          1056
+        ],
+        "id": "9d6154a2-877e-401d-aafa-41c31dfb43ad",
+        "name": "catSeguro"
+      },
+      {
+        "parameters": {
+          "description": "Nome da Ferramenta: lsSeguro\n\nDescrição:\nUse esta ferramenta para fazer uma listagem recursiva (ls -R) de diretórios para descobrir a estrutura de pastas e encontrar arquivos no projeto.\n\nRegras e Restrições Obrigatórias:\n1. Você não pode listar a raiz `/` inteira. Você deve especificar a pasta exata que deseja explorar.\n2. Os caminhos devem começar com `/` e referenciar apenas as pastas permitidas: `/apps/`, `/docs/` ou `/config/`. Exemplo válido: `/apps/components/`.\n3. É estritamente proibido usar navegação relativa com `..`.\n4. Pastas de dependências, cache e versionamento (como `node_modules`, `__pycache__`, `venv` e `.git`) estão ocultas e protegidas por padrão para evitar sobrecarga na sua janela de contexto. Não tente listá-las.\n\nFormato de Entrada: \nO parâmetro `paths` deve ser sempre uma lista (array) de strings com os diretórios que você deseja listar.\nExemplo: {\"paths\": [\"/apps/\", \"/config/\"]}",
+          "workflowId": {
+            "__rl": true,
+            "value": "eXgLaHO4ykKKFb3N",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/eXgLaHO4ykKKFb3N",
+            "cachedResultName": "LOG_SWF_Ls_seguro_tool"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [
+              "path"
+            ],
+            "schema": [
+              {
+                "id": "path",
+                "displayName": "path",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "array",
+                "removed": false
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+        "typeVersion": 2.2,
+        "position": [
+          4848,
+          1056
+        ],
+        "id": "e632b9d1-4c49-4d4c-a6e5-5086d55f0d53",
+        "name": "lsSeguro"
+      },
+      {
+        "parameters": {
+          "public": true,
+          "mode": "webhook",
+          "options": {
+            "allowedOrigins": "https://ag-analise-neat.novadata.dev/",
+            "responseMode": "lastNode"
+          }
+        },
+        "id": "97d1f4e8-f920-401b-9e04-68b5a843e9f6",
+        "name": "recebeMensagem",
+        "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+        "position": [
+          3568,
+          832
+        ],
+        "webhookId": "0e2a5635-fbc8-47b2-9f9f-2dbce85fc8ff",
+        "typeVersion": 1.1
+      },
+      {
+        "parameters": {
+          "fileSelector": "/data/files/logbit/contextoSystemPrompt.json",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.readWriteFile",
+        "typeVersion": 1,
+        "position": [
+          3792,
+          832
+        ],
+        "id": "7fc84c15-65ee-4cde-ae87-6fea7890b535",
+        "name": "leituraContextoAtual"
+      },
+      {
+        "parameters": {
+          "operation": "fromJson",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.extractFromFile",
+        "typeVersion": 1.1,
+        "position": [
+          4016,
+          832
+        ],
+        "id": "65195ce0-b943-46cb-bc6e-74c72ec1949f",
+        "name": "converteBinarioJSON"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "ce2bf24e-8ee0-4f9a-8e91-89b7e7f445ae",
+                "name": "contexto",
+                "value": "={{ $json.data[0].contexto }}",
+                "type": "array"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          4240,
+          832
+        ],
+        "id": "24fefdad-58b4-497b-b88b-78f238868614",
+        "name": "preparaVarContexto"
+      },
+      {
+        "parameters": {
+          "model": {
+            "__rl": true,
+            "value": "gpt-5-mini",
+            "mode": "list",
+            "cachedResultName": "gpt-5-mini"
+          },
+          "options": {
+            "timeout": 180000
+          }
+        },
+        "id": "67627521-a6ba-4a2f-8fc0-19ec5ef0e88e",
+        "name": "openAI",
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "position": [
+          4464,
+          1056
+        ],
+        "typeVersion": 1.2,
+        "credentials": {
+          "openAiApi": {
+            "id": "JOZpLMsgA7BLAO6D",
+            "name": "OpenAi account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "contextWindowLength": 15
+        },
+        "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+        "typeVersion": 1.3,
+        "position": [
+          4592,
+          1056
+        ],
+        "id": "febb1f4b-6d12-4405-ab28-85d8bb23cbee",
+        "name": "memoriaSimples"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "{{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Query', 'SELECT query SQL completa para executar no banco de dados', 'string') }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgresTool",
+        "typeVersion": 2.6,
+        "position": [
+          4976,
+          1056
+        ],
+        "id": "7be69c29-60dd-4687-90ad-82667fcf0f85",
+        "name": "executaQueryBanco",
+        "credentials": {
+          "postgres": {
+            "id": "MGwyGRSiscdGvAtr",
+            "name": "usuario n8n - labs dev"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $('recebeMensagem').item.json.chatInput }}",
+          "options": {
+            "systemMessage": "=# 🤖 Assistente de Gestão de Projetos\n\n**Seu Papel:** Apoio gerencial, priorização e inteligência de projeto. Você **NÃO** é desenvolvedor. O acesso ao código-fonte serve *exclusivamente* para entender como cálculos, métricas ou regras de negócio funcionam. Email e GitHub estão indisponíveis (informe isso se solicitado e ofereça buscar dados via SQL ou arquivos locais).\n\n### 🛠️ FERRAMENTAS\n\n* **`executaQueryBanco`**: Executa SQL no banco do Neat.\n* **`lsSeguro` / `catSeguro**`: Lista pastas e lê arquivos locais para entender o processamento dos dados.\n\n---\n\n### 📂 CONTEXTO\n\n*(Consulte estas variáveis antes de qualquer ação)*\n\n* **Dados dos Projetos:** `{{ $json.contexto[1].projetos.toJsonString() }}`\n* **Dados das Fases:** `{{ $json.contexto[2].fases.toJsonString() }}`\n* **Schema do Banco (Tabelas/Colunas Permitidas):** `{{ $json.contexto[3].schema.map(item => item.toJsonString()) }}`\n* **Diretórios dentro de \"apps/\"**: `{{ $json.contexto[0].dirsEmApps }}`"
+          }
+        },
+        "id": "8c62b5fb-c009-4b1f-81ff-efe127c400e5",
+        "name": "chamadaAPIAgente",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "position": [
+          4648,
+          832
+        ],
+        "typeVersion": 1.8
+      },
+      {
+        "parameters": {
+          "resource": "execution",
+          "operation": "get",
+          "executionId": "=",
+          "options": {},
+          "requestOptions": {}
+        },
+        "type": "n8n-nodes-base.n8n",
+        "typeVersion": 1,
+        "position": [
+          3568,
+          1160
+        ],
+        "id": "74581782-7c8b-4bab-a36f-241bb776a000",
+        "name": "Get an execution",
+        "credentials": {
+          "n8nApi": {
+            "id": "I5IelBeIbrcla9DG",
+            "name": "n8n account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "catSeguro": {
+        "ai_tool": [
+          [
+            {
+              "node": "chamadaAPIAgente",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "lsSeguro": {
+        "ai_tool": [
+          [
+            {
+              "node": "chamadaAPIAgente",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "recebeMensagem": {
+        "main": [
+          [
+            {
+              "node": "leituraContextoAtual",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "leituraContextoAtual": {
+        "main": [
+          [
+            {
+              "node": "converteBinarioJSON",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "converteBinarioJSON": {
+        "main": [
+          [
+            {
+              "node": "preparaVarContexto",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "preparaVarContexto": {
+        "main": [
+          [
+            {
+              "node": "chamadaAPIAgente",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "openAI": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "chamadaAPIAgente",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "memoriaSimples": {
+        "ai_memory": [
+          [
+            {
+              "node": "chamadaAPIAgente",
+              "type": "ai_memory",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "executaQueryBanco": {
+        "ai_tool": [
+          [
+            {
+              "node": "chamadaAPIAgente",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "chamadaAPIAgente": {
+        "main": [
+          []
+        ]
+      }
+    },
+    "authors": "Novadata Desenvolvimento",
+    "name": null,
+    "description": null
+  }
+}
