@@ -1,0 +1,231 @@
+{
+  "updatedAt": "2026-02-23T08:48:36.832Z",
+  "createdAt": "2026-01-21T18:01:36.097Z",
+  "id": "L0LHpinrUYbJPt4O",
+  "name": "NEAT_WF__AutenticarNeat_v1.0",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.baseUrl + '/api/token/' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1824,
+        1392
+      ],
+      "id": "b11d20ac-aaee-4455-a193-a237176509d1",
+      "name": "fazerLoginNeat",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "k01bwPrSsjTnhphp",
+          "name": "Neat API Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cb165403-272d-4115-a54d-ba3555fdd225",
+              "name": "accessToken",
+              "value": "={{ $json.access }}",
+              "type": "string"
+            },
+            {
+              "id": "386035a8-7e29-404d-9959-c38acff219ec",
+              "name": "refreshToken",
+              "value": "={{ $json.refresh }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2032,
+        1392
+      ],
+      "id": "39953d05-310d-491b-b136-558704293788",
+      "name": "extrairAccessToken"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "baseUrl"
+            },
+            {
+              "name": "loginPath"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        1632,
+        1392
+      ],
+      "id": "ff615a72-82a8-47d4-a8e8-117f2aaacf77",
+      "name": "recebeChamada"
+    },
+    {
+      "parameters": {
+        "content": "## NEAT — AutenticarNeat\n---\nOwner: @gabi\nTrigger: WF — chamado por NEAT_WF__ColetarDadosProjeto\nSecurity: Header Auth — credencial \"Neat API Credentials\" (gerenciador do n8n)\nCriticality: P1\nDocs: —\n\n**O que faz:** Recebe baseUrl, faz POST na API Neat e retorna accessToken e refreshToken.\n\n**Dependências:** Credencial \"Neat API Credentials\" cadastrada no n8n (username/password da API Neat).\n\n⚠️ Nunca hardcodar credenciais neste nodo — usar sempre o gerenciador de Credentials do n8n.",
+        "height": 340,
+        "width": 520,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        1008
+      ],
+      "id": "1b36899c-4d98-4b28-89fa-a422c7a36674",
+      "name": "Sticky Note Header"
+    }
+  ],
+  "connections": {
+    "fazerLoginNeat": {
+      "main": [
+        [
+          {
+            "node": "extrairAccessToken",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "recebeChamada": {
+      "main": [
+        [
+          {
+            "node": "fazerLoginNeat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "recebeChamada": [
+      {
+        "json": {
+          "baseUrl": "https://hub.novadata.com.br",
+          "loginPath": "/login/"
+        }
+      }
+    ]
+  },
+  "versionId": "b0f8c036-0a34-4d8d-b59b-0a01946d9d33",
+  "activeVersionId": null,
+  "versionCounter": 6,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-01-21T18:01:36.097Z",
+      "createdAt": "2026-01-21T18:01:36.097Z",
+      "role": "workflow:owner",
+      "workflowId": "L0LHpinrUYbJPt4O",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T15:11:41.884Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-02-23T08:36:09.613Z",
+      "createdAt": "2026-02-23T08:36:09.613Z",
+      "id": "0UvOY44QcPeN6jQM",
+      "name": "ativo"
+    },
+    {
+      "updatedAt": "2026-02-23T08:36:09.630Z",
+      "createdAt": "2026-02-23T08:36:09.630Z",
+      "id": "TtCooynilFvUCkqc",
+      "name": "neat"
+    },
+    {
+      "updatedAt": "2026-02-23T08:36:09.630Z",
+      "createdAt": "2026-02-23T08:36:09.630Z",
+      "id": "I0luQNtQYJb5RLWn",
+      "name": "P1"
+    },
+    {
+      "updatedAt": "2026-02-23T08:36:09.635Z",
+      "createdAt": "2026-02-23T08:36:09.635Z",
+      "id": "mR0ZFWUDA13aNKau",
+      "name": "v1.0"
+    }
+  ],
+  "activeVersion": null
+}
