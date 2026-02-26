@@ -1,0 +1,386 @@
+{
+  "updatedAt": "2025-11-03T14:43:45.422Z",
+  "createdAt": "2025-11-03T14:39:20.104Z",
+  "id": "sr37esZSnDre7Llm",
+  "name": "UNI_Schedule_Notif_emissores_fgc_generate_v2",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -384,
+        160
+      ],
+      "id": "a428a55a-24ed-40b2-8bab-ee18c8cd76dd",
+      "name": "each hour"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "PlS62KJilKsPGxO2",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/PlS62KJilKsPGxO2",
+          "cachedResultName": "UNI_Workflow_Util_fetch_sess_v2"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "baseUrl": "https://hub.unifinance.com.br/",
+            "loginPath": "login/",
+            "csrfFieldName": "csrftoken"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "baseUrl",
+              "displayName": "baseUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "loginPath",
+              "displayName": "loginPath",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "csrfFieldName",
+              "displayName": "csrfFieldName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -160,
+        160
+      ],
+      "id": "0cab6a87-6e1b-4eca-a497-2860cc721006",
+      "name": "get sess"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "results",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        288,
+        160
+      ],
+      "id": "d799649d-078a-48a3-ac8a-398719578b29",
+      "name": "pf array"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "247b3e4b-df59-41e2-abda-e5d3c7ee31d8",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "=todos",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "d157fc03-db4b-4d1c-80c4-b754a5d30e46",
+              "leftValue": "={{ $json.emissores_fora_fgc_geral }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        512,
+        160
+      ],
+      "id": "46cc5b3a-c68f-4936-ad9e-7084ec15ec51",
+      "name": "status true/emissores not null"
+    },
+    {
+      "parameters": {
+        "url": "https://hub.unifinance.com.br/api/clientepf/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Referer",
+              "value": "={{ $('get sess').item.json.baseUrl }}/"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Cookie",
+              "value": "=csrftoken={{ $('get sess').item.json.csrfCookie }}; sessionid={{ $('get sess').item.json.sessionId }}"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "responseContainsNextURL",
+              "nextURL": "={{ $response.body.next }}",
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{$response.body.next==null}}"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        64,
+        160
+      ],
+      "id": "eff79a9b-a606-42a7-a179-ff15eb0fb3da",
+      "name": "fetch clientes pf"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "binaryPropertyName": "emissores_fora_fgc_pf",
+        "options": {
+          "fileName": "emissores_fora_fgc_pf"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        736,
+        160
+      ],
+      "id": "b0f8656d-9cc1-428d-af73-e2a81ac096f8",
+      "name": "pf emissores binary"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/data/files/uni/notifs/input/{{$('pf emissores binary').item.binary.emissores_fora_fgc_pf.fileName}}.{{$('pf emissores binary').item.binary.emissores_fora_fgc_pf.fileExtension}}",
+        "dataPropertyName": "emissores_fora_fgc_pf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        960,
+        160
+      ],
+      "id": "0acb8062-1d82-4d92-8734-eedf46ab1c15",
+      "name": "save binary in notif/input"
+    },
+    {
+      "parameters": {
+        "command": "python /data/repos/uni/unifinance_notificacoes/cli_gatilhos.py emissores_fora_fgc_pf /data/files/uni/notifs/input/emissores_fora_fgc_pf.json --saida /data/files/uni/notifs/output/ -f json\n"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        160
+      ],
+      "id": "1b2e4a85-3af8-4d58-a518-fec095d4af50",
+      "name": "roda gatilho emissores_fora_fgc_pf"
+    }
+  ],
+  "connections": {
+    "each hour": {
+      "main": [
+        [
+          {
+            "node": "get sess",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get sess": {
+      "main": [
+        [
+          {
+            "node": "fetch clientes pf",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "pf array": {
+      "main": [
+        [
+          {
+            "node": "status true/emissores not null",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "status true/emissores not null": {
+      "main": [
+        [
+          {
+            "node": "pf emissores binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fetch clientes pf": {
+      "main": [
+        [
+          {
+            "node": "pf array",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "pf emissores binary": {
+      "main": [
+        [
+          {
+            "node": "save binary in notif/input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "save binary in notif/input": {
+      "main": [
+        [
+          {
+            "node": "roda gatilho emissores_fora_fgc_pf",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "b4ad8375-d37d-4f37-8d75-56c589738e8a",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-11-03T14:39:20.104Z",
+      "createdAt": "2025-11-03T14:39:20.104Z",
+      "role": "workflow:owner",
+      "workflowId": "sr37esZSnDre7Llm",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T15:11:41.884Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
