@@ -1,0 +1,698 @@
+{
+  "updatedAt": "2026-01-21T18:00:34.247Z",
+  "createdAt": "2026-01-21T17:51:42.323Z",
+  "id": "DduKIlf5eTu3sgoC",
+  "name": "WF__2_GeraRelatorioIA",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "dados_projeto",
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        176,
+        -112
+      ],
+      "id": "e572bff0-bed9-4bca-9208-e2eefb96b17c",
+      "name": "receberDadosWF1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n// NÓ: processarAgruparCards (VERSÃO 2.0)\n// Compatível com novo formato do WF1 + Sprints\n// ============================================\n\nconst inputWF1 = $json.dados_projeto || $json;\n\nconsole.log('=== WF__2 INICIADO (v2.0) ===');\n\n// Usa formato novo do WF1\nconst todosCards = inputWF1.cards || [];\nconst fases = inputWF1.fases || {};\nconst projetoInfo = inputWF1.projeto_info || { id: 0, nome: 'Projeto Desconhecido' };\nconst resumoWF1 = inputWF1.resumo || {};\nconst sprintsIdentificadas = inputWF1.sprints_identificadas || [];\n\nconsole.log(`Projeto: ${projetoInfo.nome} (ID: ${projetoInfo.id})`);\nconsole.log(`Total de cards: ${todosCards.length}`);\nconsole.log(`Sprints identificadas: ${sprintsIdentificadas.length}`);\n\n// ============================================\n// CONFIGURAÇÕES\n// ============================================\nconst agora = new Date();\nconst DIAS_ANALISE = 200;\nconst DIAS_RECENTE = 14;\nconst DIAS_ALERTA = 14;\n\nconst inicioAnalise = new Date(agora.getTime() - DIAS_ANALISE * 24 * 60 * 60 * 1000);\nconst inicioRecente = new Date(agora.getTime() - DIAS_RECENTE * 24 * 60 * 60 * 1000);\n\n// ============================================\n// FUNÇÕES AUXILIARES\n// ============================================\nfunction isDataRecente(dataStr, diasAtras = DIAS_RECENTE) {\n  if (!dataStr) return false;\n  const data = new Date(dataStr);\n  const limite = new Date(agora.getTime() - diasAtras * 24 * 60 * 60 * 1000);\n  return data >= limite && data <= agora;\n}\n\nfunction getDataEntradaFase(card, faseBuscada) {\n  if (!card.logs_fase) return null;\n  const log = card.logs_fase.find(l => \n    l.para && l.para.toLowerCase().includes(faseBuscada.toLowerCase())\n  );\n  return log ? log.data : null;\n}\n\nfunction formatarHoras(horas) {\n  if (!horas || horas === 0) return '0h';\n  if (horas < 1) return `${Math.round(horas * 60)}min`;\n  return `${Math.round(horas)}h`;\n}\n\n// CORRIGIDO: Usa tempo_trabalhado_horas (real) em vez de tempo_por_fase\nfunction calcularTempoTotal(card) {\n  if (card.tempo_trabalhado_horas && card.tempo_trabalhado_horas > 0) {\n    return card.tempo_trabalhado_horas;\n  }\n  if (card.tempo_por_fase) {\n    return Object.values(card.tempo_por_fase).reduce((a, b) => a + b, 0);\n  }\n  return 0;\n}\n\n// ============================================\n// CATEGORIZAÇÃO DOS CARDS\n// ============================================\n\nconst concluidos = todosCards.filter(c => {\n  if (!c.fase_atual_nome) return false;\n  const fase = c.fase_atual_nome.toLowerCase();\n  const isConcluido = fase.includes('conclu');\n  \n  if (!isConcluido) return false;\n  \n  const dataConclusao = getDataEntradaFase(c, 'conclu');\n  return dataConclusao && new Date(dataConclusao) >= inicioAnalise;\n});\n\nconst concluidosRecentes = concluidos.filter(c => {\n  const dataConclusao = getDataEntradaFase(c, 'conclu');\n  return isDataRecente(dataConclusao, DIAS_RECENTE);\n});\n\nconst emAndamento = todosCards.filter(c => \n  c.fase_atual_nome && c.fase_atual_nome.toLowerCase().includes('andamento')\n);\n\nconst emAndamentoAlerta = emAndamento.filter(c => \n  c.dias_na_fase_atual && c.dias_na_fase_atual >= DIAS_ALERTA\n);\n\nconst emTestes = todosCards.filter(c => \n  c.fase_atual_nome && c.fase_atual_nome.toLowerCase().includes('teste')\n);\n\nconst pendentes = todosCards.filter(c => {\n  if (!c.fase_atual_nome) return false;\n  const fase = c.fase_atual_nome.toLowerCase();\n  return fase.includes('sprint') || fase.includes('backlog') || fase.includes('fila');\n});\n\nconst outros = todosCards.filter(c => {\n  if (!c.fase_atual_nome) return false;\n  const fase = c.fase_atual_nome.toLowerCase();\n  \n  return !fase.includes('conclu') && \n         !fase.includes('andamento') && \n         !fase.includes('teste') &&\n         !fase.includes('sprint') && \n         !fase.includes('backlog') && \n         !fase.includes('fila');\n});\n\nconst cardsTravados = todosCards.filter(c => \n  c.dias_na_fase_atual && c.dias_na_fase_atual >= 30\n);\n\n// ============================================\n// AGRUPAMENTO POR SPRINT\n// ============================================\nconst cardsPorSprint = {};\n\nsprintsIdentificadas.forEach(sprint => {\n  cardsPorSprint[sprint.nome] = {\n    info: sprint,\n    cards: todosCards.filter(c => c.sprint_identificada === sprint.nome),\n    concluidos: [],\n    em_andamento: [],\n    em_testes: [],\n    pendentes: [],\n    outros: []\n  };\n  \n  cardsPorSprint[sprint.nome].cards.forEach(card => {\n    const fase = (card.fase_atual_nome || '').toLowerCase();\n    \n    if (fase.includes('conclu')) {\n      cardsPorSprint[sprint.nome].concluidos.push(card);\n    } else if (fase.includes('andamento')) {\n      cardsPorSprint[sprint.nome].em_andamento.push(card);\n    } else if (fase.includes('teste')) {\n      cardsPorSprint[sprint.nome].em_testes.push(card);\n    } else if (fase.includes('sprint') || fase.includes('backlog') || fase.includes('fila')) {\n      cardsPorSprint[sprint.nome].pendentes.push(card);\n    } else {\n      cardsPorSprint[sprint.nome].outros.push(card);\n    }\n  });\n});\n\nconst cardsSemSprint = todosCards.filter(c => !c.sprint_identificada);\n\nconsole.log('📊 CATEGORIZAÇÃO:');\nconsole.log(`   Concluídos (${DIAS_ANALISE} dias): ${concluidos.length}`);\nconsole.log(`   Concluídos recentes (${DIAS_RECENTE} dias): ${concluidosRecentes.length}`);\nconsole.log(`   Em Andamento: ${emAndamento.length} (${emAndamentoAlerta.length} com alerta)`);\nconsole.log(`   Em Testes: ${emTestes.length}`);\nconsole.log(`   Pendentes: ${pendentes.length}`);\nconsole.log(`   Outros: ${outros.length}`);\nconsole.log(`   Travados (>30 dias): ${cardsTravados.length}`);\nconsole.log(`   Sem sprint: ${cardsSemSprint.length}`);\n\n// ============================================\n// MOVIMENTAÇÕES RECENTES\n// ============================================\nconst movimentacoesRecentes = [];\n\ntodosCards.forEach(card => {\n  if (!card.logs_fase) return;\n  \n  card.logs_fase.forEach(log => {\n    if (isDataRecente(log.data, DIAS_RECENTE)) {\n      movimentacoesRecentes.push({\n        card_id: card.id,\n        card_titulo: card.titulo,\n        card_descricao: card.descricao_limpa,\n        de: log.de,\n        para: log.para,\n        data: log.data,\n        usuario: log.usuario,\n        sprint: card.sprint_identificada\n      });\n    }\n  });\n});\n\nmovimentacoesRecentes.sort((a, b) => new Date(b.data) - new Date(a.data));\n\nconsole.log(`📅 Movimentações nos últimos ${DIAS_RECENTE} dias: ${movimentacoesRecentes.length}`);\n\n// ============================================\n// MÉTRICAS\n// ============================================\nconst totalHorasConcluidas = concluidos.reduce((sum, c) => sum + calcularTempoTotal(c), 0);\nconst totalHorasRecentesConcluidas = concluidosRecentes.reduce((sum, c) => sum + calcularTempoTotal(c), 0);\nconst totalPontosConcluidos = concluidos.reduce((sum, c) => sum + (c.pontos_totais || 0), 0);\n\n// ============================================\n// OUTPUT\n// ============================================\nconst resultado = {\n  projeto_info: projetoInfo,\n  fases: fases,\n  \n  periodo_analise: {\n    inicio: inicioAnalise.toISOString().split('T')[0],\n    fim: agora.toISOString().split('T')[0],\n    dias: DIAS_ANALISE,\n    dias_recente: DIAS_RECENTE\n  },\n  \n  sprints: {\n    total: sprintsIdentificadas.length,\n    lista: sprintsIdentificadas,\n    por_sprint: cardsPorSprint\n  },\n  \n  analise: {\n    concluidos: {\n      total: concluidos.length,\n      recentes: concluidosRecentes.length,\n      cards: concluidos.map(c => ({\n        id: c.id,\n        titulo: c.titulo,\n        descricao: c.descricao_limpa ? c.descricao_limpa.substring(0, 300) : '',\n        tempo_total_horas: Math.round(calcularTempoTotal(c)),\n        tempo_formatado: formatarHoras(calcularTempoTotal(c)),\n        pontos: c.pontos_totais,\n        responsaveis: c.responsaveis || [],\n        sprint: c.sprint_identificada,\n        data_conclusao: getDataEntradaFase(c, 'conclu'),\n        is_recente: concluidosRecentes.some(cr => cr.id === c.id)\n      }))\n    },\n    \n    em_andamento: {\n      total: emAndamento.length,\n      com_alerta: emAndamentoAlerta.length,\n      cards: emAndamento.map(c => ({\n        id: c.id,\n        titulo: c.titulo,\n        descricao: c.descricao_limpa ? c.descricao_limpa.substring(0, 200) : '',\n        tempo_total_horas: Math.round(calcularTempoTotal(c)),\n        dias_na_fase: c.dias_na_fase_atual,\n        alerta: c.dias_na_fase_atual >= DIAS_ALERTA,\n        responsaveis: c.responsaveis || [],\n        sprint: c.sprint_identificada\n      }))\n    },\n    \n    em_testes: {\n      total: emTestes.length,\n      cards: emTestes.map(c => ({\n        id: c.id,\n        titulo: c.titulo,\n        descricao: c.descricao_limpa ? c.descricao_limpa.substring(0, 200) : '',\n        tempo_total_horas: Math.round(calcularTempoTotal(c)),\n        dias_na_fase: c.dias_na_fase_atual,\n        responsaveis: c.responsaveis || [],\n        sprint: c.sprint_identificada\n      }))\n    },\n    \n    pendentes: {\n      total: pendentes.length,\n      cards: pendentes.map(c => ({\n        id: c.id,\n        titulo: c.titulo,\n        fase: c.fase_atual_nome,\n        sprint: c.sprint_identificada\n      }))\n    },\n    \n    outros: {\n      total: outros.length,\n      cards: outros.map(c => ({\n        id: c.id,\n        titulo: c.titulo,\n        fase: c.fase_atual_nome,\n        dias_na_fase: c.dias_na_fase_atual,\n        sprint: c.sprint_identificada\n      }))\n    },\n    \n    alertas: {\n      cards_travados: cardsTravados.map(c => ({\n        id: c.id,\n        titulo: c.titulo,\n        fase: c.fase_atual_nome,\n        dias_parado: c.dias_na_fase_atual,\n        sprint: c.sprint_identificada\n      })),\n      cards_em_andamento_alerta: emAndamentoAlerta.map(c => ({\n        id: c.id,\n        titulo: c.titulo,\n        dias_na_fase: c.dias_na_fase_atual,\n        sprint: c.sprint_identificada\n      }))\n    },\n    \n    movimentacoes_recentes: {\n      total: movimentacoesRecentes.length,\n      lista: movimentacoesRecentes.slice(0, 50)\n    },\n    \n    metricas: {\n      total_horas_concluidas: Math.round(totalHorasConcluidas),\n      total_horas_recentes: Math.round(totalHorasRecentesConcluidas),\n      total_pontos_concluidos: totalPontosConcluidos,\n      cards_sem_sprint: cardsSemSprint.length,\n      taxa_progresso: concluidos.length > 0 && (concluidos.length + pendentes.length) > 0\n        ? ((concluidos.length / (concluidos.length + pendentes.length)) * 100).toFixed(1) + '%'\n        : 'N/A'\n    }\n  }\n};\n\nconsole.log('');\nconsole.log('✅ Processamento concluído');\nconsole.log(`📊 Métricas: ${resultado.analise.metricas.total_horas_concluidas}h total, ${resultado.analise.metricas.total_horas_recentes}h recentes`);\n\nreturn [{ json: resultado }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        -112
+      ],
+      "id": "8242f258-342a-431b-8d28-6e24a9007d81",
+      "name": "processarAgruparCards"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n// NÓ: montarPromptGroq (VERSÃO 2.1)\n// Ajuste: Usa título quando descrição vazia\n// Ajuste: Força descrição individual por card\n// ============================================\n\nconst dados = $json;\nconst analise = dados.analise;\nconst projetoInfo = dados.projeto_info;\nconst periodo = dados.periodo_analise;\nconst sprints = dados.sprints;\n\nconsole.log('=== GERANDO PROMPT PARA IA (v2.1) ===');\n\n// ============================================\n// FUNÇÕES AUXILIARES\n// ============================================\nfunction formatarData(dataStr) {\n  if (!dataStr) return 'N/A';\n  const data = new Date(dataStr);\n  return data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });\n}\n\n// 🆕 MELHORIA: Usa título como fallback quando descrição vazia\nfunction obterDescricaoCard(card) {\n  // Se tem descrição, usa ela\n  if (card.descricao_limpa && card.descricao_limpa.trim() !== '') {\n    const desc = card.descricao_limpa.trim();\n    return desc.length > 150 ? desc.substring(0, 150) + '...' : desc;\n  }\n  \n  // Se não tem descrição, interpreta o título\n  if (card.titulo) {\n    // Remove prefixos comuns como [DJANGO], [FRONT], etc\n    let titulo = card.titulo.replace(/^\\[.*?\\]\\s*-?\\s*/i, '').trim();\n    return `tarefa de ${titulo.toLowerCase()}`;\n  }\n  \n  return 'sem descrição disponível';\n}\n\n// 🆕 MELHORIA: Formata tempo de forma mais clara\nfunction formatarTempo(horas) {\n  if (!horas || horas === 0) return null;\n  if (horas < 1) return `${Math.round(horas * 60)} minutos`;\n  if (horas < 24) return `${Math.round(horas)}h`;\n  const dias = Math.floor(horas / 24);\n  const horasRestantes = Math.round(horas % 24);\n  return `${dias} dias e ${horasRestantes}h (~${Math.round(horas)}h total)`;\n}\n\n// 🆕 MELHORIA: Classifica complexidade baseado em horas ou pontos\nfunction classificarComplexidade(card) {\n  const horas = card.tempo_por_fase ? Object.values(card.tempo_por_fase).reduce((a,b) => a+b, 0) : 0;\n  const pontos = card.pontos_totais || 0;\n  \n  if (pontos >= 3 || horas >= 100) return 'alta complexidade';\n  if (pontos >= 2 || horas >= 40) return 'média complexidade';\n  if (pontos >= 1 || horas >= 10) return 'baixa complexidade';\n  return null;\n}\n\n// ============================================\n// MONTA CONTEXTO POR SPRINT (MELHORADO)\n// ============================================\nlet textoSprints = '';\n\nif (sprints.lista && sprints.lista.length > 0) {\n  textoSprints = sprints.lista.map(sprint => {\n    const dadosSprint = sprints.por_sprint[sprint.nome];\n    if (!dadosSprint || dadosSprint.cards.length === 0) return '';\n    \n    const concluidos = dadosSprint.concluidos;\n    const emAndamento = dadosSprint.em_andamento;\n    const emTestes = dadosSprint.em_testes;\n    const pendentes = dadosSprint.pendentes;\n    \n    let textoSprint = `\\n### ${sprint.nome} (${sprint.total} cards)\\n`;\n    textoSprint += `Período: ${formatarData(sprint.periodo.inicio)} a ${formatarData(sprint.periodo.fim)}\\n\\n`;\n    \n    // 🆕 Cards concluídos - DETALHAMENTO INDIVIDUAL\n    if (concluidos.length > 0) {\n      textoSprint += `**CONCLUÍDOS (${concluidos.length}):**\\n`;\n      concluidos.forEach(c => {\n        const tempo = c.tempo_por_fase ? Math.round(Object.values(c.tempo_por_fase).reduce((a,b) => a+b, 0)) : 0;\n        const complexidade = classificarComplexidade(c);\n        \n        textoSprint += `• Card #${c.id}: \"${c.titulo}\"\\n`;\n        textoSprint += `  → O QUE FAZ: ${obterDescricaoCard(c)}\\n`;\n        textoSprint += `  → TEMPO GASTO: ${tempo}h${complexidade ? ` (${complexidade})` : ''}\\n`;\n        textoSprint += `  → PONTOS: ${c.pontos_totais || 0}\\n`;\n        textoSprint += `  → RESPONSÁVEIS: ${(c.responsaveis || []).join(', ') || 'Não atribuído'}\\n\\n`;\n      });\n    }\n    \n    // 🆕 Cards em andamento - DETALHAMENTO INDIVIDUAL\n    if (emAndamento.length > 0) {\n      textoSprint += `**EM ANDAMENTO (${emAndamento.length}):**\\n`;\n      emAndamento.forEach(c => {\n        const tempo = c.tempo_por_fase ? Math.round(Object.values(c.tempo_por_fase).reduce((a,b) => a+b, 0)) : 0;\n        \n        textoSprint += `• Card #${c.id}: \"${c.titulo}\"\\n`;\n        textoSprint += `  → O QUE FAZ: ${obterDescricaoCard(c)}\\n`;\n        textoSprint += `  → TEMPO JÁ GASTO: ${tempo}h\\n`;\n        textoSprint += `  → DIAS EM ANDAMENTO: ${c.dias_na_fase_atual || '?'} dias\\n`;\n        textoSprint += `  → RESPONSÁVEIS: ${(c.responsaveis || []).join(', ') || 'Não atribuído'}\\n\\n`;\n      });\n    }\n    \n    // 🆕 Cards em testes - DETALHAMENTO INDIVIDUAL\n    if (emTestes.length > 0) {\n      textoSprint += `**EM TESTES/AGUARDANDO VALIDAÇÃO (${emTestes.length}):**\\n`;\n      emTestes.forEach(c => {\n        const tempo = c.tempo_por_fase ? Math.round(Object.values(c.tempo_por_fase).reduce((a,b) => a+b, 0)) : 0;\n        \n        textoSprint += `• Card #${c.id}: \"${c.titulo}\"\\n`;\n        textoSprint += `  → O QUE FAZ: ${obterDescricaoCard(c)}\\n`;\n        textoSprint += `  → TEMPO TOTAL: ${tempo}h\\n`;\n        textoSprint += `  → DIAS EM TESTES: ${c.dias_na_fase_atual || '?'} dias aguardando validação\\n\\n`;\n      });\n    }\n    \n    // Cards pendentes\n    if (pendentes.length > 0) {\n      textoSprint += `**PENDENTES/NÃO INICIADOS (${pendentes.length}):**\\n`;\n      pendentes.forEach(c => {\n        textoSprint += `• Card #${c.id}: \"${c.titulo}\" → ${obterDescricaoCard(c)}\\n`;\n      });\n      textoSprint += '\\n';\n    }\n    \n    return textoSprint;\n  }).filter(t => t !== '').join('\\n---\\n');\n} else {\n  textoSprints = 'Nenhuma sprint identificada no período.';\n}\n\n// ============================================\n// CARDS SEM SPRINT\n// ============================================\nlet textoSemSprint = '';\nconst cardsSemSprint = analise.outros.cards.filter(c => !c.sprint);\nconst backlogSemSprint = analise.pendentes.cards.filter(c => !c.sprint);\n\nif (cardsSemSprint.length > 0 || backlogSemSprint.length > 0) {\n  textoSemSprint = '\\n### Cards fora de Sprint\\n';\n  \n  if (backlogSemSprint.length > 0) {\n    textoSemSprint += `**No Backlog (${backlogSemSprint.length}):**\\n`;\n    backlogSemSprint.slice(0, 10).forEach(c => {\n      textoSemSprint += `• Card #${c.id}: \"${c.titulo}\"\\n`;\n    });\n    if (backlogSemSprint.length > 10) {\n      textoSemSprint += `... e mais ${backlogSemSprint.length - 10} cards\\n`;\n    }\n    textoSemSprint += '\\n';\n  }\n  \n  if (cardsSemSprint.length > 0) {\n    textoSemSprint += `**Em outras fases (${cardsSemSprint.length}):**\\n`;\n    cardsSemSprint.forEach(c => {\n      textoSemSprint += `• Card #${c.id}: \"${c.titulo}\" - ${c.fase} (há ${c.dias_na_fase || '?'} dias)\\n`;\n    });\n  }\n}\n\n// ============================================\n// ALERTAS\n// ============================================\nlet textoAlertas = '';\n\nif (analise.alertas.cards_travados.length > 0) {\n  textoAlertas += '**⚠️ Cards travados (>30 dias sem movimentação):**\\n';\n  analise.alertas.cards_travados.forEach(c => {\n    textoAlertas += `• Card #${c.id}: \"${c.titulo}\" - Parado há ${c.dias_parado} dias em \"${c.fase}\"\\n`;\n  });\n  textoAlertas += '\\n';\n}\n\nif (analise.alertas.cards_em_andamento_alerta.length > 0) {\n  textoAlertas += '**⚠️ Cards em andamento há muito tempo (>14 dias):**\\n';\n  analise.alertas.cards_em_andamento_alerta.forEach(c => {\n    textoAlertas += `• Card #${c.id}: \"${c.titulo}\" - Há ${c.dias_na_fase} dias em andamento\\n`;\n  });\n}\n\nif (!textoAlertas) {\n  textoAlertas = 'Nenhum alerta crítico identificado.';\n}\n\n// ============================================\n// MOVIMENTAÇÕES RECENTES\n// ============================================\nlet textoMovimentacoes = '';\n\nif (analise.movimentacoes_recentes && analise.movimentacoes_recentes.total > 0) {\n  const mov = analise.movimentacoes_recentes.lista.slice(0, 15);\n  textoMovimentacoes = `**Últimas ${mov.length} movimentações (${periodo.dias_recente} dias):**\\n`;\n  mov.forEach(m => {\n    textoMovimentacoes += `• ${formatarData(m.data)}: Card #${m.card_id} - ${m.de} → ${m.para}\\n`;\n  });\n} else {\n  textoMovimentacoes = 'Nenhuma movimentação nos últimos ' + periodo.dias_recente + ' dias.';\n}\n\n// ============================================\n// PROMPT PRINCIPAL (MELHORADO)\n// ============================================\nconst prompt = `Você é um analista de projetos sênior. Gere um **acompanhamento semanal para coordenadores** baseado nos dados do Neat.\n\n---\n\n## PROJETO: ${projetoInfo.nome} (ID: ${projetoInfo.id})\n**Período:** ${periodo.inicio} a ${periodo.fim}\n**Total de cards:** ${analise.concluidos.total + analise.em_andamento.total + analise.em_testes.total + analise.pendentes.total + analise.outros.total}\n**Sprints:** ${sprints.total}\n\n---\n\n## DADOS POR SPRINT\n\n${textoSprints}\n\n${textoSemSprint}\n\n---\n\n## ALERTAS\n\n${textoAlertas}\n\n---\n\n## MOVIMENTAÇÕES RECENTES\n\n${textoMovimentacoes}\n\n---\n\n## MÉTRICAS\n\n- Horas em cards concluídos: ${analise.metricas.total_horas_concluidas}h\n- Horas recentes (${periodo.dias_recente} dias): ${analise.metricas.total_horas_recentes}h\n- Pontos concluídos: ${analise.metricas.total_pontos_concluidos}\n- Cards em testes: ${analise.em_testes.total}\n- Taxa de progresso: ${analise.metricas.taxa_progresso}\n\n---\n\n## 🎯 INSTRUÇÕES CRÍTICAS - LEIA COM ATENÇÃO\n\n### FORMATO DO RELATÓRIO:\n\n**1. RESUMO DA SEMANA** (2-3 frases)\n\n**2. PROGRESSO POR SPRINT**\n\n### ⚠️ REGRA OBRIGATÓRIA: DESCREVA CADA CARD INDIVIDUALMENTE\n\nPara CADA card importante, você DEVE escrever no seguinte formato:\n\n✅ **EXEMPLO CORRETO:**\n\"O card #12912, que realiza a **criação do projeto e app base** do Django, consumiu **319h de desenvolvimento** e está em testes há 127 dias aguardando validação. Esse é um card de **alta complexidade** que estabelece a fundação do sistema.\"\n\n\"O card #12931, responsável pelo **Release 2 do projeto**, já acumulou **3.358h** e permanece em andamento há 104 dias. Os cards #12926 e #12927, que implementam os **endpoints, views, serializers e permissões da API-PROJETOS**, estão em testes há 78 dias após consumirem cerca de **647h cada**.\"\n\n❌ **EXEMPLO ERRADO (NÃO FAÇA ASSIM):**\n\"Os cards #12912, #12910, #12913 permanecem em testes. Esses cards abordam a criação do projeto.\"\n\n### INFORMAÇÕES OBRIGATÓRIAS POR CARD:\n1. **Número do card** (#ID)\n2. **O que o card faz** (use \"O QUE FAZ\" dos dados)\n3. **Tempo gasto em horas** (use \"TEMPO\" dos dados)\n4. **Situação atual** (dias na fase, aguardando validação, etc)\n5. **Complexidade** quando relevante (alta/média/baixa)\n\n**3. PONTOS DE ATENÇÃO**\n- Cards travados ou parados há muito tempo\n- Cards em testes aguardando validação do cliente\n- Riscos identificados\n\n**4. CARDS EM TESTES**\n- IMPORTANTE: Destaque cards aguardando validação\n- Mencione há quantos dias estão parados\n- Sugira ação (cobrar validação, revisar escopo, etc)\n\n**5. PRÓXIMOS PASSOS**\n- Recomendações objetivas\n- Prioridades sugeridas\n\n---\n\n## DIRETRIZES FINAIS:\n\n- Use português brasileiro\n- Seja ESPECÍFICO - mencione números, horas, dias\n- NUNCA agrupe cards sem descrever o que cada um faz\n- Se não houver descrição, use o título para explicar\n- Responda APENAS com o relatório formatado`;\n\nconsole.log(`✅ Prompt v2.1 gerado com ${prompt.length} caracteres`);\n\nreturn [{\n  json: {\n    prompt: prompt,\n    analise: analise,\n    projeto_info: projetoInfo,\n    sprints: sprints\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        -112
+      ],
+      "id": "fda327fd-babf-44dc-9434-5b75f3a911e2",
+      "name": "montarPromptGroq"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Recebe resposta da IA e dados da análise\nconst respostaIA = $input.first().json;\nconst narrativaIA = respostaIA.output || respostaIA.choices?.[0]?.message?.content || respostaIA.text || 'Relatório não gerado';\n\n// Pega dados da análise (do nó anterior via referência)\nconst analise = $('montarPromptGroq').item.json.analise;\nconst projetoInfo = $('montarPromptGroq').item.json.projeto_info;\n\nconsole.log('=== GERANDO HTML DO RELATÓRIO ===');\nconsole.log(`Narrativa da IA: ${narrativaIA.length} caracteres`);\n\n// Formata a data\nconst dataAtual = new Date().toLocaleDateString('pt-BR', {\n  day: '2-digit',\n  month: 'long',\n  year: 'numeric'\n});\n\n// Template HTML profissional\nconst htmlRelatorio = `\n<!DOCTYPE html>\n<html lang=\"pt-BR\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Relatório Semanal - ${projetoInfo.nome}</title>\n    <style>\n        body {\n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n            line-height: 1.6;\n            color: #333;\n            max-width: 800px;\n            margin: 0 auto;\n            padding: 20px;\n            background-color: #f5f5f5;\n        }\n        .container {\n            background-color: white;\n            padding: 40px;\n            border-radius: 8px;\n            box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n        }\n        .header {\n            border-bottom: 3px solid #2563eb;\n            padding-bottom: 20px;\n            margin-bottom: 30px;\n        }\n        .header h1 {\n            color: #1e40af;\n            margin: 0 0 10px 0;\n            font-size: 28px;\n        }\n        .header .meta {\n            color: #64748b;\n            font-size: 14px;\n        }\n        .narrativa {\n            background-color: #f8fafc;\n            padding: 25px;\n            border-left: 4px solid #2563eb;\n            margin: 30px 0;\n            white-space: pre-wrap;\n            line-height: 1.8;\n        }\n        .metricas {\n            display: grid;\n            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));\n            gap: 20px;\n            margin: 30px 0;\n        }\n        .metrica-card {\n            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n            color: white;\n            padding: 20px;\n            border-radius: 8px;\n            text-align: center;\n        }\n        .metrica-card .valor {\n            font-size: 32px;\n            font-weight: bold;\n            margin: 10px 0;\n        }\n        .metrica-card .label {\n            font-size: 14px;\n            opacity: 0.9;\n        }\n        table {\n            width: 100%;\n            border-collapse: collapse;\n            margin: 20px 0;\n        }\n        th {\n            background-color: #2563eb;\n            color: white;\n            padding: 12px;\n            text-align: left;\n            font-weight: 600;\n        }\n        td {\n            padding: 12px;\n            border-bottom: 1px solid #e2e8f0;\n        }\n        tr:hover {\n            background-color: #f8fafc;\n        }\n        .alerta {\n            background-color: #fef2f2;\n            border-left: 4px solid #ef4444;\n            padding: 12px;\n            margin: 10px 0;\n            border-radius: 4px;\n        }\n        .footer {\n            margin-top: 40px;\n            padding-top: 20px;\n            border-top: 1px solid #e2e8f0;\n            color: #64748b;\n            font-size: 12px;\n            text-align: center;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <h1>📊 Relatório Semanal</h1>\n            <div class=\"meta\">\n                <strong>Projeto:</strong> ${projetoInfo.nome} (ID: ${projetoInfo.id})<br>\n                <strong>Período:</strong> ${$('processarAgruparCards').item.json.periodo_analise.inicio} a ${$('processarAgruparCards').item.json.periodo_analise.fim}<br>\n                <strong>Gerado em:</strong> ${dataAtual}\n            </div>\n        </div>\n\n        <div class=\"metricas\">\n            <div class=\"metrica-card\">\n                <div class=\"label\">Cards Concluídos</div>\n                <div class=\"valor\">${analise.concluidos.total}</div>\n            </div>\n            <div class=\"metrica-card\">\n                <div class=\"label\">Em Andamento</div>\n                <div class=\"valor\">${analise.em_andamento.total}</div>\n            </div>\n            <div class=\"metrica-card\">\n                <div class=\"label\">Horas Trabalhadas</div>\n                <div class=\"valor\">${analise.metricas.total_horas_concluidas}h</div>\n            </div>\n            <div class=\"metrica-card\">\n                <div class=\"label\">Pontos Concluídos</div>\n                <div class=\"valor\">${analise.metricas.total_pontos_concluidos}</div>\n            </div>\n        </div>\n\n        ${analise.em_andamento.com_alerta > 0 ? `\n        <div class=\"alerta\">\n            ⚠️ <strong>Atenção:</strong> ${analise.em_andamento.com_alerta} card(s) em andamento há mais de 14 dias sem progresso.\n        </div>\n        ` : ''}\n\n        <div class=\"narrativa\">\n${narrativaIA}\n        </div>\n\n        ${analise.concluidos.total > 0 ? `\n        <h3>📋 Detalhes dos Cards Concluídos</h3>\n        <table>\n            <thead>\n                <tr>\n                    <th>ID</th>\n                    <th>Título</th>\n                    <th>Tempo (h)</th>\n                    <th>Pontos</th>\n                </tr>\n            </thead>\n            <tbody>\n                ${analise.concluidos.cards.map(c => `\n                <tr>\n                    <td>#${c.id}</td>\n                    <td>${c.titulo}</td>\n                    <td>${c.tempo_total_horas}h</td>\n                    <td>${c.pontos || 'N/A'}</td>\n                </tr>\n                `).join('')}\n            </tbody>\n        </table>\n        ` : ''}\n\n        ${analise.em_andamento.total > 0 ? `\n        <h3>🔄 Cards em Andamento</h3>\n        <table>\n            <thead>\n                <tr>\n                    <th>ID</th>\n                    <th>Título</th>\n                    <th>Dias na Fase</th>\n                    <th>Status</th>\n                </tr>\n            </thead>\n            <tbody>\n                ${analise.em_andamento.cards.map(c => `\n                <tr>\n                    <td>#${c.id}</td>\n                    <td>${c.titulo}</td>\n                    <td>${c.dias_na_fase}</td>\n                    <td>${c.alerta ? '⚠️ Alerta' : '✅ Normal'}</td>\n                </tr>\n                `).join('')}\n            </tbody>\n        </table>\n        ` : ''}\n\n        <div class=\"footer\">\n            Relatório gerado automaticamente pelo sistema de acompanhamento Neat.<br>\n            Para mais informações, acesse: <a href=\"https://hub.novadata.com.br\">hub.novadata.com.br</a>\n        </div>\n    </div>\n</body>\n</html>\n`;\n\nconsole.log('✅ HTML gerado com sucesso');\n\nreturn [{\n  json: {\n    html: htmlRelatorio,\n    assunto: `Relatório Semanal - ${projetoInfo.nome} - ${dataAtual}`,\n    projeto_nome: projetoInfo.nome,\n    total_concluidos: analise.concluidos.total\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        -112
+      ],
+      "id": "10ebc932-1581-4ae5-9a4e-4c5bb9d01709",
+      "name": "montarHTMLRelatorio"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=={{ $json.prompt }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        768,
+        -112
+      ],
+      "id": "80af6e93-2d39-4605-90dc-5b3e7b039087",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        704,
+        96
+      ],
+      "id": "620bd68b-cf9a-42b5-a0d5-14a2b79dafaa",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "JOZpLMsgA7BLAO6D",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "receberDadosWF1": {
+      "main": [
+        [
+          {
+            "node": "processarAgruparCards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "processarAgruparCards": {
+      "main": [
+        [
+          {
+            "node": "montarPromptGroq",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "montarPromptGroq": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "montarHTMLRelatorio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {
+    "receberDadosWF1": [
+      {
+        "json": {
+          "dados_projeto": {
+            "data": [
+              {
+                "id": 885786,
+                "chamado": 12910,
+                "dados_usuario": {
+                  "id": 105,
+                  "nome": "Everton Leite",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/105/resized/100/100/everton.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              },
+              {
+                "id": 885793,
+                "chamado": 12912,
+                "dados_usuario": {
+                  "id": 105,
+                  "nome": "Everton Leite",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/105/resized/100/100/everton.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              },
+              {
+                "id": 885801,
+                "chamado": 12913,
+                "dados_usuario": {
+                  "id": 105,
+                  "nome": "Everton Leite",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/105/resized/100/100/everton.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              },
+              {
+                "id": 926639,
+                "chamado": 12914,
+                "dados_usuario": {
+                  "id": 175,
+                  "nome": "Icaro Martins",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/175/resized/100/100/icaro2_fDtmBc7.png"
+                },
+                "logs_fase": [
+                  {
+                    "data": "2025-09-03T15:51:37.546254-03:00",
+                    "de": "Em Andamento",
+                    "para": "Em Testes",
+                    "usuario": "icaro.martins",
+                    "frase": "moveu o card de Em Andamento para Em Testes"
+                  }
+                ],
+                "tempo_por_fase": {
+                  "Em Testes": 3356.616675
+                },
+                "dias_na_fase_atual": 139,
+                "maior_tempo_fase": {
+                  "fase": "Em Testes",
+                  "horas": 3357
+                }
+              },
+              {
+                "id": 921243,
+                "chamado": 12915,
+                "dados_usuario": {
+                  "id": 120,
+                  "nome": "Daniel Portilho",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/120/resized/100/100/foto_trabalho_barba.png"
+                },
+                "logs_fase": [
+                  {
+                    "data": "2025-09-02T10:44:04.238620-03:00",
+                    "de": "Sprint Atual",
+                    "para": "Em Andamento",
+                    "usuario": "daniel.portilho",
+                    "frase": "moveu o card de Sprint Atual para Em Andamento"
+                  }
+                ],
+                "tempo_por_fase": {
+                  "Em Andamento": 3385.7425938888887
+                },
+                "dias_na_fase_atual": 141,
+                "maior_tempo_fase": {
+                  "fase": "Em Andamento",
+                  "horas": 3386
+                }
+              },
+              {
+                "id": 926733,
+                "chamado": 12916,
+                "dados_usuario": {
+                  "id": 175,
+                  "nome": "Icaro Martins",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/175/resized/100/100/icaro2_fDtmBc7.png"
+                },
+                "logs_fase": [
+                  {
+                    "data": "2025-09-03T15:52:55.343103-03:00",
+                    "de": "Sprint Atual",
+                    "para": "Em Testes",
+                    "usuario": "icaro.martins",
+                    "frase": "moveu o card de Sprint Atual para Em Testes"
+                  }
+                ],
+                "tempo_por_fase": {
+                  "Em Testes": 3356.595064722222
+                },
+                "dias_na_fase_atual": 139,
+                "maior_tempo_fase": {
+                  "fase": "Em Testes",
+                  "horas": 3357
+                }
+              },
+              {
+                "id": 926688,
+                "chamado": 12917,
+                "dados_usuario": {
+                  "id": 175,
+                  "nome": "Icaro Martins",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/175/resized/100/100/icaro2_fDtmBc7.png"
+                },
+                "logs_fase": [
+                  {
+                    "data": "2025-09-03T15:51:43.692667-03:00",
+                    "de": "Na Fila",
+                    "para": "Em Andamento",
+                    "usuario": "icaro.martins",
+                    "frase": "moveu o card de Na Fila para Em Andamento"
+                  }
+                ],
+                "tempo_por_fase": {
+                  "Em Andamento": 3356.6149677777776
+                },
+                "dias_na_fase_atual": 139,
+                "maior_tempo_fase": {
+                  "fase": "Em Andamento",
+                  "horas": 3357
+                }
+              },
+              {
+                "id": 885860,
+                "chamado": 12918,
+                "dados_usuario": {
+                  "id": 105,
+                  "nome": "Everton Leite",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/105/resized/100/100/everton.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              },
+              {
+                "id": 885873,
+                "chamado": 12919,
+                "dados_usuario": {
+                  "id": 105,
+                  "nome": "Everton Leite",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/105/resized/100/100/everton.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              },
+              {
+                "id": 885887,
+                "chamado": 12920,
+                "dados_usuario": {
+                  "id": 105,
+                  "nome": "Everton Leite",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/105/resized/100/100/everton.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              },
+              {
+                "id": 885902,
+                "chamado": 12921,
+                "dados_usuario": {
+                  "id": 105,
+                  "nome": "Everton Leite",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/105/resized/100/100/everton.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              },
+              {
+                "id": 885918,
+                "chamado": 12922,
+                "dados_usuario": {
+                  "id": 105,
+                  "nome": "Everton Leite",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/105/resized/100/100/everton.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              },
+              {
+                "id": 885935,
+                "chamado": 12923,
+                "dados_usuario": {
+                  "id": 105,
+                  "nome": "Everton Leite",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/105/resized/100/100/everton.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              },
+              {
+                "id": 885972,
+                "chamado": 12925,
+                "dados_usuario": {
+                  "id": 105,
+                  "nome": "Everton Leite",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/105/resized/100/100/everton.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              },
+              {
+                "id": 885994,
+                "chamado": 12926,
+                "dados_usuario": {
+                  "id": 105,
+                  "nome": "Everton Leite",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/105/resized/100/100/everton.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              },
+              {
+                "id": 886016,
+                "chamado": 12927,
+                "dados_usuario": {
+                  "id": 105,
+                  "nome": "Everton Leite",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/105/resized/100/100/everton.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              },
+              {
+                "id": 886038,
+                "chamado": 12928,
+                "dados_usuario": {
+                  "id": 105,
+                  "nome": "Everton Leite",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/105/resized/100/100/everton.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              },
+              {
+                "id": 886061,
+                "chamado": 12929,
+                "dados_usuario": {
+                  "id": 105,
+                  "nome": "Everton Leite",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/105/resized/100/100/everton.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              },
+              {
+                "id": 926630,
+                "chamado": 12930,
+                "dados_usuario": {
+                  "id": 175,
+                  "nome": "Icaro Martins",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/175/resized/100/100/icaro2_fDtmBc7.png"
+                },
+                "logs_fase": [
+                  {
+                    "data": "2025-09-03T15:51:35.328282-03:00",
+                    "de": "Em Andamento",
+                    "para": "Em Testes",
+                    "usuario": "icaro.martins",
+                    "frase": "moveu o card de Em Andamento para Em Testes"
+                  }
+                ],
+                "tempo_por_fase": {
+                  "Em Testes": 3356.6172919444443
+                },
+                "dias_na_fase_atual": 139,
+                "maior_tempo_fase": {
+                  "fase": "Em Testes",
+                  "horas": 3357
+                }
+              },
+              {
+                "id": 926713,
+                "chamado": 12931,
+                "dados_usuario": {
+                  "id": 175,
+                  "nome": "Icaro Martins",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/175/resized/100/100/icaro2_fDtmBc7.png"
+                },
+                "logs_fase": [
+                  {
+                    "data": "2025-09-03T15:52:28.293476-03:00",
+                    "de": "Backlog",
+                    "para": "Em Andamento",
+                    "usuario": "icaro.martins",
+                    "frase": "moveu o card de Backlog para Em Andamento"
+                  }
+                ],
+                "tempo_por_fase": {
+                  "Em Andamento": 3356.6025794444445
+                },
+                "dias_na_fase_atual": 139,
+                "maior_tempo_fase": {
+                  "fase": "Em Andamento",
+                  "horas": 3357
+                }
+              },
+              {
+                "id": 886136,
+                "chamado": 12932,
+                "dados_usuario": {
+                  "id": 105,
+                  "nome": "Everton Leite",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/105/resized/100/100/everton.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              },
+              {
+                "id": 886163,
+                "chamado": 12933,
+                "dados_usuario": {
+                  "id": 105,
+                  "nome": "Everton Leite",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/105/resized/100/100/everton.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              },
+              {
+                "id": 886191,
+                "chamado": 12934,
+                "dados_usuario": {
+                  "id": 105,
+                  "nome": "Everton Leite",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/105/resized/100/100/everton.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              },
+              {
+                "id": 886220,
+                "chamado": 12935,
+                "dados_usuario": {
+                  "id": 105,
+                  "nome": "Everton Leite",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/105/resized/100/100/everton.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              },
+              {
+                "id": 888800,
+                "chamado": 12957,
+                "dados_usuario": {
+                  "id": 120,
+                  "nome": "Daniel Portilho",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/120/resized/100/100/foto_trabalho_barba.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              },
+              {
+                "id": 888807,
+                "chamado": 12958,
+                "dados_usuario": {
+                  "id": 120,
+                  "nome": "Daniel Portilho",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/120/resized/100/100/foto_trabalho_barba.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              },
+              {
+                "id": 1174856,
+                "chamado": 15097,
+                "dados_usuario": {
+                  "id": 120,
+                  "nome": "Daniel Portilho",
+                  "foto": "https://django-datacartes.s3.amazonaws.com/media/avatars/120/resized/100/100/foto_trabalho_barba.png"
+                },
+                "logs_fase": [],
+                "tempo_por_fase": {},
+                "dias_na_fase_atual": null,
+                "maior_tempo_fase": null
+              }
+            ],
+            "fases_map": {
+              "1": "Backlog",
+              "3": "Na Fila",
+              "4": "Em Andamento",
+              "5": "Em Testes",
+              "6": "Concluído",
+              "7": "Cancelado",
+              "8": "Pendente Cliente",
+              "9": "Standby",
+              "10": "Sprint Atual",
+              "11": "Conclusão da Sprint",
+              "12": "Reprovado",
+              "13": "Aguardando Deploy"
+            }
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "versionId": "29d1e0e3-2529-4981-b80d-01a9a04f6760",
+  "activeVersionId": null,
+  "versionCounter": 4,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-01-21T17:51:42.323Z",
+      "createdAt": "2026-01-21T17:51:42.323Z",
+      "role": "workflow:owner",
+      "workflowId": "DduKIlf5eTu3sgoC",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T15:11:41.884Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
