@@ -1,0 +1,176 @@
+{
+  "updatedAt": "2026-02-20T18:49:20.512Z",
+  "createdAt": "2025-11-27T20:09:16.372Z",
+  "id": "aGPSM7QdRGV47rmx",
+  "name": "LOG_Workf_envia_email_backlog_v1",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "data",
+              "type": "object"
+            },
+            {
+              "name": "email"
+            },
+            {
+              "name": "backlog_reqs",
+              "type": "object"
+            },
+            {
+              "name": "backlog_metricas",
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "id": "feb2ff18-16a6-4196-bd58-8252376169d3",
+      "typeVersion": 1.1,
+      "name": "chamado",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        2224,
+        -512
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ---------- 1) Entrada e Configuração ----------\nconst inputData = $input.first().json.data || {};\nconst resultado = inputData.resultado || {};\nconst meta = inputData.meta || {};\nconst okrs = inputData.okrs || {};\nconst cards = Array.isArray(resultado.cards) ? resultado.cards : [];\n\n// Configurações de seleção\nconst selReq = (inputData.backlog_reqs && typeof inputData.backlog_reqs === \"object\") ? inputData.backlog_reqs : {};\n// Configuração de Métricas (NOVO)\nconst metricasReq = (inputData.backlog_metricas && typeof inputData.backlog_metricas === \"object\") ? inputData.backlog_metricas : {};\n\n// ---------- 2) Funções Auxiliares (Helpers) ----------\n\nconst fmtNumber = (n, d = 0) => (n == null || isNaN(n)) ? \"-\" : Number(n).toLocaleString(\"pt-BR\", { minimumFractionDigits: d, maximumFractionDigits: d });\n\nconst formatDate = (isoStr) => {\n    if (!isoStr) return \"-\";\n    return new Date(isoStr).toLocaleDateString('pt-BR');\n};\n\n// Cores baseadas no Health Score (Semântica mantida: Verde=Bom, Vermelho=Ruim)\nconst getHealthColor = (score) => {\n    if (score >= 7.0) return '#2e7d32'; // Verde Forte\n    if (score >= 4.0) return '#f9a825'; // Amarelo/Laranja\n    return '#c62828'; // Vermelho\n};\n\n// Cores para risco de prazo\nconst getRiskColor = (percent) => {\n    if (percent >= 80) return '#c62828'; // Vermelho\n    if (percent >= 50) return '#ef6c00'; // Laranja\n    return '#2e7d32'; // Verde\n};\n\n// --- DEFINIÇÃO DO TEMA DE CORES (VERMELHO / VERMELHO ESCURO) ---\nconst theme = {\n    primary: '#c62828',      // Vermelho principal (Cabeçalho, Títulos)\n    dark: '#b71c1c',         // Vermelho escuro (Texto forte, KPIs)\n    light: '#ffebee',        // Fundo claro avermelhado\n    bg: '#f4f6f8'            // Fundo neutro\n};\n\n// ---------- 3) Lógica de Negócio ----------\n\nfunction deriveReqFlags(card) {\n    const av = card.alertas_validacao || {};\n    const aged = (av.backlog_estagnado && av.backlog_estagnado.bool === true) || av.card_antigo_sem_priorizacao === true;\n    \n    return {\n        titulo_presente: !av.sem_titulo,\n        estimativa_esforco: !av.sem_estimativa_esforco,\n        criterios_aceite: !av.sem_criterios_aceite,\n        projeto_vinculado: !av.sem_vinculo_projeto,\n        alerta_estagnado: aged,\n        dias_estagnado: av.backlog_estagnado?.params?.dias || 0\n    };\n}\n\n// Cálculo de Médias para Métricas extras\nlet avgLeadTime = 0;\nlet avgCycleTime = 0;\nif (cards.length > 0) {\n    const totalLead = cards.reduce((acc, c) => acc + (c.lead_time || 0), 0);\n    const totalCycle = cards.reduce((acc, c) => acc + (c.cycle_time || 0), 0);\n    avgLeadTime = totalLead / cards.length;\n    avgCycleTime = totalCycle / cards.length;\n}\n\nconst dupPairs = [];\n(resultado.alertas_gerais || []).forEach(entry => {\n    const arr = entry?.similaridade_titulo;\n    if (Array.isArray(arr)) arr.forEach(p => dupPairs.push(p));\n});\n\n// ---------- 4) Construção do HTML ----------\n\nconst projetoNome = resultado.projeto?.nome || \"Projeto\";\nconst produtoNome = resultado.projeto?.produto_nome || \"\";\nconst fase = resultado.fase || \"Backlog\";\nconst total = cards.length;\n\n// CSS Inline\nconst css = `font-family: 'Segoe UI', Arial, sans-serif; color: #333; line-height: 1.5;`;\n\nlet html = `\n<!DOCTYPE html>\n<html>\n<head><style>body { ${css} }</style></head>\n<body style=\"background-color: ${theme.bg}; margin: 0; padding: 20px;\">\n<div style=\"max-width: 650px; margin: 0 auto; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #e0e0e0;\">\n    \n    <div style=\"background: ${theme.primary}; color: #fff; padding: 20px; text-align: center;\">\n        <h1 style=\"margin:0; font-size: 22px;\">📊 Análise: ${projetoNome}</h1>\n        <p style=\"margin:5px 0 0; opacity: 0.9; font-size: 14px;\">${produtoNome} • Fase: <strong>${fase}</strong> • ${formatDate(new Date().toISOString())}</p>\n    </div>\n\n    <table width=\"100%\" cellpadding=\"15\" cellspacing=\"0\" style=\"border-bottom: 1px solid #eee;\">\n        <tr>\n            <td align=\"center\" width=\"33%\" style=\"border-right: 1px solid #eee;\">\n                <div style=\"font-size: 24px; font-weight: bold; color: ${theme.dark};\">${total}</div>\n                <div style=\"font-size: 11px; color: #666; text-transform: uppercase;\">Total Cards</div>\n            </td>\n            <td align=\"center\" width=\"33%\" style=\"border-right: 1px solid #eee;\">\n                <div style=\"font-size: 24px; font-weight: bold; color: ${theme.dark};\">${fmtNumber(resultado.metrica_qualidade?.throughput)}</div>\n                <div style=\"font-size: 11px; color: #666; text-transform: uppercase;\">Throughput</div>\n            </td>\n            <td align=\"center\" width=\"33%\">\n                <div style=\"font-size: 24px; font-weight: bold; color: ${theme.dark};\">${fmtNumber(resultado.metrica_qualidade?.tempo_medio_por_fase_dia, 1)}d</div>\n                <div style=\"font-size: 11px; color: #666; text-transform: uppercase;\">Tempo Médio</div>\n            </td>\n        </tr>\n        \n        ${ (metricasReq.lead_time || metricasReq.cycle_time) ? `\n        <tr>\n            <td colspan=\"3\" style=\"padding: 0;\">\n                <table width=\"100%\" cellpadding=\"10\" cellspacing=\"0\" style=\"border-top: 1px solid #eee; background-color: #fafafa;\">\n                    <tr>\n                         ${ metricasReq.lead_time ? `\n                        <td align=\"center\" width=\"50%\" style=\"border-right: 1px solid #eee;\">\n                            <div style=\"font-size: 18px; font-weight: bold; color: #555;\">${fmtNumber(avgLeadTime, 0)}d</div>\n                            <div style=\"font-size: 10px; color: #888; text-transform: uppercase;\">Média Lead Time</div>\n                        </td>` : ''}\n                        \n                        ${ metricasReq.cycle_time ? `\n                        <td align=\"center\" width=\"50%\">\n                            <div style=\"font-size: 18px; font-weight: bold; color: #555;\">${fmtNumber(avgCycleTime, 0)}d</div>\n                            <div style=\"font-size: 10px; color: #888; text-transform: uppercase;\">Média Cycle Time</div>\n                        </td>` : ''}\n                    </tr>\n                </table>\n            </td>\n        </tr>\n        ` : ''}\n    </table>\n\n    <div style=\"padding: 20px;\">\n\n        ${Object.keys(okrs).length > 0 ? `\n            <div style=\"margin-bottom: 25px;\">\n                <h3 style=\"margin: 0 0 10px; font-size: 16px; border-left: 4px solid ${theme.primary}; padding-left: 10px;\">🎯 Alinhamento Estratégico</h3>\n                <div style=\"background: #f8f9fa; padding: 15px; border-radius: 6px; font-size: 13px;\">\n                    ${Object.entries(okrs).map(([k, v]) => `\n                        <div style=\"margin-bottom: 10px;\">\n                            <strong style=\"text-transform:uppercase; color:#555;\">${k}</strong>\n                            <ul style=\"margin: 5px 0 0; padding-left: 20px; color: #666;\">\n                                ${v.objetivos ? v.objetivos.map(o => `<li>${o}</li>`).join('') : ''}\n                            </ul>\n                        </div>\n                    `).join('')}\n                </div>\n            </div>\n        ` : ''}\n\n        ${dupPairs.length > 0 ? `\n            <div style=\"background-color: #fff3e0; padding: 12px; border-radius: 4px; border-left: 4px solid #ff9800; margin-bottom: 25px;\">\n                <strong style=\"color: #e65100;\">⚠️ Possíveis Cards Duplicados:</strong>\n                <ul style=\"margin: 5px 0 0; padding-left: 20px; font-size: 13px;\">\n                    ${dupPairs.map(p => {\n                        const [a, b] = p.cards || [];\n                        return `<li>IDs #${a[0]} e #${b[0]} (${Number(p.grau_de_similaridade).toFixed(0)}% similaridade)</li>`;\n                    }).join('')}\n                </ul>\n            </div>\n        ` : ''}\n\n        <h3 style=\"margin: 0 0 15px; font-size: 16px; border-left: 4px solid ${theme.primary}; padding-left: 10px;\">📋 Detalhe dos Cards (${total})</h3>\n`;\n\nconst sortedCards = cards.sort((a, b) => (a.health_score?.health_score_final || 0) - (b.health_score?.health_score_final || 0));\n\nsortedCards.forEach(card => {\n    const flags = deriveReqFlags(card);\n    const hs = card.health_score?.health_score_final || 0;\n    const color = getHealthColor(hs);\n    \n    // Predição\n    let predicao = { \n        horas: 'N/A', \n        pessimista: null,\n        percent: 0, \n        justif: 'Sem dados preditivos disponíveis.' \n    };\n    \n    const ap = card.analise_estrategica_ia?.analise_preditiva || {};\n    \n    if (ap.prazo_sugerido_horas !== undefined || ap.risco_estouro_porcento !== undefined) {\n        predicao.horas = ap.prazo_sugerido_horas ? `${ap.prazo_sugerido_horas}h` : 'N/A';\n        if (ap.estimativa_pessimista_horas) predicao.pessimista = `${ap.estimativa_pessimista_horas}h`;\n        predicao.percent = parseInt(ap.risco_estouro_porcento) || 0;\n        predicao.justif = ap.justificativa_completa || '';\n    } else if (ap.predicao_agregada) {\n        predicao.horas = ap.predicao_agregada.prazo_sugerido_horas || 'N/A';\n        predicao.percent = parseInt(ap.predicao_agregada.risco_estouro_prazo_porcentagem) || 0;\n        predicao.justif = ap.predicao_agregada.justificativa_completa || '';\n    }\n\n    const riscoColor = getRiskColor(predicao.percent);\n\n    html += `\n        <div style=\"border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.03);\">\n            \n            <div style=\"padding: 12px; background: #fff; border-bottom: 1px solid #f0f0f0; border-left: 5px solid ${color}; border-radius: 6px 6px 0 0; display: flex; justify-content: space-between;\">\n                <div style=\"width: 85%;\">\n                    <div style=\"font-size: 11px; color: #999; margin-bottom: 2px;\">\n                        #${card.id} • Criado em ${formatDate(card.datas?.criacao)}\n                    </div>\n                    <div style=\"font-weight: 600; font-size: 15px; color: #333;\">\n                        ${card.titulo || '(Sem Título)'}\n                    </div>\n                    \n                    <div style=\"margin-top: 6px;\">\n                        ${flags.alerta_estagnado ? `<span style=\"background:#ffebee; color:#c62828; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:bold; margin-right:4px;\">⚠️ Estagnado (${flags.dias_estagnado}d)</span>` : ''}\n                        ${!flags.estimativa_esforco ? `<span style=\"background:#fff8e1; color:#f57f17; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:bold; margin-right:4px;\">Sem Estimativa</span>` : ''}\n                    </div>\n                </div>\n                <div style=\"text-align: right; min-width: 60px;\">\n                    <div style=\"font-size: 18px; font-weight: bold; color: ${color};\">${hs.toFixed(1)}</div>\n                    <div style=\"font-size: 9px; color: #999; text-transform: uppercase;\">Score</div>\n                </div>\n            </div>\n\n            <div style=\"padding: 12px; background: #fff; font-size: 13px; color: #555; line-height: 1.4;\">\n                ${card.descricao ? (card.descricao.length > 250 ? card.descricao.substring(0, 250) + '...' : card.descricao) : '<em>Sem descrição detalhada.</em>'}\n            </div>\n            \n            ${ (metricasReq.lead_time || metricasReq.cycle_time) ? `\n            <div style=\"padding: 0 12px 8px 12px; font-size: 11px; color: #777;\">\n               ${metricasReq.lead_time ? `Lead Time: <strong>${card.lead_time || 0}d</strong>` : ''}\n               ${metricasReq.lead_time && metricasReq.cycle_time ? ' • ' : ''}\n               ${metricasReq.cycle_time ? `Cycle Time: <strong>${card.cycle_time || 0}d</strong>` : ''}\n            </div>\n            ` : ''}\n\n            <div style=\"background-color: #f3e5f5; padding: 12px; margin: 0 12px 12px 12px; border-radius: 4px; border: 1px solid #e1bee7;\">\n                <div style=\"font-size: 12px; font-weight: bold; color: #7b1fa2; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;\">\n                    🔮 Análise Preditiva & Risco\n                </div>\n                \n                <div style=\"display: flex; gap: 10px; margin-bottom: 8px; font-size: 12px; flex-wrap: wrap;\">\n                    <span style=\"background: #fff; padding: 3px 8px; border-radius: 4px; border: 1px solid #ddd;\">\n                        🕒 Sugerido: <strong>${predicao.horas}</strong>\n                    </span>\n                    \n                    ${predicao.pessimista ? `\n                    <span style=\"background: #fff; padding: 3px 8px; border-radius: 4px; border: 1px solid #ddd;\">\n                        🌧️ Pessimista: <strong>${predicao.pessimista}</strong>\n                    </span>` : ''}\n\n                    <span style=\"background: #fff; padding: 3px 8px; border-radius: 4px; border: 1px solid #ddd; color: ${riscoColor};\">\n                        ⚠️ Risco Estouro: <strong>${predicao.percent}%</strong>\n                    </span>\n                </div>\n\n                <div style=\"font-size: 12px; color: #4a148c; font-style: italic; line-height: 1.4; background: rgba(255,255,255,0.5); padding: 8px; border-radius: 4px;\">\n                    \"${predicao.justif}\"\n                </div>\n            </div>\n\n            <div style=\"background: #f8fbff; padding: 8px 12px; border-top: 1px solid #f0f0f0; border-radius: 0 0 6px 6px; font-size: 11px; color: #666; display: flex; justify-content: space-between;\">\n                <span><strong>Responsável:</strong> ${(card.responsaveis || []).map(r => r.nome).join(', ') || '-'}</span>\n                <span><strong>Alinhamento:</strong> ${card.analise_estrategica_ia?.alinhamento_estrategico?.alinhado === 'sim' ? '✅ Sim' : '❌ Não'}</span>\n            </div>\n        </div>\n    `;\n});\n\nhtml += `\n    </div>\n    <div style=\"padding: 20px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #eee;\">\n        Gerado automaticamente pelo Agente Orbit\n    </div>\n</div>\n</body>\n</html>\n`;\n\n// ---------- 5) Saída ----------\nreturn [{\n    json: {\n        html_email: html,\n        subject: `Relatório de Backlog: ${projetoNome} (${total} cards)`,\n        stats: {\n            total: total,\n            risco_alto: sortedCards.filter(c => (c.health_score?.health_score_final || 0) < 5).length\n        }\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2432,
+        -512
+      ],
+      "id": "2e60c721-8546-4c9a-a32c-b35b70f598e9",
+      "name": "cria email html"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('chamado').item.json.email }}",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.html_email }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2656,
+        -512
+      ],
+      "id": "842296e6-f092-4a89-802b-fabd1f0e17e4",
+      "name": "envia email",
+      "webhookId": "2ba649f8-7846-4e7a-9dba-6d3af9d23b11",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "7oUeNgUPlzGsXFJH",
+          "name": "GMAIL_ndt"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "chamado": {
+      "main": [
+        [
+          {
+            "node": "cria email html",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cria email html": {
+      "main": [
+        [
+          {
+            "node": "envia email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "e0a22f62-082d-430e-88c8-61c1351e6530",
+  "activeVersionId": null,
+  "versionCounter": 33,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-11-27T20:09:16.372Z",
+      "createdAt": "2025-11-27T20:09:16.372Z",
+      "role": "workflow:owner",
+      "workflowId": "aGPSM7QdRGV47rmx",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T10:16:57.321Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
