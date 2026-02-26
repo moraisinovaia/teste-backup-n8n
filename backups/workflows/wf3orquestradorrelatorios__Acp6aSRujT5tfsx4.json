@@ -1,0 +1,340 @@
+{
+  "updatedAt": "2026-01-21T18:00:34.247Z",
+  "createdAt": "2026-01-21T17:56:09.669Z",
+  "id": "Acp6aSRujT5tfsx4",
+  "name": "WF__3_OrquestradorRelatorios",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 * * 1"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -656,
+        64
+      ],
+      "id": "ae51912b-eed9-46f9-8c3a-0fc1c86e1476",
+      "name": "WF__3_OrquestradorRelatorios"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Lista fixa de projetos para processar\nconst projetos = [\n  { projeto_id: 741, nome: \"Projeto Squad Labs\" }\n  // Adicione mais projetos aqui conforme necessário:\n  // { projeto_id: 523, nome: \"Outro Projeto\" },\n  // { projeto_id: 601, nome: \"Mais um Projeto\" }\n];\n\nconsole.log(`📋 Total de projetos a processar: ${projetos.length}`);\n\n// Retorna cada projeto como um item separado\nreturn projetos.map(projeto => ({\n  json: projeto\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        64
+      ],
+      "id": "65dc671e-bc9d-44af-8319-feac16440b19",
+      "name": "listaProjetosFixa"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "eqGAftxvIpPEYWVT",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/eqGAftxvIpPEYWVT",
+          "cachedResultName": "WF__1_ColetaDadosNeat"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "projeto_id": "={{ $json.projeto_id }}"
+          },
+          "matchingColumns": [
+            "projeto_id"
+          ],
+          "schema": [
+            {
+              "id": "projeto_id",
+              "displayName": "projeto_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -48,
+        224
+      ],
+      "id": "79e89796-0c0d-4f3a-9267-98d02525ab96",
+      "name": "executarWF1_ColetaDados"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validação: verifica se recebeu dados válidos do WF2\nif (!$json) {\n  console.error('❌ ERRO: Nenhum dado recebido do WF2');\n  throw new Error('WF2 não retornou dados');\n}\n\n// O WF2 retorna estruturas diferentes dependendo do caminho\n// Extrair dados do formato correto\nlet relatorioHTML, projetoInfo, analise;\n\nif ($json.html) {\n  // Formato do montarHTMLRelatorio (sucesso)\n  relatorioHTML = $json.html;\n  projetoInfo = { \n    nome: $json.projeto_nome,\n    id: null // não vem no output simplificado\n  };\n  analise = {\n    concluidos: { total: $json.total_concluidos || 0 },\n    em_andamento: { total: 0 },\n    pendentes: { total: 0 },\n    metricas: {\n      total_horas_concluidas: 0,\n      total_pontos_concluidos: 0\n    }\n  };\n} else if ($json.projeto_info) {\n  // Formato completo do WF2\n  relatorioHTML = $json.html_relatorio || $json.relatorio_html;\n  projetoInfo = $json.projeto_info;\n  analise = $json.analise;\n} else {\n  console.error('❌ ERRO: Formato de dados não reconhecido');\n  throw new Error('Formato inválido do WF2');\n}\n\n// Gera timestamp\nconst agora = new Date();\nconst dataFormatada = agora.toISOString().split('T')[0];\nconst horaFormatada = agora.toTimeString().split(' ')[0];\n\nconsole.log(`📊 Relatório gerado para projeto ${projetoInfo.nome}`);\nconsole.log(`   - Tamanho do HTML: ${relatorioHTML.length} caracteres`);\n\n// Retorna objeto estruturado\nreturn [{\n  json: {\n    projeto_nome: projetoInfo.nome,\n    projeto_id: projetoInfo.id,\n    data_geracao: dataFormatada,\n    hora_geracao: horaFormatada,\n    timestamp_completo: agora.toISOString(),\n    relatorio_html: relatorioHTML,\n    tamanho_html_bytes: relatorioHTML.length,\n    assunto_email: $json.assunto || `Relatório Semanal - ${projetoInfo.nome} - ${dataFormatada}`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        416
+      ],
+      "id": "9d62dfa9-6e2a-4914-b269-1d6b3a15e673",
+      "name": "organizarRelatorio"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e355d41e-95a8-4fd6-815b-4d7bf988dd5c",
+      "name": "juntarTodosRelatorios"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pega todos os relatórios gerados\nconst relatorios = $input.all();\n\nconsole.log('');\nconsole.log('========================================');\nconsole.log('  EXECUÇÃO COMPLETA - RESUMO FINAL');\nconsole.log('========================================');\nconsole.log('');\n\n// Extrai os dados reais (pode estar em .data ou direto no json)\nconst relatoriosExtraidos = relatorios.map(item => {\n  // Se tem array \"data\", pega o primeiro item\n  if (item.json.data && Array.isArray(item.json.data)) {\n    return item.json.data[0];\n  }\n  return item.json;\n});\n\nconst totalProjetos = relatoriosExtraidos.length;\n\nconsole.log(`📊 Total de projetos processados: ${totalProjetos}`);\nconsole.log('');\n\n// Processa cada relatório\nconst resumoPorProjeto = relatoriosExtraidos.map((rel, index) => {\n  console.log(`${index + 1}. Projeto: ${rel.projeto_nome || 'Desconhecido'}`);\n  console.log(`   - ID: ${rel.projeto_id || 'N/A'}`);\n  console.log(`   - Data: ${rel.data_geracao} ${rel.hora_geracao}`);\n  console.log(`   - Tamanho HTML: ${(rel.tamanho_html_bytes / 1024).toFixed(2)} KB`);\n  console.log(`   - Assunto Email: ${rel.assunto_email || 'N/A'}`);\n  console.log('');\n  \n  return {\n    projeto_id: rel.projeto_id,\n    projeto_nome: rel.projeto_nome,\n    data_geracao: rel.data_geracao,\n    hora_geracao: rel.hora_geracao,\n    tamanho_relatorio_kb: (rel.tamanho_html_bytes / 1024).toFixed(2),\n    assunto_email: rel.assunto_email,\n    tem_html: rel.relatorio_html ? true : false\n  };\n});\n\nconsole.log('========================================');\nconsole.log('✅ WORKFLOW CONCLUÍDO COM SUCESSO!');\nconsole.log(`📧 ${totalProjetos} relatório(s) pronto(s) para envio`);\nconsole.log('========================================');\nconsole.log('');\n\n// Retorna objeto final estruturado\nreturn [{\n  json: {\n    execucao_completa: true,\n    timestamp_execucao: new Date().toISOString(),\n    \n    totais: {\n      projetos_processados: totalProjetos,\n      relatorios_gerados: totalProjetos\n    },\n    \n    relatorios: relatoriosExtraidos,\n    \n    resumo_por_projeto: resumoPorProjeto\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "ded9cb5a-3b3d-4e41-9470-808d14132c87",
+      "name": "resumoFinal"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "jqaLyIgYmjRE4cuF",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/jqaLyIgYmjRE4cuF",
+          "cachedResultName": "WF__2_GeraRelatorioIA"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "dados_projeto": "={{ $json }}"
+          },
+          "matchingColumns": [
+            "dados_projeto"
+          ],
+          "schema": [
+            {
+              "id": "dados_projeto",
+              "displayName": "dados_projeto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "object",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        112,
+        336
+      ],
+      "id": "a4ad0b4e-c5f4-4647-b5af-0895d21a10dc",
+      "name": "executarWF2_GerarRelatorio"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -240,
+        64
+      ],
+      "id": "45a922d8-02da-4ee2-bc7b-7cf968f43612",
+      "name": "loopProjetos"
+    }
+  ],
+  "connections": {
+    "WF__3_OrquestradorRelatorios": {
+      "main": [
+        [
+          {
+            "node": "listaProjetosFixa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "listaProjetosFixa": {
+      "main": [
+        [
+          {
+            "node": "loopProjetos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "executarWF1_ColetaDados": {
+      "main": [
+        [
+          {
+            "node": "executarWF2_GerarRelatorio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "organizarRelatorio": {
+      "main": [
+        [
+          {
+            "node": "loopProjetos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "juntarTodosRelatorios": {
+      "main": [
+        [
+          {
+            "node": "resumoFinal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "executarWF2_GerarRelatorio": {
+      "main": [
+        [
+          {
+            "node": "organizarRelatorio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "loopProjetos": {
+      "main": [
+        [
+          {
+            "node": "juntarTodosRelatorios",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "executarWF1_ColetaDados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "37166c7e-9b6f-4c16-82ad-930ae2aabc7a",
+  "activeVersionId": null,
+  "versionCounter": 5,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-01-21T17:56:09.669Z",
+      "createdAt": "2026-01-21T17:56:09.669Z",
+      "role": "workflow:owner",
+      "workflowId": "Acp6aSRujT5tfsx4",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T10:16:57.321Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
