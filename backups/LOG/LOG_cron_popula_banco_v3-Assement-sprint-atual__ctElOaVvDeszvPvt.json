@@ -1,0 +1,2689 @@
+{
+  "updatedAt": "2026-01-27T20:38:38.543Z",
+  "createdAt": "2025-12-16T14:30:10.137Z",
+  "id": "ctElOaVvDeszvPvt",
+  "name": "LOG_cron_popula_banco_v3 - Assement -sprint atual",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "0KkK1Qgl3hvhrtvf",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/0KkK1Qgl3hvhrtvf",
+          "cachedResultName": "LOG_Workf_agente_analise_cards_v3"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "projeto": 487,
+            "fase": 10
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "projeto",
+              "displayName": "projeto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "fase",
+              "displayName": "fase",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -2816,
+        -704
+      ],
+      "id": "1aa3a723-95af-41d6-8057-bf4f8f6c2c51",
+      "name": "Call 'LOG_Workf_Agente_analise_cards_v2'"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "projetos",
+          "mode": "list",
+          "cachedResultName": "projetos"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "nome": "={{ $json.data.resultado.projeto.nome }}",
+            "neat_id": "={{ $json.data.resultado.projeto.id }}"
+          },
+          "matchingColumns": [
+            "neat_id"
+          ],
+          "schema": [
+            {
+              "id": "neat_id",
+              "displayName": "neat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nome",
+              "displayName": "nome",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "embedding_nome",
+              "displayName": "embedding_nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2192,
+        -1392
+      ],
+      "id": "574d2eda-294b-48b1-a6ef-5bf8ef98040e",
+      "name": "tabela projetos",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "produtos",
+          "mode": "list",
+          "cachedResultName": "produtos"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "projeto_id": "={{ $json.data.resultado.projeto.id }}",
+            "nome": "={{ $json.data.resultado.projeto.produto_nome }}",
+            "okr": "={{ $json.data.okrs }}"
+          },
+          "matchingColumns": [
+            "nome"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "nome",
+              "displayName": "nome",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "projeto_id",
+              "displayName": "projeto_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "okr",
+              "displayName": "okr",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "embedding_nome",
+              "displayName": "embedding_nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "embedding_okr",
+              "displayName": "embedding_okr",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2192,
+        -1200
+      ],
+      "id": "56d08657-e597-4f7f-aab6-a290c3931c03",
+      "name": "tabela produtos",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "relatorio_meta",
+          "mode": "list",
+          "cachedResultName": "relatorio_meta"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "uuid": "={{ $json.data.meta.uuid }}",
+            "versao_schema": "={{ $json.data.meta.versao_schema }}",
+            "gerado_em": "={{ $json.data.meta.gerado_em }}",
+            "fonte": "={{ $json.data.meta.fonte }}",
+            "projeto_id": "={{ $json.data.resultado.projeto.id }}"
+          },
+          "matchingColumns": [
+            "uuid"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "uuid",
+              "displayName": "uuid",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "versao_schema",
+              "displayName": "versao_schema",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "gerado_em",
+              "displayName": "gerado_em",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "fonte",
+              "displayName": "fonte",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "projeto_id",
+              "displayName": "projeto_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2192,
+        -1008
+      ],
+      "id": "e61e14f3-155e-4490-a73e-04bbda70bd48",
+      "name": "tabela relatorio meta",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 30 0 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -3040,
+        -704
+      ],
+      "id": "bd75c071-b347-495b-bf0d-671150d74ebd",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "db08b030-cba3-4121-9c47-b63d20a7ba46",
+              "name": "uuid",
+              "value": "={{ $json.uuid }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1968,
+        -1104
+      ],
+      "id": "7df0bc6a-99c3-44e7-ac5c-38f0bf7b30af",
+      "name": "uuid"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "89896c1c-ad4d-4122-bc96-77c2f6d25840",
+              "name": "relatorio meta id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1968,
+        -912
+      ],
+      "id": "6a9982ea-82c9-4bee-b053-88b262fff080",
+      "name": "relatorio meta id"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "analise_projeto",
+          "mode": "list",
+          "cachedResultName": "analise_projeto"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "total_cards": "={{ $json.data.resultado.total_cards }}",
+            "throughput": "={{ $json.data.resultado.metrica_qualidade.throughput }}",
+            "tempo_medio_por_fase_dia": "={{ $json.data.resultado.metrica_qualidade.tempo_medio_por_fase_dia }}",
+            "fase": "={{ $json.data.resultado.fase }}",
+            "data": "={{$now}}",
+            "relatorio_uuid": "={{ $json.data.meta.uuid }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "fase",
+              "displayName": "fase",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "total_cards",
+              "displayName": "total_cards",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "throughput",
+              "displayName": "throughput",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "relatorio_uuid",
+              "displayName": "relatorio_uuid",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tempo_medio_por_fase_dia",
+              "displayName": "tempo_medio_por_fase_dia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2192,
+        -720
+      ],
+      "id": "cfa9469f-3850-420c-9a13-94893d9a3f29",
+      "name": "tabela analise projeto",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6d423a5c-7652-459c-a578-23fb1a3ade2c",
+              "name": "analise projeto id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1968,
+        -720
+      ],
+      "id": "2ce295b7-8f8d-4599-890e-c4241e847c6d",
+      "name": "analise projeto id"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO alerta_card_tipo (tipo)\nVALUES\n    ('sem_titulo'),\n    ('sem_descricao'),\n    ('sem_responsaveis'),\n    ('sem_tags'),\n    ('sem_data_criacao'),\n    ('sem_estimativa_esforco'),\n    ('sem_data_prevista'),\n    ('sem_data_desejada'),\n    ('sem_pontos'),\n    ('sem_vinculo_projeto'),\n    ('descricao_curta'),\n    ('sem_criterios_aceite'),\n    ('tags_pouco_descritivas'),\n    ('data_prevista_antes_criacao'),\n    ('data_conclusao_antes_criacao'),\n    ('card_antigo_sem_priorizacao')\nON CONFLICT (tipo) DO NOTHING;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2192,
+        -528
+      ],
+      "id": "cb28a054-b734-49be-811c-f44c09c2caa9",
+      "name": "tabela alerta card tipo",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO alerta_projeto_tipo (tipo)\nVALUES ('Similaridade título')\nON CONFLICT (tipo) DO UPDATE\nSET tipo = EXCLUDED.tipo  \nRETURNING id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2064,
+        -336
+      ],
+      "id": "cb990e78-1672-4e10-828a-b5fda5dfd73a",
+      "name": "tabela alerta projeto tipo",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a617d073-6e37-48a9-afb2-498d6737169b",
+              "name": "alerta projeto tipo id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1840,
+        -336
+      ],
+      "id": "7098e8aa-034e-45bd-8dc9-bc49ab8df2f3",
+      "name": "alerta projeto tipo id"
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = [];\n\nfor (const item of $input.all()) {\n  // Caminho até o array de similaridades\n  const similaridades = item.json?.data?.resultado?.alertas_gerais?.[0]?.similaridade_titulo;\n\n  if (Array.isArray(similaridades)) {\n    // Para cada similaridade (cada objeto com cards + grau_de_similaridade)\n    for (const sim of similaridades) {\n      // Garante que cada saida seja um item completo\n      output.push({\n        json: {\n          cards: sim.cards,\n          grau_de_similaridade: sim.grau_de_similaridade\n        }\n      });\n    }\n  }\n}\n\nreturn output;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2048,
+        -112
+      ],
+      "id": "a8c39e50-3efc-4e48-a2f3-b8d075643b41",
+      "name": "split alertas similaridade titulo",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1616,
+        -240
+      ],
+      "id": "28f858b9-d3be-4a67-a2d3-3523163adcc4",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1376,
+        -240
+      ],
+      "id": "6388abc1-1aae-4270-b37a-fb995b6f5aef",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "alertas_projeto",
+          "mode": "list",
+          "cachedResultName": "alertas_projeto"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "relatorio_uuid": "={{ $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.meta.uuid }}",
+            "alerta_projeto_tipo_id": "={{ $json['alerta projeto tipo id'] }}",
+            "dados": "={{ JSON.stringify(\n    {\n        \"cards\": $json.cards,\n        \"grau_de_similaridade\": $json.grau_de_similaridade\n    }\n) }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "relatorio_uuid",
+              "displayName": "relatorio_uuid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "alerta_projeto_tipo_id",
+              "displayName": "alerta_projeto_tipo_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "dados",
+              "displayName": "dados",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1136,
+        -224
+      ],
+      "id": "4a05d8fc-a601-4723-92a4-b8fc08a86f10",
+      "name": "tabela alertas projeto",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b5321157-300b-47c4-9177-a14f29bade2e",
+              "name": "alertas projeto id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -928,
+        -224
+      ],
+      "id": "45fde4db-5b1d-4345-a4b8-99ffff76a79a",
+      "name": "alertas projeto id"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1968,
+        80
+      ],
+      "id": "b51c4b36-336f-4497-a0d6-735fba4aba7b",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data.resultado.cards",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -2544,
+        400
+      ],
+      "id": "0bac661b-048c-4d7d-89a6-1da7c5e80f5c",
+      "name": "Split Card Healthchecks"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "card",
+          "mode": "list",
+          "cachedResultName": "card"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Split Card Healthchecks').item.json.id }}",
+            "data_criacao": "={{ $('Split Card Healthchecks').item.json.datas.criacao }}",
+            "titulo": "={{ $('Split Card Healthchecks').item.json.titulo }}",
+            "descricao": "={{ $('Split Card Healthchecks').item.json.descricao }}",
+            "projeto_id": "={{ $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.resultado.projeto.id }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "projeto_id",
+              "displayName": "projeto_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "data_criacao",
+              "displayName": "data_criacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "titulo",
+              "displayName": "titulo",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "descricao",
+              "displayName": "descricao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "embedding_titulo",
+              "displayName": "embedding_titulo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "embedding_descricao",
+              "displayName": "embedding_descricao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1744,
+        96
+      ],
+      "id": "3a87323c-4bb4-4543-9fcc-df489a61ec81",
+      "name": "tabela card",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1968,
+        432
+      ],
+      "id": "856b1143-a87c-48ce-aa2a-bc36e3bdc669",
+      "name": "Loop Over Items2"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "analise_card",
+          "mode": "list",
+          "cachedResultName": "analise_card"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "em_andamento": "={{ $('Loop Over Items2').item.json.em_andamento }}",
+            "fase": "={{ $('Loop Over Items2').item.json.fase }}",
+            "orcado": "={{ $('Loop Over Items2').item.json.orcado }}",
+            "tempo_decorrido": "={{ $('Loop Over Items2').item.json.tempo_decorrido }}",
+            "pontos_totais": "={{ $('Loop Over Items2').item.json.pontos_totais }}",
+            "lead_time": "={{ $('Loop Over Items2').item.json.lead_time }}",
+            "cycle_time": "={{ $('Loop Over Items2').item.json.cycle_time }}",
+            "avaliacao": "={{ $('Loop Over Items2').item.json.avaliacao_ia }}",
+            "data_prevista": "={{ $('Loop Over Items2').item.json.datas.prevista }}",
+            "data_desejada": "={{ $('Loop Over Items2').item.json.datas.desejada }}",
+            "data_conclusao": "={{ $('Loop Over Items2').item.json.datas.conclusao }}",
+            "data_inicio_doing": "={{ $('Loop Over Items2').item.json.datas.inicio_doing }}",
+            "data_criacao_banco": "={{$now}}",
+            "nota_avaliacao": "={{ $('Loop Over Items2').item.json.avaliacao_ia.nota }}",
+            "relatorio_uuid": "={{ $('Call \\'LOG_Workf_Agente_analise_cards_v2\\'').item.json.data.meta.uuid }}",
+            "card_id": "={{ $('Loop Over Items2').item.json.id }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "card_id",
+              "displayName": "card_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fase",
+              "displayName": "fase",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "orcado",
+              "displayName": "orcado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tempo_decorrido",
+              "displayName": "tempo_decorrido",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "em_andamento",
+              "displayName": "em_andamento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pontos_totais",
+              "displayName": "pontos_totais",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "lead_time",
+              "displayName": "lead_time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "cycle_time",
+              "displayName": "cycle_time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data_criacao_banco",
+              "displayName": "data_criacao_banco",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "avaliacao",
+              "displayName": "avaliacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data_prevista",
+              "displayName": "data_prevista",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data_desejada",
+              "displayName": "data_desejada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data_conclusao",
+              "displayName": "data_conclusao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data_inicio_doing",
+              "displayName": "data_inicio_doing",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nota_avaliacao",
+              "displayName": "nota_avaliacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "relatorio_uuid",
+              "displayName": "relatorio_uuid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "embedding_avaliacao",
+              "displayName": "embedding_avaliacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1520,
+        464
+      ],
+      "id": "b525e43d-92a3-4e29-8191-17bc8598fca0",
+      "name": "tabela analise card",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const mapaTipos = {\n    \"sem_titulo\": 2, \"sem_descricao\": 3, \"sem_responsaveis\": 4, \"sem_tags\": 5, \n    \"sem_data_criacao\": 6, \"sem_estimativa_esforco\": 7, \"sem_data_prevista\": 8, \n    \"sem_data_desejada\": 9, \"sem_pontos\": 10, \"sem_vinculo_projeto\": 11, \n    \"descricao_curta\": 12, \"sem_criterios_aceite\": 13, \"tags_pouco_descritivas\": 14, \n    \"data_prevista_antes_criacao\": 15, \"data_conclusao_antes_criacao\": 16, \n    \"card_antigo_sem_priorizacao\": 17\n};\n\nconst itemsDeSaida = [];\n\n// Loop sobre todos os itens de entrada (cada card no Loop Over Items8)\nfor (const item of $input.all()) {\n    \n    // Acessa o objeto de alertas de validação.\n    const alertasValidacao = item.json.alertas_validacao;\n    \n    // Obtém o ID do card original (chave de correspondência futura no Merge)\n    const cardId = item.json.id; \n    \n    // Verifica se o objeto de alertas existe\n    if (typeof alertasValidacao === 'object' && alertasValidacao !== null) {\n\n        // Itera sobre as chaves (os nomes dos alertas)\n        for (const tipoAlerta in alertasValidacao) {\n            \n            // Verifica se a chave existe no objeto E no nosso mapa de IDs\n            if (alertasValidacao.hasOwnProperty(tipoAlerta) && mapaTipos.hasOwnProperty(tipoAlerta)) {\n                \n                const statusAtivo = alertasValidacao[tipoAlerta];\n\n                // Busca o ID do tipo de alerta\n                const alertaTipoId = mapaTipos[tipoAlerta];\n\n                // Cria um novo item para cada par chave-valor\n                itemsDeSaida.push({\n                    json: {\n                        // IDs PRINCIPAIS PARA A INSERÇÃO\n                        alerta_card_tipo_id: alertaTipoId,\n                        ativo: statusAtivo, \n                        dados: JSON.stringify({ [tipoAlerta]: statusAtivo }),\n                        \n                        // CHAVE DE CORRESPONDÊNCIA PARA O MERGE\n                        card_referencia_id: cardId, \n                        tipo_alerta: tipoAlerta\n                    }\n                });\n            }\n        }\n    }\n}\n\nreturn itemsDeSaida;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1360,
+        160
+      ],
+      "id": "2306da72-2727-4062-a929-35be95e783e5",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cb653848-be08-455b-8d79-1e15ab6aec62",
+              "name": "analise card id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "e5888aaa-8656-4b7a-af3b-b001c5270879",
+              "name": "card_referencia_id",
+              "value": "={{ $json.id_card }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1328,
+        464
+      ],
+      "id": "fd065860-04a5-4e88-a86f-dc1c1b39b31f",
+      "name": "analise card id"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "card_referencia_id",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1072,
+        272
+      ],
+      "id": "2b11b141-ee71-4405-82b8-f17bc7622951",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "alertas_card",
+          "mode": "list",
+          "cachedResultName": "alertas_card"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ativo": "={{ $json.ativo }}",
+            "analise_card_id": "={{ $json['analise card id'] }}",
+            "dados": "={{ $json.dados }}",
+            "alerta_card_tipo_id": "={{ $json.alerta_card_tipo_id }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "analise_card_id",
+              "displayName": "analise_card_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ativo",
+              "displayName": "ativo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "dados",
+              "displayName": "dados",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "alerta_card_tipo_id",
+              "displayName": "alerta_card_tipo_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -848,
+        272
+      ],
+      "id": "cac930cd-a3cc-4397-9e25-eb4f5fe357c3",
+      "name": "tabela alertas card",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "45a55509-6b29-4d6f-b889-482db85324c1",
+              "name": "alertas card id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -624,
+        272
+      ],
+      "id": "e96724c3-54d4-43b8-b061-62e378b4e26b",
+      "name": "alertas card id"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "analise_estrategica",
+          "mode": "list",
+          "cachedResultName": "analise_estrategica"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "analise_card_id": "={{ $json['analise card id'] }}",
+            "alinhado": "={{ $('Loop Over Items2').item.json.analise_estrategica_ia.alinhamento_estrategico.alinhado }}",
+            "justificativa": "={{ $('Loop Over Items2').item.json.analise_estrategica_ia.alinhamento_estrategico.justificativa }}",
+            "score": "={{ $('Loop Over Items2').item.json.analise_estrategica_ia.alinhamento_estrategico.pontuacao }}",
+            "pontuacao_valor": "={{ $('Loop Over Items2').item.json.analise_estrategica_ia.alinhamento_estrategico.pontuacao_num }}",
+            "alinhado_status": "={{ $('Loop Over Items2').item.json.analise_estrategica_ia.alinhamento_estrategico.alinhado_bool }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "analise_card_id",
+              "displayName": "analise_card_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "alinhado",
+              "displayName": "alinhado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "justificativa",
+              "displayName": "justificativa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "alinhado_status",
+              "displayName": "alinhado_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "pontuacao_valor",
+              "displayName": "pontuacao_valor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "embedding_justificativa",
+              "displayName": "embedding_justificativa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1072,
+        464
+      ],
+      "id": "56be3b51-b7c9-4e2b-8a2b-59be8f835f4a",
+      "name": "tabela analise estrategica",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "708c48ae-5623-4f75-923b-8db91e0d3579",
+              "name": "analise estrategica id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -848,
+        464
+      ],
+      "id": "e21c81e0-5632-49c2-ad65-c71099faa116",
+      "name": "analise estrategica id"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "health_score",
+          "mode": "list",
+          "cachedResultName": "health_score"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "analise_card_id": "={{ $json['analise card id'] }}",
+            "nota_qualidade": "={{ $('Loop Over Items2').item.json.health_score.nota_qualidade }}",
+            "nota_estrategica": "={{ $('Loop Over Items2').item.json.health_score.nota_estrategica }}",
+            "health_score_final": "={{ $('Loop Over Items2').item.json.health_score.health_score_final }}",
+            "justificativa": "={{ $('Loop Over Items2').item.json.health_score.justificativa }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "analise_card_id",
+              "displayName": "analise_card_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nota_qualidade",
+              "displayName": "nota_qualidade",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nota_estrategica",
+              "displayName": "nota_estrategica",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "health_score_final",
+              "displayName": "health_score_final",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "justificativa",
+              "displayName": "justificativa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "embedding_justificativa",
+              "displayName": "embedding_justificativa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1072,
+        656
+      ],
+      "id": "3980691c-211b-470f-9516-2e9ab0127b0a",
+      "name": "tabela health score",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cda8c9a9-f0fc-44a6-818c-f8da319bf726",
+              "name": "health score id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "0170e486-0458-42fd-bdfb-a575a5fabf34",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -848,
+        656
+      ],
+      "id": "0a3265af-1b7c-49d7-abbc-5e8f9cadbe6e",
+      "name": "health score id"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "61c7c8ff-b016-48f0-a364-bbf59325d69f",
+              "leftValue": "={{ $('Loop Over Items2').item.json.fase }}",
+              "rightValue": "Concluído",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1072,
+        848
+      ],
+      "id": "1e21e1c7-62b4-4d11-92f7-eea91f094ba7",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "documentacao_ia",
+          "mode": "list",
+          "cachedResultName": "documentacao_ia"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "analise_card_id": "={{ $('analise card id').item.json['analise card id'] }}",
+            "conteudo": "={{ $('Loop Over Items2').item.json.documentacao_ia }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "analise_card_id",
+              "displayName": "analise_card_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "conteudo",
+              "displayName": "conteudo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "embedding",
+              "displayName": "embedding",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -816,
+        832
+      ],
+      "id": "191f5cfa-1c7a-4a9e-a5b0-4fccd2ff702d",
+      "name": "tabela documentacao ia",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "127a92af-1089-4903-bf4f-a886878aacdb",
+              "name": "documentacao ia id",
+              "value": "=",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -592,
+        832
+      ],
+      "id": "54467ff2-0e24-4d18-850d-9ea5df7365fe",
+      "name": "documentacao ia id"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "responsaveis",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -1968,
+        1056
+      ],
+      "id": "36319027-189d-4dc9-89bf-bf0377ed2ca7",
+      "name": "Split Out responsaveis"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1744,
+        1056
+      ],
+      "id": "3cdabc59-d704-4410-8917-f01022e8e10b",
+      "name": "Loop Over Items3"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "responsavel",
+          "mode": "list",
+          "cachedResultName": "responsavel"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Split Out responsaveis').item.json.id }}",
+            "nome": "={{ $('Split Out responsaveis').item.json.nome }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nome",
+              "displayName": "nome",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "embedding_nome",
+              "displayName": "embedding_nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1520,
+        1072
+      ],
+      "id": "85b89bf2-452a-48b1-8d93-ec666716d63a",
+      "name": "tabela responsavel",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e12e9e96-d6f2-438e-8b2a-756916950961",
+              "name": "responsavel id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1296,
+        1072
+      ],
+      "id": "6ea8164b-24bf-4587-988c-eae0c7a036f9",
+      "name": "responsavel id"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "card_responsavel",
+          "mode": "list",
+          "cachedResultName": "card_responsavel"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "responsavel_id": "={{ $json['responsavel id'] }}",
+            "card_id": "={{ $('Split Card Healthchecks').item.json.id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "card_id",
+              "displayName": "card_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "responsavel_id",
+              "displayName": "responsavel_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1072,
+        1072
+      ],
+      "id": "7474e40c-0f7c-4e13-9c6c-f9934068247b",
+      "name": "tabela card responsavel",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const tagsDict = {\n  1: \"Bug\",\n  2: \"Pendente Requisitos\",\n  3: \"MVP\",\n  4: \"Front\",\n  5: \"Back\",\n  6: \"Design\",\n  7: \"Produto\",\n  8: \"Feature\",\n  9: \"Infraestrutura\",\n  10: \"QA\",\n  11: \"Prioridade\",\n  12: \"Reprovado\",\n  13: \"Em Orçamento\",\n  14: \"Retrabalho\",\n  15: \"Computar\",\n  16: \"Não Computar\",\n  17: \"BI\",\n  18: \"3\",\n  19: \"2\",\n  20: \"1\",\n  21: \"irreproduzível\"\n};\n\nreturn $input.all().map(item => {\n  const tags = (item.json.tags || []).map(id => ({\n    id,\n    nome: tagsDict[id] || `Tag ${id} desconhecida`\n  }));\n  item.json.tags = tags;\n  return item;\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1968,
+        1376
+      ],
+      "id": "884a1ab5-901e-4cab-ae1f-afde9901329d",
+      "name": "nome tags"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "tags",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -1744,
+        1376
+      ],
+      "id": "be99a9a3-cfc0-4239-a71c-c5aa06603649",
+      "name": "Split Out tags"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1520,
+        1376
+      ],
+      "id": "294d9fbc-61f9-401a-a419-f3b6bb7a2504",
+      "name": "Loop Over Items4"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tags",
+          "mode": "list",
+          "cachedResultName": "tags"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "nome": "={{ $json.nome }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nome",
+              "displayName": "nome",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "embedding_nome",
+              "displayName": "embedding_nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1264,
+        1392
+      ],
+      "id": "0a214d7d-3a97-493a-a2e4-0d8385131a86",
+      "name": "tabela tags",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "93833e32-d8e6-4bf2-a607-d2a65e9aa1c0",
+              "name": "tag id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1072,
+        1392
+      ],
+      "id": "63b36e58-2745-4e5b-bf1a-8a3ff8b30149",
+      "name": "tag id"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "card_tags",
+          "mode": "list",
+          "cachedResultName": "card_tags"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "tag_id": "={{ $json['tag id'] }}",
+            "card_id": "={{ $('nome tags').item.json.id }}"
+          },
+          "matchingColumns": [
+            "card_id",
+            "tag_id"
+          ],
+          "schema": [
+            {
+              "id": "card_id",
+              "displayName": "card_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "tag_id",
+              "displayName": "tag_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -848,
+        1392
+      ],
+      "id": "2c1cb790-d2fc-4868-b683-11af5640e1d7",
+      "name": "tabela card tags",
+      "credentials": {
+        "postgres": {
+          "id": "ezX3E4wAaohalvvh",
+          "name": "banco logbit labs dev"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Call 'LOG_Workf_Agente_analise_cards_v2'": {
+      "main": [
+        [
+          {
+            "node": "Split Card Healthchecks",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "tabela projetos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "tabela analise projeto",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "tabela relatorio meta",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "tabela alerta card tipo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "split alertas similaridade titulo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "tabela alerta projeto tipo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "tabela produtos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela relatorio meta": {
+      "main": [
+        [
+          {
+            "node": "uuid",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "relatorio meta id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Call 'LOG_Workf_Agente_analise_cards_v2'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela analise projeto": {
+      "main": [
+        [
+          {
+            "node": "analise projeto id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela alerta projeto tipo": {
+      "main": [
+        [
+          {
+            "node": "alerta projeto tipo id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "alerta projeto tipo id": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "split alertas similaridade titulo": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "tabela alertas projeto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela alertas projeto": {
+      "main": [
+        [
+          {
+            "node": "alertas projeto id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "alertas projeto id": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "tabela card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Card Healthchecks": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Split Out responsaveis",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "nome tags",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela card": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items2": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "tabela analise card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela analise card": {
+      "main": [
+        [
+          {
+            "node": "analise card id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "analise card id": {
+      "main": [
+        [
+          {
+            "node": "tabela analise estrategica",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "tabela health score",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "tabela alertas card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela alertas card": {
+      "main": [
+        [
+          {
+            "node": "alertas card id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela analise estrategica": {
+      "main": [
+        [
+          {
+            "node": "analise estrategica id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela health score": {
+      "main": [
+        [
+          {
+            "node": "health score id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "tabela documentacao ia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela documentacao ia": {
+      "main": [
+        [
+          {
+            "node": "documentacao ia id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out responsaveis": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items3": {
+      "main": [
+        [],
+        [
+          {
+            "node": "tabela responsavel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela responsavel": {
+      "main": [
+        [
+          {
+            "node": "responsavel id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "responsavel id": {
+      "main": [
+        [
+          {
+            "node": "tabela card responsavel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela card responsavel": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "nome tags": {
+      "main": [
+        [
+          {
+            "node": "Split Out tags",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out tags": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items4": {
+      "main": [
+        [],
+        [
+          {
+            "node": "tabela tags",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela tags": {
+      "main": [
+        [
+          {
+            "node": "tag id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tag id": {
+      "main": [
+        [
+          {
+            "node": "tabela card tags",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tabela card tags": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {
+    "node:Schedule Trigger": {
+      "recurrenceRules": []
+    },
+    "node:Schedule Trigger1": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "fbcffaf5-54cb-4f0c-886f-b810bcdb1dcb",
+  "activeVersionId": null,
+  "versionCounter": 112,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-12-16T14:30:10.137Z",
+      "createdAt": "2025-12-16T14:30:10.137Z",
+      "role": "workflow:owner",
+      "workflowId": "ctElOaVvDeszvPvt",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T15:11:41.884Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2025-11-17T13:23:42.179Z",
+      "createdAt": "2025-11-17T13:23:42.179Z",
+      "id": "vfz8aT8u7Qwc2ZCH",
+      "name": "Assesmet"
+    },
+    {
+      "updatedAt": "2025-12-16T14:28:22.781Z",
+      "createdAt": "2025-12-16T14:28:22.781Z",
+      "id": "fy5WxnAHZdzhKkiT",
+      "name": "sprint atual"
+    }
+  ],
+  "activeVersion": null
+}
