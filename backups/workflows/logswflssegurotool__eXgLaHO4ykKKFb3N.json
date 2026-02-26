@@ -1,0 +1,240 @@
+{
+  "updatedAt": "2026-02-20T23:04:31.607Z",
+  "createdAt": "2026-02-20T22:13:36.544Z",
+  "id": "eXgLaHO4ykKKFb3N",
+  "name": "LOG_SWF_Ls_seguro_tool",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "path",
+              "type": "array"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -416,
+        -160
+      ],
+      "id": "78015062-03f3-42a3-a5b9-c3b8028c1118",
+      "name": "chamadaChatbot"
+    },
+    {
+      "parameters": {
+        "jsCode": "const newItems = [];\n\nfor (const item of $input.all()) {\n  const paths = item.json.path;\n\n  // 0. Validação de Esquema\n  if (!Array.isArray(paths)) {\n    throw new Error(`Formato inválido. O campo 'path' deve ser um array de strings.`);\n  }\n\n  for (let p of paths) {\n    if (typeof p !== 'string') {\n      throw new Error(`Acesso negado: Um dos caminhos fornecidos não é um texto válido.`);\n    }\n\n    // --- LÓGICA DE RAIZ VIRTUAL ---\n    // Garante que todo caminho comece com \"/\" e remove barras duplas\n    if (!p.startsWith('/')) {\n      p = '/' + p;\n    }\n    p = p.replace(/\\/+/g, '/');\n\n    // 1. Bloqueia \"..\" (Path Traversal)\n    if (p.includes(\"..\")) {\n      throw new Error(`Acesso negado: Tentativa de Path Traversal (..) ao tentar listar ${p}`);\n    }\n\n    // 2. Bloqueia diretórios sensíveis ou muito pesados\n    const restrictedPattern = /(^|\\/)\\.?(env|git|node_modules|__pycache__|venv)(\\.|$|\\/)/i;\n    if (restrictedPattern.test(p)) {\n      throw new Error(`Acesso negado: Tentativa de listar diretório restrito ou excessivamente grande: ${p}`);\n    }\n\n    // 3. Validação rigorosa de caracteres\n    const safePattern = /^[a-zA-Z0-9/ \\-_\\.]+$/;\n    if (!safePattern.test(p)) {\n      throw new Error(`Acesso negado: O caminho contém caracteres perigosos ou não permitidos: ${p}`);\n    }\n\n    // 4. Validação de prefixos permitidos\n    const allowedDirs = [\"/apps/\", \"/docs/\", \"/config/\"];\n    \n    // Arquivos específicos permitidos (sem a raiz \"/\")\n    const allowedExactPaths = [\"/README.md\", \"/AGENTS.md\"]; \n\n    const hasAllowedPrefix = allowedDirs.some(prefix => p.startsWith(prefix));\n    const isAllowedExactPath = allowedExactPaths.includes(p);\n\n    if (!hasAllowedPrefix && !isAllowedExactPath) {\n      throw new Error(`Acesso negado: O diretório '${p}' não está na lista de locais permitidos para listagem.`);\n    }\n\n    // --- PREPARAÇÃO DO OUTPUT ---\n    const cleanJson = { ...item.json };\n    delete cleanJson.path; \n    \n    // Passa o caminho normalizado para o próximo nó\n    cleanJson.safePath = p;\n\n    newItems.push({\n      json: cleanJson\n    });\n  }\n}\n\nreturn newItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        -160
+      ],
+      "id": "8fd8b703-8213-4fce-9fa1-44b64b26146e",
+      "name": "garanteRestricoesLs"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        0,
+        -160
+      ],
+      "id": "7bc3517d-c2c8-4cc3-a65c-8e118ca122fd",
+      "name": "forSafePath"
+    },
+    {
+      "parameters": {
+        "command": "=ls -R \"/data/repos/logbit/agente-analise-neat{{$json.safePath}}\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        272,
+        -80
+      ],
+      "id": "c10270ac-8110-4b06-b732-dce38373bf2c",
+      "name": "executaLs"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "598c68f1-511f-4a40-b913-059e8408e740",
+              "name": "dir",
+              "value": "={{ $('forSafePath').item.json.safePath }}",
+              "type": "string"
+            },
+            {
+              "id": "0f355766-a5a4-4db4-94f7-3ea7f1b315cb",
+              "name": "content",
+              "value": "={{ $json.stdout }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        -80
+      ],
+      "id": "59fd5859-4436-4c13-8d15-0c7abcd79d9f",
+      "name": "preparaResultado"
+    }
+  ],
+  "connections": {
+    "chamadaChatbot": {
+      "main": [
+        [
+          {
+            "node": "garanteRestricoesLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "garanteRestricoesLs": {
+      "main": [
+        [
+          {
+            "node": "forSafePath",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "forSafePath": {
+      "main": [
+        [],
+        [
+          {
+            "node": "executaLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "executaLs": {
+      "main": [
+        [
+          {
+            "node": "preparaResultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "preparaResultado": {
+      "main": [
+        [
+          {
+            "node": "forSafePath",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "chamadaChatbot": [
+      {
+        "json": {
+          "path": [
+            "docs/",
+            "apps/"
+          ]
+        }
+      }
+    ]
+  },
+  "versionId": "ead186f1-d79c-4a05-9876-eb16d5b6664d",
+  "activeVersionId": null,
+  "versionCounter": 13,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-02-20T22:13:36.544Z",
+      "createdAt": "2026-02-20T22:13:36.544Z",
+      "role": "workflow:owner",
+      "workflowId": "eXgLaHO4ykKKFb3N",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T10:16:57.321Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
