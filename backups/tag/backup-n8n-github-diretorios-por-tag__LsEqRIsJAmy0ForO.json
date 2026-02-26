@@ -1,0 +1,470 @@
+{
+  "updatedAt": "2026-02-26T15:19:41.322Z",
+  "createdAt": "2026-02-26T15:19:41.322Z",
+  "id": "LsEqRIsJAmy0ForO",
+  "name": "Backup n8n → GitHub (Diretórios por [TAG])",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "c63f6e26-24f7-4e71-b29b-e02954c9e88d",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst dateStr = now.toISOString().replace('T', ' ').substring(0, 19);\nreturn [{ json: { commitDate: dateStr } }];"
+      },
+      "id": "352352ca-7f36-4e55-8674-5775565e2691",
+      "name": "Gerar Data/Hora",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "filters": {},
+        "requestOptions": {}
+      },
+      "id": "1e47230f-fef6-46c3-a913-fb898a1e4b32",
+      "name": "Listar Todos os Workflows",
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ],
+      "credentials": {
+        "n8nApi": {
+          "id": "JLNWcgSoTOoMux4V",
+          "name": "n8n account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "ebcf8f7d-ec17-4b39-8dea-aa58868f7395",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        656,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "workflowId": "={{ $json.id }}",
+        "requestOptions": {}
+      },
+      "id": "1608906b-e487-4c3e-8e09-86d6b4c9dbcb",
+      "name": "Buscar Workflow Completo",
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        928,
+        160
+      ],
+      "credentials": {
+        "n8nApi": {
+          "id": "JLNWcgSoTOoMux4V",
+          "name": "n8n account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const workflow = $input.first().json;\nconst name = workflow.name || 'sem-nome';\n\n// Função de limpeza para caminhos de arquivo\nconst slugify = (text) => {\n  return text\n    .toString()\n    .toLowerCase()\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .replace(/[^a-z0-9\\s-]/g, '')\n    .replace(/\\s+/g, '-')\n    .replace(/-+/g, '-')\n    .replace(/^-|-$/g, '');\n};\n\n// LÓGICA DE DIRETÓRIO: Procura por [TEXTO] no nome do workflow\nconst match = name.match(/\\[(.*?)\\]/);\nlet folder = 'geral';\n\nif (match && match[1]) {\n    folder = match[1]; // Pega o que está dentro de []\n}\n\nconst cleanFolder = slugify(folder);\nconst cleanName = slugify(name);\n\nconst filePath = `backups/${cleanFolder}/${cleanName}__${workflow.id}.json`;\nconst content = JSON.stringify(workflow, null, 2);\n\nreturn [{\n  json: {\n    filePath,\n    content,\n    workflowName: workflow.name,\n    workflowId: workflow.id\n  }\n}];"
+      },
+      "id": "7f41046b-5004-438b-943a-564930375ed3",
+      "name": "Preparar Arquivo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": "moraisinovaia",
+        "repository": "teste-backup-n8n",
+        "filePath": "={{ $json.filePath }}",
+        "asBinaryProperty": false,
+        "additionalParameters": {}
+      },
+      "id": "98cb8f4a-350a-4b29-b1cd-fffb03b82787",
+      "name": "Verificar se Arquivo Existe",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        160
+      ],
+      "webhookId": "2b8e0e1b-d263-45ee-9839-288c254cc8dc",
+      "credentials": {
+        "githubApi": {
+          "id": "jArmW5kmeNI4BAo6",
+          "name": "GitHub gab"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "file-exists-check",
+              "leftValue": "={{ $json.sha }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "62203b42-8a58-412b-adf3-bbb432abbc6d",
+      "name": "Arquivo Já Existe?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "edit",
+        "owner": "moraisinovaia",
+        "repository": "teste-backup-n8n",
+        "filePath": "={{ $('Preparar Arquivo').item.json.filePath }}",
+        "fileContent": "={{ $('Preparar Arquivo').item.json.content }}",
+        "commitMessage": "=✏️ Atualizado: {{ $('Preparar Arquivo').item.json.workflowName }} ({{ $('Gerar Data/Hora').first().json.commitDate }})"
+      },
+      "id": "364f0166-0640-45c7-9f49-a4956fdfe843",
+      "name": "Atualizar Arquivo (Edit)",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        48
+      ],
+      "webhookId": "435c9289-92e6-4693-849e-a727bfd5b2c4",
+      "credentials": {
+        "githubApi": {
+          "id": "jArmW5kmeNI4BAo6",
+          "name": "GitHub gab"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": "moraisinovaia",
+        "repository": "teste-backup-n8n",
+        "filePath": "={{ $('Preparar Arquivo').item.json.filePath }}",
+        "fileContent": "={{ $('Preparar Arquivo').item.json.content }}",
+        "commitMessage": "=🆕 Criado: {{ $('Preparar Arquivo').item.json.workflowName }} ({{ $('Gerar Data/Hora').first().json.commitDate }})"
+      },
+      "id": "f512515d-1b97-461b-a413-dbadfeb0f2ee",
+      "name": "Criar Arquivo (Create)",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        272
+      ],
+      "webhookId": "68ce5abd-c727-49f5-81f7-15283f72eff9",
+      "credentials": {
+        "githubApi": {
+          "id": "jArmW5kmeNI4BAo6",
+          "name": "GitHub gab"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-status",
+              "name": "status",
+              "value": "={{ $json.content ? '✅ Backup OK' : '⚠️ Verificar' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "060ca033-8e40-4e9d-a32f-e20236147288",
+      "name": "Log do Backup",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1984,
+        160
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "410eaeb5-cbca-4623-b410-ff1b97285b90",
+      "name": "Aguardar 1s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2208,
+        160
+      ],
+      "webhookId": "5746ad20-43f5-4dfa-adb9-6ddf5e59363e"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Gerar Data/Hora",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar Data/Hora": {
+      "main": [
+        [
+          {
+            "node": "Listar Todos os Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listar Todos os Workflows": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Buscar Workflow Completo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Workflow Completo": {
+      "main": [
+        [
+          {
+            "node": "Preparar Arquivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Arquivo": {
+      "main": [
+        [
+          {
+            "node": "Verificar se Arquivo Existe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar se Arquivo Existe": {
+      "main": [
+        [
+          {
+            "node": "Arquivo Já Existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Arquivo Já Existe?": {
+      "main": [
+        [
+          {
+            "node": "Atualizar Arquivo (Edit)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Criar Arquivo (Create)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar Arquivo (Edit)": {
+      "main": [
+        [
+          {
+            "node": "Log do Backup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar Arquivo (Create)": {
+      "main": [
+        [
+          {
+            "node": "Log do Backup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log do Backup": {
+      "main": [
+        [
+          {
+            "node": "Aguardar 1s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguardar 1s": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "89674595-8d56-4136-9429-915a3a2a2244",
+  "activeVersionId": null,
+  "versionCounter": 2,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-02-26T15:19:41.322Z",
+      "createdAt": "2026-02-26T15:19:41.322Z",
+      "role": "workflow:owner",
+      "workflowId": "LsEqRIsJAmy0ForO",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T15:11:41.884Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
