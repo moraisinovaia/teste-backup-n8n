@@ -1,0 +1,806 @@
+{
+  "updatedAt": "2026-01-26T15:41:23.048Z",
+  "createdAt": "2026-01-26T15:41:23.048Z",
+  "id": "n5enUiXQ4N1jK5cP",
+  "name": "benchmark_post_v2",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        80
+      ],
+      "id": "01ee9b3e-4d42-481a-a945-acefc7212ce4",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/data/files/uni/notifs/output/benchmark_cdi_pf.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        176,
+        -16
+      ],
+      "id": "70216652-080b-4924-b925-e9b2f31134a1",
+      "name": "Read/Write Files from Disk",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "destinationKey": "benchmark_cdi_pf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        400,
+        -16
+      ],
+      "id": "167a2364-70cb-4a43-9d94-8b96a7a04a52",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c607c30b-b697-4c83-a569-46e1694128e2",
+              "name": "benchmark_cdi_pf",
+              "value": "={{ $json.benchmark_cdi_pf.itens.notificacoes }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        608,
+        -16
+      ],
+      "id": "0f752256-803f-46e7-9dd9-366ad01fbc70",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$('get sess').item.json.baseUrl}}api/notificacao/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Referer",
+              "value": "={{ $('get sess').item.json.baseUrl }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Cookie",
+              "value": "=csrftoken={{ $('get sess').item.json.csrfCookie }}; sessionid={{ $('get sess').item.json.sessionId }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "={{ $('get sess').item.json.csrfCookie }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "off"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2448,
+        -16
+      ],
+      "id": "f078f97c-af7e-48a9-8fef-d5939942cc2f",
+      "name": "POST1",
+      "executeOnce": false,
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.baseUrl }}clientes/gastos/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Referer",
+              "value": "={{ $json.baseUrl }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Cookie",
+              "value": "=csrftoken={{ $('get sess').item.json.csrfCookie }}; sessionid={{ $('get sess').item.json.sessionId }}"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "off"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        176,
+        176
+      ],
+      "id": "3c6c5971-1028-478e-afbf-f0a52fadebaa",
+      "name": "fetch gestor_sap",
+      "retryOnFail": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "todos_users",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        624,
+        176
+      ],
+      "id": "6fb7255a-c73b-42a4-a9bb-c2fa963755ac",
+      "name": "pf array"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1792,
+        160
+      ],
+      "id": "3f615e29-9302-41c2-beff-7f13ae280816",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f68d428e-2463-4556-8461-2231916266e5",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1136,
+        176
+      ],
+      "id": "54bc67b0-7f1a-4c36-a19d-c03561a14311",
+      "name": "ids_destinatarios_gestor_sap"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "from html import escape\n\n# ------------------------------\n# Funções auxiliares\n# ------------------------------\ndef to_brl(n: float) -> str:\n    n = float(n) if n is not None else 0.0\n    return f\"{n:,.2f}\".replace(\",\", \"X\").replace(\".\", \",\").replace(\"X\", \".\")\n\ndef to_pct(n: float) -> str:\n    n = float(n) if n is not None else 0.0\n    return f\"{n:,.2f}%\".replace(\",\", \"X\").replace(\".\", \",\").replace(\"X\", \".\")\n\ndef ensure_list(name, value):\n    if isinstance(value, list):\n        return value\n    try:\n        return value.to_py()\n    except Exception as e:\n        raise TypeError(f\"{name} não é lista nem JsProxy convertível: {type(value)}\") from e\n\ndef ensure_dict(name, value):\n    if isinstance(value, dict):\n        return value\n    try:\n        return value.to_py()\n    except Exception as e:\n        raise TypeError(f\"{name} não é dict nem JsProxy convertível: {type(value)}\") from e\n\n\n# ------------------------------\n# Processamento principal\n# ------------------------------\nnew_items = []\nGATILHO_SLUG = \"benchmark_cdi_pf\"\nids_destinatarios = []\nitems_notificacao = []\n\n\n# PRIMEIRA PASSAGEM: Separar os dados de notificação (2 itens) dos IDs (20 itens)\nfor idx, item in enumerate(_input.all()):\n    j_raw = item.json.to_py()\n    \n    # ----------------------------------------------------------------------\n    # LÓGICA DE IDENTIFICAÇÃO DO ITEM:\n    # 1. Coletar IDs: Assumimos que IDs são itens que contêm 'id' E NÃO contêm 'detalhes' (que é da notificação)\n    #    Ajuste 'id' se o campo for diferente (ex: 'ID_PESSOA')\n    # 2. Coletar Notificação: Itens que contêm o GATILHO_SLUG ou 'detalhes'\n    # ----------------------------------------------------------------------\n    \n    # Tenta coletar o ID\n    if 'id' in j_raw and isinstance(j_raw['id'], (int, str)) and 'detalhes' not in j_raw:\n        try:\n            ids_destinatarios.append(int(j_raw['id'])) \n        except ValueError:\n            ids_destinatarios.append(j_raw['id'])\n            \n    # Tenta coletar o item de notificação\n    elif GATILHO_SLUG in j_raw or ('detalhes' in j_raw):\n        # Apenas coleta o item se ele ainda não foi adicionado ou se for diferente\n        items_notificacao.append(item)\n\n\n# Remove IDs duplicados, se houver\nids_destinatarios = list(set(ids_destinatarios)) \n\n# Fallback: Se não encontrar IDs, usa ID 1 (Admin)\nif not ids_destinatarios:\n    print(\"AVISO: Array de destinatários vazio. Usando ID 1 (Admin) como fallback.\")\n    ids_destinatarios = [1]\n\n\n# ------------------------------\n# SEGUNDA PASSAGEM: Montar as notificações (Iteração Dupla: Notificação x ID)\n# ------------------------------\nif not items_notificacao:\n    return [] \n\n# Loop 1: Itera sobre cada ITEM de NOTIFICAÇÃO (os 2 itens do fluxo de cima)\nfor idx_notificacao, item_notificacao in enumerate(items_notificacao):\n\n    j_item = item_notificacao.json.to_py()\n    j = ensure_dict(\"notificacao\", j_item.get(GATILHO_SLUG, j_item))\n\n    # Extração de campos (mantendo sua lógica)\n    detalhes_texto = escape(str(j[\"detalhes\"]))\n    nome_alvo = j[\"nome_alvo\"]\n    id_alvo = j[\"id_alvo\"]\n    p50 = float(j.get(\"p50\", 0.0))\n    p90 = float(j.get(\"p90\", 0.0))\n    n_ratios = int(j.get(\"n_ratios\", 0))\n\n    # Determina se é p50 ou p90 (Mantido)\n    is_mediana = \"Mediana\" in j[\"detalhes\"]\n    valor_ratio = p50 if is_mediana else p90\n    label_ratio = \"Mediana (p50)\" if is_mediana else \"Percentil 90 (p90)\"\n\n    # Limiares (Mantido)\n    limiar_baixa = j.get(\"limiar_ratio_baixa\")\n    limiar_alta = j.get(\"limiar_ratio_alta\")\n    limiar = limiar_baixa if limiar_baixa is not None else limiar_alta\n    \n    # ------------------------------\n    # Montagem do corpo da notificação (Mantida)\n    # ------------------------------\n    descricao_html = (\nf\"<p><strong>Detalhes da Avaliação:</strong></p>\"\n        f\"<ol>\"\n        f\"<li><strong>Mediana (p50):</strong> {p50:.2f}</li>\"\n        f\"<li><strong>Percentil 90 (p90):</strong> {p90:.2f}</li>\"\n        f\"<li><strong>Número de Clientes (Ratios Válidos):</strong> {n_ratios}</li>\"\n         f\"<p><em>Disparo de alerta quando o benchmark CDI (100%-120%) não é atendido pela rentabilidade (P50/P90) de clientes PF em 12 meses.</em></p>\"\n        f\"</ol>\"\n    )\n\n    # Loop 2: Itera sobre cada ID de DESTINATÁRIO (os 20 IDs)\n    for destinatario_id in ids_destinatarios:\n        \n        novo = {\n            \"titulo\": \"⚠️ Alerta: Benchmark CDI - Cliente PF\",\n            \"descricao\": descricao_html,\n            \"destinatario\": destinatario_id, # CHAVE: ID do destinatário da lista\n        }\n\n\n        new_items.append({\n            \"json\": novo,\n            # Usa o índice do item de notificação atual para rastreabilidade\n            \"pairedItem\": {\"item\": idx_notificacao}, \n        })\n\nreturn new_items"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2096,
+        -208
+      ],
+      "id": "31e2374a-a46b-4c77-8c66-7bc945d8d9a7",
+      "name": "Apenas com IDS gestores SAP",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "PlS62KJilKsPGxO2",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/PlS62KJilKsPGxO2",
+          "cachedResultName": "UNI_Workflow_Util_fetch_sess_v2"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "baseUrl": "https://hub-unifinance.novadata.dev/",
+            "loginPath": "login/",
+            "csrfFieldName": "csrftoken"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "baseUrl",
+              "displayName": "baseUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "loginPath",
+              "displayName": "loginPath",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "csrfFieldName",
+              "displayName": "csrfFieldName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -144,
+        80
+      ],
+      "id": "0e4d51b2-953b-493b-9f88-061204c149c3",
+      "name": "get sess"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1792,
+        -16
+      ],
+      "id": "0dea2795-5094-4095-86e1-9039e6c74698",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "from html import escape\n\n# ------------------------------\n# Funções auxiliares\n# ------------------------------\ndef to_brl(n: float) -> str:\n    n = float(n) if n is not None else 0.0\n    return f\"{n:,.2f}\".replace(\",\", \"X\").replace(\".\", \",\").replace(\"X\", \".\")\n\ndef to_pct(n: float) -> str:\n    n = float(n) if n is not None else 0.0\n    return f\"{n:,.2f}%\".replace(\",\", \"X\").replace(\".\", \",\").replace(\"X\", \".\")\n\ndef ensure_list(name, value):\n    if isinstance(value, list):\n        return value\n    try:\n        return value.to_py()\n    except Exception as e:\n        raise TypeError(f\"{name} não é lista nem JsProxy convertível: {type(value)}\") from e\n\ndef ensure_dict(name, value):\n    if isinstance(value, dict):\n        return value\n    try:\n        return value.to_py()\n    except Exception as e:\n        raise TypeError(f\"{name} não é dict nem JsProxy convertível: {type(value)}\") from e\n\n\n# ------------------------------\n# Processamento principal\n# ------------------------------\nnew_items = []\nGATILHO_SLUG = \"benchmark_cdi_pf_p50\"\nids_destinatarios = []\nitems_notificacao = []\n\n\n# PRIMEIRA PASSAGEM: Separar IDs e notificações\nfor idx, item in enumerate(_input.all()):\n    j_raw = item.json.to_py()\n\n    # IDs de gestores\n    if 'id' in j_raw and isinstance(j_raw['id'], (int, str)) and 'detalhes' not in j_raw:\n        try:\n            ids_destinatarios.append(int(j_raw['id']))\n        except ValueError:\n            ids_destinatarios.append(j_raw['id'])\n\n    # Notificações\n    elif GATILHO_SLUG in j_raw or ('detalhes' in j_raw):\n        items_notificacao.append(item)\n\nids_destinatarios = list(set(ids_destinatarios)) or [1]\n\n# ------------------------------\n# SEGUNDA PASSAGEM: Montagem das notificações p50\n# ------------------------------\nfor idx_notificacao, item_notificacao in enumerate(items_notificacao):\n    j_item = item_notificacao.json.to_py()\n    j = ensure_dict(\"notificacao\", j_item.get(GATILHO_SLUG, j_item))\n\n    nome_alvo = j.get(\"nome_alvo\", \"Cliente não informado\")\n    id_alvo = j.get(\"id_alvo\", None)\n    p50 = float(j.get(\"p50\", 0.0))\n    n_ratios = int(j.get(\"n_ratios\", 0))\n\n    CDI_REF = float(j.get(\"limiar_ratio_baixa\", 1.0))  # 100%\n\n    crossed_p50 = bool(j.get(\"threshold_crossed_p50\", p50 < CDI_REF))\n    if not crossed_p50:\n        continue\n\n    descricao_html = (\n        f\"<ol>\"\n        f\"<strong>Detalhes da Avaliação:</strong> {p50:.2f}\"\n        f\"<li><strong>Ratios válidos:</strong> {n_ratios}</li>\"\n        f\"</ol>\"\n    )\n\n    detalhes_notificacao = (\n        f\"<strong>Benchmark CDI (p50)</strong> ultrapassado.<br>\"\n    )\n\n    frase_final = (\n        f\"<p style='color: gray; font-style: italic;'>Disparo de alerta quando o benchmark CDI (100%-120%) não é atendido pela rentabilidade (P50) de clientes PF em 12 meses.</p>\"\n    )\n\n    for destinatario_id in ids_destinatarios:\n        novo = {\n            \"titulo\": \"⚠️ Alerta: Mediana (p50) Benchmark CDI - Cliente PF\",\n            \"descricao\": f\"{descricao_html}<p>{detalhes_notificacao}</p><p>{frase_final}</p>\",\n            \"destinatario\": destinatario_id,\n        }\n\n        new_items.append({\n            \"json\": novo,\n            \"pairedItem\": {\"item\": idx_notificacao},\n        })\n\nreturn new_items\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2096,
+        -16
+      ],
+      "id": "f4ac525a-509a-4b7f-91ba-b2502194f688",
+      "name": "benchmark_cdi_pf_p50"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "from html import escape\n\n# ------------------------------\n# Funções auxiliares\n# ------------------------------\ndef to_brl(n: float) -> str:\n    n = float(n) if n is not None else 0.0\n    return f\"{n:,.2f}\".replace(\",\", \"X\").replace(\".\", \",\").replace(\"X\", \".\")\n\ndef to_pct(n: float) -> str:\n    n = float(n) if n is not None else 0.0\n    return f\"{n:,.2f}%\".replace(\",\", \"X\").replace(\".\", \",\").replace(\"X\", \".\")\n\ndef ensure_list(name, value):\n    if isinstance(value, list):\n        return value\n    try:\n        return value.to_py()\n    except Exception as e:\n        raise TypeError(f\"{name} não é lista nem JsProxy convertível: {type(value)}\") from e\n\ndef ensure_dict(name, value):\n    if isinstance(value, dict):\n        return value\n    try:\n        return value.to_py()\n    except Exception as e:\n        raise TypeError(f\"{name} não é dict nem JsProxy convertível: {type(value)}\") from e\n\n\n# ------------------------------\n# Processamento principal (apenas p90)\n# ------------------------------\nnew_items = []\nGATILHO_SLUG = \"benchmark_cdi_pf\"\nids_destinatarios = []\nitems_notificacao = []\n\n# PRIMEIRA PASSAGEM: Separar dados de notificação (p90) dos IDs\nfor idx, item in enumerate(_input.all()):\n    j_raw = item.json.to_py()\n    \n    # Identificação dos tipos de item\n    if 'id' in j_raw and isinstance(j_raw['id'], (int, str)) and 'detalhes' not in j_raw:\n        try:\n            ids_destinatarios.append(int(j_raw['id'])) \n        except ValueError:\n            ids_destinatarios.append(j_raw['id'])\n    elif GATILHO_SLUG in j_raw or ('detalhes' in j_raw):\n        items_notificacao.append(item)\n\n# Remove IDs duplicados\nids_destinatarios = list(set(ids_destinatarios))\n\n# Fallback: caso não haja IDs\nif not ids_destinatarios:\n    print(\"AVISO: Nenhum destinatário encontrado. Usando ID 1 (Admin) como fallback.\")\n    ids_destinatarios = [1]\n\n# ------------------------------\n# SEGUNDA PASSAGEM: Montagem das notificações (somente p90)\n# ------------------------------\nif not items_notificacao:\n    return []\n\nfor idx_notificacao, item_notificacao in enumerate(items_notificacao):\n    j_item = item_notificacao.json.to_py()\n    j = ensure_dict(\"notificacao\", j_item.get(GATILHO_SLUG, j_item))\n\n    # Extrai apenas os campos necessários\n    detalhes_texto = escape(str(j[\"detalhes\"]))\n    nome_alvo = j[\"nome_alvo\"]\n    id_alvo = j[\"id_alvo\"]\n    p90 = float(j.get(\"p90\", 0.0))\n    n_ratios = int(j.get(\"n_ratios\", 0))\n\n    # Limiares (mantido)\n    limiar_baixa = j.get(\"limiar_ratio_baixa\")\n    limiar_alta = j.get(\"limiar_ratio_alta\")\n    limiar = limiar_baixa if limiar_baixa is not None else limiar_alta\n\n    # ------------------------------\n    # Montagem do corpo da notificação (somente p90)\n    # ------------------------------\n    descricao_html = (\n        f\"<p><strong>Detalhes da Avaliação:</strong></p>\"\n        f\"<ol>\"\n        f\"<li><strong>Percentil 90 (p90):</strong> {p90:.2f}</li>\"\n        f\"<li><strong>Número de Clientes (Ratios Válidos):</strong> {n_ratios}</li>\"\n        f\"<p><em style='color:gray;'>Disparo de alerta quando o benchmark CDI (100%-120%) \"\n        f\"não é atendido pela rentabilidade (P90) de clientes PF em 12 meses.</em></p>\"\n        f\"</ol>\"\n    )\n\n    # Envia a notificação para cada destinatário\n    for destinatario_id in ids_destinatarios:\n        novo = {\n            \"titulo\": \"⚠️ Alerta: Percentil (P90) Benchmark CDI - Cliente PF\",\n            \"descricao\": descricao_html,\n            \"destinatario\": destinatario_id,\n        }\n\n\n        new_items.append({\n            \"json\": novo,\n            \"pairedItem\": {\"item\": idx_notificacao},\n        })\n\nreturn new_items\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2096,
+        160
+      ],
+      "id": "874b79f4-eaca-4aab-9bae-663daecdcec0",
+      "name": "benchmark_cdi_pf_p90"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1792,
+        -208
+      ],
+      "id": "12b2e111-546f-455a-bad1-042c8ae018e9",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a157b661-70b0-4fb5-8243-19ca3117c8a2",
+              "leftValue": "={{ $json.benchmark_cdi_pf[0].limiar_ultrapassado }}",
+              "rightValue": "p50",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "86c9dd7f-5975-442a-92db-f977a73118fc",
+              "leftValue": "={{ $json.benchmark_cdi_pf[1].limiar_ultrapassado }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1184,
+        -16
+      ],
+      "id": "a5e59a4f-1f82-404c-b07a-3dc86575ae6f",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "683665e6-f279-407c-b5e7-b1594e79b0ab",
+              "leftValue": "={{ $json.benchmark_cdi_pf[0].limiar_ultrapassado }}",
+              "rightValue": "=p50",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "2c179e04-deed-48ea-8f95-ec45860a2e2e",
+              "leftValue": "={{ $json.benchmark_cdi_pf[1].limiar_ultrapassado }}",
+              "rightValue": "p90",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        976,
+        -208
+      ],
+      "id": "f6890e5b-a768-4e4a-936d-c2b361febba2",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "lista_de_itens = _data[\"benchmark_cdi_pf\"]\nbenchmark_cdi_pf = {\"benchmark_cdi_pf\": []}\n\nif len(lista_de_itens) > 0:\n    item_0 = lista_de_itens[0]\n    p50_0 = float(item_0[\"p50\"])\n    if p50_0 < 1.0:\n        benchmark_cdi_pf[\"benchmark_cdi_pf\"].append(item_0)\n\nif len(lista_de_itens) > 1:\n    item_1 = lista_de_itens[1]\n    p90_1 = float(item_1[\"p90\"])\n    if p90_1 < 1.2:\n        benchmark_cdi_pf[\"benchmark_cdi_pf\"].append(item_1)\n\nreturn benchmark_cdi_pf\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        -16
+      ],
+      "id": "c76e4733-0ce7-4a7f-8837-9c9ce6c7dc65",
+      "name": "Code in Python (Beta)1"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "benchmark_cdi_pf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1472,
+        -528
+      ],
+      "id": "b81d8d2e-2b1f-4bfa-bbd0-af8622937141",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "benchmark_cdi_pf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1472,
+        -352
+      ],
+      "id": "8faa81f1-b078-4e83-96ec-8bba8a3a9eff",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "benchmark_cdi_pf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1472,
+        -160
+      ],
+      "id": "38ba0eca-3b8a-4840-909f-7091c91f441f",
+      "name": "Split Out2"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "get sess",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code in Python (Beta)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fetch gestor_sap": {
+      "main": [
+        [
+          {
+            "node": "pf array",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "pf array": {
+      "main": [
+        [
+          {
+            "node": "ids_destinatarios_gestor_sap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ids_destinatarios_gestor_sap": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "benchmark_cdi_pf_p90",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apenas com IDS gestores SAP": {
+      "main": [
+        [
+          {
+            "node": "POST1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get sess": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "fetch gestor_sap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "benchmark_cdi_pf_p50",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "benchmark_cdi_pf_p50": {
+      "main": [
+        [
+          {
+            "node": "POST1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "benchmark_cdi_pf_p90": {
+      "main": [
+        [
+          {
+            "node": "POST1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Apenas com IDS gestores SAP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Split Out2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in Python (Beta)1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "98f4e8ec-568c-4d7a-a217-253efd98919d",
+  "activeVersionId": null,
+  "versionCounter": 2,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-01-26T15:41:23.048Z",
+      "createdAt": "2026-01-26T15:41:23.048Z",
+      "role": "workflow:owner",
+      "workflowId": "n5enUiXQ4N1jK5cP",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T10:16:57.321Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
