@@ -1,0 +1,310 @@
+{
+  "updatedAt": "2025-10-28T14:31:38.261Z",
+  "createdAt": "2025-10-28T14:14:50.641Z",
+  "id": "Iu1nExB5ezJNWwht",
+  "name": "Roberto - testes",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "7629feae-0edf-4562-9d3d-12a85d6dba5a",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "position": [
+        -400,
+        -64
+      ],
+      "webhookId": "53c136fe-3e77-4709-a143-fe82746dd8b6",
+      "typeVersion": 1.1,
+      "notesInFlow": false,
+      "retryOnFail": false,
+      "executeOnce": false,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "description": "Gera HTML com iframe do Power BI a partir de um link",
+        "jsCode": "return `\n<iframe \n  src=\"${$json.query}\" \n  width=\"100%\" \n  height=\"600\" \n  style=\"border:none;\" \n  allowfullscreen=\"true\">\n</iframe>\n`;",
+        "specifyInputSchema": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        224
+      ],
+      "id": "f1b5a0e5-c31c-41f9-8880-566f057ea80c",
+      "name": "gerar_html_powerbi",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "=# System Prompt - Assistente PostgreSQL\n\nVocê é um assistente de dados PostgreSQL. Você SEMPRE deve consultar o banco antes de responder qualquer pergunta sobre dados.\n\n## SCHEMA DO BANCO\n\nTabelas principais:\n- card: registros de cards/tarefas (id, titulo, descricao, responsavel_id, projeto_id, status, data_criacao)\n- projetos: projetos cadastrados (id, nome, descricao, data_inicio)\n- responsavel: usuários/pessoas responsáveis (id, nome, email, cargo)\n\nRelacionamentos:\n- card.responsavel_id → responsavel.id\n- card.projeto_id → projetos.id\n\n## FERRAMENTAS\n\n1. consultar_banco_labs: Executa queries SQL (USE SEMPRE para responder perguntas sobre dados)\n2. listar_tabelas_banco: Lista schema completo (use se precisar confirmar estrutura)\n3. gerar_html_powerbi: Gera HTML com um iframe do Power BI. \n   Use essa ferramenta quando o usuário pedir para \"ver\", \"abrir\" ou \"mostrar\" um dashboard.\n   O parâmetro necessário é o link do dashboard (link_dashboard).\n   Retorne o HTML gerado diretamente como resposta, pois o chat do n8n renderiza HTML automaticamente.\n\n\n## REGRA OBRIGATÓRIA\n\nANTES de responder QUALQUER pergunta sobre dados (quantos, quais, liste, mostre, etc):\n1. Gere a query SQL apropriada\n2. Execute usando consultar_banco_labs\n3. Baseie sua resposta APENAS no resultado da query\n4. Apresente o resultado de forma clara e natural\n\nNUNCA responda sem consultar o banco primeiro.\nSe não conseguir gerar a query, use listar_tabelas_banco para entender o schema.\n\n## REGRAS PARA DASHBOARDS\n\n- Sempre que o usuário pedir qualquer dashboard, exemplo: \"mostre o dashboard 6\", \"abrir dashboard financeiro\", \"ver dashboard de vendas\", etc, você **deve chamar a ferramenta gerar_html_powerbi**.\n- O parâmetro da ferramenta (link_dashboard) deve vir do campo link_dashboard do banco, correspondente ao dashboard solicitado.\n- Não invente o link ou informações do dashboard.\n- Sempre retorne HTML puro, pronto para renderização no chat do n8n.\n\nExemplo:\nUsuário: \"mostre o dashboard de vendas\"\nVocê deve: chamar gerar_html_powerbi com link_dashboard = <valor real do link_dashboard retornado do banco para o dashboard de vendas>\nQuando utilizar a ferramenta gerar_html_powerbi, o resultado deve ser retornado diretamente como HTML puro, sem comentários ou explicações adicionais.\n\n\n\n## PADRÕES DE QUERY\n\n### CONTAGENS TOTAIS (sem filtros):\n- \"quantos cards temos?\" = SELECT COUNT(*) FROM card\n- \"quantos projetos temos?\" = SELECT COUNT(*) FROM projetos\n- \"quantos responsáveis temos?\" = SELECT COUNT(*) FROM responsavel\n\n### CONTAGENS DISTINTAS:\n- \"quantos responsáveis têm cards?\" = SELECT COUNT(DISTINCT responsavel_id) FROM card WHERE responsavel_id IS NOT NULL\n- \"quantos projetos têm cards?\" = SELECT COUNT(DISTINCT projeto_id) FROM card WHERE projeto_id IS NOT NULL\n\n### LISTAGENS:\n- \"liste os cards\" = SELECT * FROM card\n- \"mostre os projetos\" = SELECT * FROM projetos\n- \"mostre quais dashboards temos disponiveis\" = SELECT dashboard_n8n.nome,dashboards_n8n.descricao,dashboard_n8n.link_dashboard FROM dashboard_n8n\n- \"mostre os 10 primeiros cards\" = SELECT * FROM card LIMIT 10\n- Use LIMIT apenas quando o usuário especificar uma quantidade\n\n### AGREGAÇÕES:\n- \"cards por responsável\" = SELECT responsavel_id, COUNT(*) as total FROM card GROUP BY responsavel_id\n- \"cards por projeto\" = SELECT projeto_id, COUNT(*) as total FROM card GROUP BY projeto_id\n\n### JOINS (quando precisar dados de múltiplas tabelas):\n- \"cards com nome do responsável\" = \n  SELECT c.id, c.titulo, r.nome as responsavel \n  FROM card c \n  LEFT JOIN responsavel r ON c.responsavel_id = r.id\n\n### FILTROS (apenas se explicitamente pedidos):\n- \"cards ativos\" = SELECT * FROM card WHERE status = 'ativo'\n- \"cards do projeto X\" = SELECT * FROM card WHERE projeto_id = X\n- \"mostre o dashboard x\" = SELECT link_dashboard FROM dashboards_n8n WHERE id = x \n\n## PROCESSO\n\n1. Analise a pergunta do usuário\n2. Identifique que tipo de query é necessária\n3. Gere a query SQL seguindo os padrões acima\n4. Execute usando consultar_banco_labs\n5. Interprete o resultado e responda de forma clara e natural\n\nSe receber erro \"relation does not exist\", consulte listar_tabelas_banco e ajuste a query.\n\n## PROTEÇÃO DE PERFORMANCE\n\nSe uma query retornar mais de 200 registros em uma listagem, informe ao usuário quantos registros foram encontrados e pergunte se deseja ver todos ou prefere aplicar algum filtro.\n\n## IMPORTANTE\n\n- NUNCA invente dados ou números\n- NUNCA responda sem executar a query\n- Se não tiver certeza, pergunte ao usuário para esclarecer\n- Para contagens totais, NUNCA use JOIN\n- Responda de forma direta e natural, sem mencionar detalhes técnicos da query"
+        }
+      },
+      "id": "edef97fa-c908-4905-9b5c-eb66f3d07272",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        -160,
+        -64
+      ],
+      "typeVersion": 1.8,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "4f1dde72-c4e7-4fe2-b245-b2285ba48b9d",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        -304,
+        208
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+          "id": "JOZpLMsgA7BLAO6D",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 15
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -128,
+        208
+      ],
+      "id": "0814a45f-958e-478c-b784-34e3169dbe33",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "html": "<div class=\"dashboard-card\">\n  <div class=\"iframe-wrapper\">\n    <iframe \n      frameborder=\"0\" \n      title=\"Dashboard Dinâmico\" \n      src=\"{{ $json.query }}\" \n      allowfullscreen>\n    </iframe>\n  </div>\n  <div class=\"card-content\">\n    <h3>Dashboard Dinâmico</h3>\n    <p>Visualização do dashboard correspondente ao ID selecionado, com filtros e métricas principais.</p>\n    <a href=\"{{ $json.query }}\" target=\"_blank\" class=\"btn-card\">Ver no Power BI</a>\n  </div>\n</div>\n\n<style>\n/* Reset básico para melhor visualização */\nbody {\n    font-family: Arial, sans-serif;\n    background-color: #f7f7f7;\n    padding: 20px;\n}\n\n.dashboard-card {\n  background-color: #ffffff;\n  border-radius: 12px;\n  /* Sombra mais suave */\n  box-shadow: 0 6px 18px rgba(0,0,0,0.15); \n  margin: 16px auto;\n  /* Aumentei a largura máxima para acomodar melhor a dashboard */\n  max-width: 950px; \n  overflow: hidden;\n  transition: transform 0.3s ease;\n}\n\n.dashboard-card:hover {\n    transform: translateY(-5px); /* Efeito sutil ao passar o mouse */\n}\n\n.iframe-wrapper {\n    /* Garante que o iframe não ultrapasse o padding interno se houver algum */\n    line-height: 0; \n}\n\n.iframe-wrapper iframe {\n  width: 100%;\n  /* Aumentei a altura para melhor visualização da dashboard */\n  height: 600px; \n  border: none;\n  display: block; /* Remove possíveis margens inferiores */\n}\n\n.card-content {\n  padding: 20px;\n  text-align: center;\n}\n\n.card-content h3 {\n  margin-top: 0;\n  margin-bottom: 10px;\n  color: #ff6d5a; /* Cor principal */\n  font-size: 1.5em;\n}\n\n.card-content p {\n  color: #555;\n  margin-bottom: 15px;\n  font-size: 1em;\n}\n\n.btn-card {\n  display: inline-block;\n  padding: 10px 24px;\n  background-color: #ff6d5a;\n  color: #fff;\n  text-decoration: none;\n  border-radius: 8px; /* Borda um pouco maior */\n  font-weight: bold;\n  transition: background-color 0.3s ease, transform 0.1s ease;\n  box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n}\n\n.btn-card:hover {\n  background-color: #e55b48; /* Cor mais escura no hover */\n  transform: translateY(-1px);\n  box-shadow: 0 4px 8px rgba(0,0,0,0.2);\n}\n</style>"
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        272,
+        -64
+      ],
+      "id": "c6ba56d1-51a5-46dd-bf10-9ce35165d269",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Query', 'SELECT query SQL completa para executar no banco de dados', 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        64,
+        208
+      ],
+      "id": "7da22ba7-d2d5-456a-8703-91c30bb56d85",
+      "name": "consultar banco labs",
+      "credentials": {
+        "postgres": {
+          "id": "8jfEsb8k358usGVL",
+          "name": "banco logbit labs"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n    table_name,\n    column_name,\n    data_type\nFROM\n    information_schema.columns\nWHERE\n    table_schema = 'public'\nORDER BY\n    table_name, ordinal_position;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        272,
+        224
+      ],
+      "id": "3ac16ddc-8bdb-4132-8799-ed747e718ddb",
+      "name": "listar_tabelas_banco",
+      "credentials": {
+        "postgres": {
+          "id": "8jfEsb8k358usGVL",
+          "name": "banco logbit labs"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gerar_html_powerbi": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "listar_tabelas_banco": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consultar banco labs": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "ef941793-70e1-4694-b1ba-f47eaac22135",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-10-28T14:14:50.641Z",
+      "createdAt": "2025-10-28T14:14:50.641Z",
+      "role": "workflow:owner",
+      "workflowId": "Iu1nExB5ezJNWwht",
+      "projectId": "15Qt0qSDwS8AuDGZ",
+      "project": {
+        "updatedAt": "2025-10-09T15:01:17.148Z",
+        "createdAt": "2025-10-09T14:44:12.492Z",
+        "id": "15Qt0qSDwS8AuDGZ",
+        "name": "Novadata Desenvolvimento <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "updatedAt": "2025-10-09T14:44:12.492Z",
+            "createdAt": "2025-10-09T14:44:12.492Z",
+            "userId": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+            "projectId": "15Qt0qSDwS8AuDGZ",
+            "user": {
+              "updatedAt": "2026-02-26T10:16:57.321Z",
+              "createdAt": "2025-10-09T14:44:10.591Z",
+              "id": "15de4335-f03a-4c55-bc14-1adc361afaf4",
+              "email": "infra@novadata.com.br",
+              "firstName": "Novadata",
+              "lastName": "Desenvolvimento",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-10-09T14:55:45.395Z",
+                "personalization_survey_n8n_version": "1.108.2",
+                "automationGoalDevops": [
+                  "ci-cd"
+                ],
+                "companySize": "<20",
+                "companyType": "education",
+                "role": "devops",
+                "reportedSource": "linkedin"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "PlS62KJilKsPGxO2",
+                "userActivatedAt": 1760025035676,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1761646491793
+                },
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
