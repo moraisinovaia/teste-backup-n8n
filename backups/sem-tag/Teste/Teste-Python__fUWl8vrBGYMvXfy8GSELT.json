@@ -1,0 +1,123 @@
+{
+  "updatedAt": "2026-03-06T15:01:19.698Z",
+  "createdAt": "2026-02-05T18:22:54.401Z",
+  "id": "fUWl8vrBGYMvXfy8GSELT",
+  "name": "Teste Python",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "82eeaba5-4082-4201-9686-8d9a3221b3fb",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "language": "pythonNative",
+        "pythonCode": "for item in _items:\n    item[\"json\"][\"my_new_field\"] = 1\nreturn _items"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "980b60f1-0cb4-46af-a32f-d5c3db585777",
+      "name": "Code in Python"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Code in Python",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "e03dd277-16e2-4507-84d8-25de47e544c0",
+  "activeVersionId": null,
+  "versionCounter": 15,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-02-05T18:22:54.401Z",
+      "createdAt": "2026-02-05T18:22:54.401Z",
+      "role": "workflow:owner",
+      "workflowId": "fUWl8vrBGYMvXfy8GSELT",
+      "projectId": "aLeETedgrx3HypUV",
+      "project": {
+        "updatedAt": "2026-02-05T18:12:51.008Z",
+        "createdAt": "2026-02-05T17:11:33.764Z",
+        "id": "aLeETedgrx3HypUV",
+        "name": "Miguel Kubrusly <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-02-05T17:11:33.764Z",
+            "createdAt": "2026-02-05T17:11:33.764Z",
+            "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+            "projectId": "aLeETedgrx3HypUV",
+            "user": {
+              "updatedAt": "2026-03-10T03:07:07.287Z",
+              "createdAt": "2026-02-05T17:11:32.394Z",
+              "id": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+              "email": "infra@novadata.com.br",
+              "firstName": "Miguel",
+              "lastName": "Kubrusly",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-02-06T13:42:55.997Z",
+                "personalization_survey_n8n_version": "2.6.0",
+                "automationGoalDevops": [
+                  "data-syncing"
+                ],
+                "companyIndustryExtended": [
+                  "it-industry"
+                ],
+                "companySize": "<20",
+                "companyType": "other",
+                "role": "it",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "4oFgpwW3T5VYLBkmatmZt",
+                "userActivatedAt": 1772566324555,
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-03-10",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
