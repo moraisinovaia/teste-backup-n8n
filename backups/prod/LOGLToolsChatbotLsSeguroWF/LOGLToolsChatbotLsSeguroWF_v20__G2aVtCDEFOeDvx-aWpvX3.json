@@ -1,0 +1,420 @@
+{
+  "updatedAt": "2026-03-06T19:28:59.954Z",
+  "createdAt": "2026-02-26T10:58:52.268Z",
+  "id": "G2aVtCDEFOeDvx-aWpvX3",
+  "name": "[LOGL]ToolsChatbot.LsSeguro.WF_v2.0",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "input",
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -240,
+        144
+      ],
+      "id": "37680f89-2397-45ef-acaf-34e662ce8d3a",
+      "name": "chamadaChatbot"
+    },
+    {
+      "parameters": {
+        "jsCode": "const newItems = [];\n\nfor (const item of $input.all()) {\n  // --- EXTRAÇÃO DO INPUT ---\n  let input = item.json.input;\n\n  if (typeof input === 'string') {\n    try {\n      input = JSON.parse(input);\n    } catch (e) {\n      throw new Error('Formato inválido. O campo \"input\" não é um objeto JSON válido.');\n    }\n  }\n\n  let dirs = input?.dirs;\n\n  if (typeof dirs === 'string') {\n    try {\n      dirs = JSON.parse(dirs);\n    } catch (e) {\n      dirs = [dirs];\n    }\n  }\n\n  // 0. Validação de Esquema\n  if (!Array.isArray(dirs)) {\n    throw new Error('Formato inválido. O campo \"dirs\" deve ser um array de strings.');\n  }\n\n  for (let p of dirs) {\n    if (typeof p !== 'string') {\n      throw new Error(`Acesso negado: Um dos caminhos fornecidos não é um texto válido.`);\n    }\n\n    if (!p.startsWith('/')) {\n      p = '/' + p;\n    }\n    p = p.replace(/\\/+/g, '/');\n\n    // 1. Bloqueia \"..\" (Path Traversal)\n    if (p.includes(\"..\")) {\n      throw new Error(`Acesso negado: Tentativa de Path Traversal (..) ao tentar listar ${p}`);\n    }\n\n    // 2. Bloqueia diretórios sensíveis ou muito pesados\n    const restrictedPattern = /(^|\\/)\\.?(env|git|node_modules|__pycache__|venv)(\\.|$|\\/)/i;\n    if (restrictedPattern.test(p)) {\n      throw new Error(`Acesso negado: Tentativa de listar diretório restrito ou excessivamente grande: ${p}`);\n    }\n\n    // 3. Validação rigorosa de caracteres\n    const safePattern = /^[a-zA-Z0-9/ \\-_\\.]+$/;\n    if (!safePattern.test(p)) {\n      throw new Error(`Acesso negado: O caminho contém caracteres perigosos ou não permitidos: ${p}`);\n    }\n\n    // 4. Validação de prefixos permitidos\n    const allowedDirs = [\"/apps\", \"/docs\", \"/config\"];\n\n    const hasAllowedPrefix = allowedDirs.some(prefix =>\n      p === prefix || p.startsWith(prefix + \"/\")\n    );\n\n    if (!hasAllowedPrefix) {\n      throw new Error(`Acesso negado: O diretório '${p}' não está na lista de locais permitidos para listagem.`);\n    }\n\n    // --- PREPARAÇÃO DO OUTPUT ---\n    newItems.push({\n      json: { safePath: p }\n    });\n  }\n}\n\nreturn newItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -16,
+        144
+      ],
+      "id": "efeca0e7-2dfd-49db-9cf3-01b2c3981e18",
+      "name": "garanteRestricoesLs"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        208,
+        144
+      ],
+      "id": "022e6f02-49ce-4b23-95f2-3a8a03b65645",
+      "name": "forSafePath"
+    },
+    {
+      "parameters": {
+        "command": "=ls -R \"/data/repos/agente-analise-neat{{ $json.safePath }}\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        432,
+        64
+      ],
+      "id": "e49eeabd-4070-42d7-90e6-f57b74f3361d",
+      "name": "executaLs"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "598c68f1-511f-4a40-b913-059e8408e740",
+              "name": "dir",
+              "value": "={{ $('forSafePath').item.json.safePath }}",
+              "type": "string"
+            },
+            {
+              "id": "0f355766-a5a4-4db4-94f7-3ea7f1b315cb",
+              "name": "content",
+              "value": "={{ $json.stdout }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        656,
+        144
+      ],
+      "id": "bd32491b-51ad-40e3-8c69-c57f2c0102a1",
+      "name": "preparaResultado"
+    }
+  ],
+  "connections": {
+    "chamadaChatbot": {
+      "main": [
+        [
+          {
+            "node": "garanteRestricoesLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "garanteRestricoesLs": {
+      "main": [
+        [
+          {
+            "node": "forSafePath",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "preparaResultado": {
+      "main": [
+        [
+          {
+            "node": "forSafePath",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "forSafePath": {
+      "main": [
+        [],
+        [
+          {
+            "node": "executaLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "executaLs": {
+      "main": [
+        [
+          {
+            "node": "preparaResultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "chamadaChatbot": [
+      {
+        "json": {
+          "input": {
+            "dirs": [
+              "/apps/analise",
+              "/docs"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "versionId": "59f373c5-974b-4315-9e92-8638a8d54772",
+  "activeVersionId": "59f373c5-974b-4315-9e92-8638a8d54772",
+  "versionCounter": 81,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-02-26T10:58:52.268Z",
+      "createdAt": "2026-02-26T10:58:52.268Z",
+      "role": "workflow:owner",
+      "workflowId": "G2aVtCDEFOeDvx-aWpvX3",
+      "projectId": "aLeETedgrx3HypUV",
+      "project": {
+        "updatedAt": "2026-02-05T18:12:51.008Z",
+        "createdAt": "2026-02-05T17:11:33.764Z",
+        "id": "aLeETedgrx3HypUV",
+        "name": "Miguel Kubrusly <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-02-05T17:11:33.764Z",
+            "createdAt": "2026-02-05T17:11:33.764Z",
+            "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+            "projectId": "aLeETedgrx3HypUV",
+            "user": {
+              "updatedAt": "2026-03-10T03:07:07.287Z",
+              "createdAt": "2026-02-05T17:11:32.394Z",
+              "id": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+              "email": "infra@novadata.com.br",
+              "firstName": "Miguel",
+              "lastName": "Kubrusly",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-02-06T13:42:55.997Z",
+                "personalization_survey_n8n_version": "2.6.0",
+                "automationGoalDevops": [
+                  "data-syncing"
+                ],
+                "companyIndustryExtended": [
+                  "it-industry"
+                ],
+                "companySize": "<20",
+                "companyType": "other",
+                "role": "it",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "4oFgpwW3T5VYLBkmatmZt",
+                "userActivatedAt": 1772566324555,
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-03-10",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-06T15:02:49.033Z",
+      "createdAt": "2026-03-06T15:02:49.033Z",
+      "id": "WefOyCNePUH6cMEC",
+      "name": "prod"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-03-06T16:36:04.669Z",
+    "createdAt": "2026-03-06T16:35:51.646Z",
+    "versionId": "59f373c5-974b-4315-9e92-8638a8d54772",
+    "workflowId": "G2aVtCDEFOeDvx-aWpvX3",
+    "nodes": [
+      {
+        "parameters": {
+          "workflowInputs": {
+            "values": [
+              {
+                "name": "input",
+                "type": "object"
+              }
+            ]
+          }
+        },
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          -240,
+          144
+        ],
+        "id": "37680f89-2397-45ef-acaf-34e662ce8d3a",
+        "name": "chamadaChatbot"
+      },
+      {
+        "parameters": {
+          "jsCode": "const newItems = [];\n\nfor (const item of $input.all()) {\n  // --- EXTRAÇÃO DO INPUT ---\n  let input = item.json.input;\n\n  if (typeof input === 'string') {\n    try {\n      input = JSON.parse(input);\n    } catch (e) {\n      throw new Error('Formato inválido. O campo \"input\" não é um objeto JSON válido.');\n    }\n  }\n\n  let dirs = input?.dirs;\n\n  if (typeof dirs === 'string') {\n    try {\n      dirs = JSON.parse(dirs);\n    } catch (e) {\n      dirs = [dirs];\n    }\n  }\n\n  // 0. Validação de Esquema\n  if (!Array.isArray(dirs)) {\n    throw new Error('Formato inválido. O campo \"dirs\" deve ser um array de strings.');\n  }\n\n  for (let p of dirs) {\n    if (typeof p !== 'string') {\n      throw new Error(`Acesso negado: Um dos caminhos fornecidos não é um texto válido.`);\n    }\n\n    if (!p.startsWith('/')) {\n      p = '/' + p;\n    }\n    p = p.replace(/\\/+/g, '/');\n\n    // 1. Bloqueia \"..\" (Path Traversal)\n    if (p.includes(\"..\")) {\n      throw new Error(`Acesso negado: Tentativa de Path Traversal (..) ao tentar listar ${p}`);\n    }\n\n    // 2. Bloqueia diretórios sensíveis ou muito pesados\n    const restrictedPattern = /(^|\\/)\\.?(env|git|node_modules|__pycache__|venv)(\\.|$|\\/)/i;\n    if (restrictedPattern.test(p)) {\n      throw new Error(`Acesso negado: Tentativa de listar diretório restrito ou excessivamente grande: ${p}`);\n    }\n\n    // 3. Validação rigorosa de caracteres\n    const safePattern = /^[a-zA-Z0-9/ \\-_\\.]+$/;\n    if (!safePattern.test(p)) {\n      throw new Error(`Acesso negado: O caminho contém caracteres perigosos ou não permitidos: ${p}`);\n    }\n\n    // 4. Validação de prefixos permitidos\n    const allowedDirs = [\"/apps\", \"/docs\", \"/config\"];\n\n    const hasAllowedPrefix = allowedDirs.some(prefix =>\n      p === prefix || p.startsWith(prefix + \"/\")\n    );\n\n    if (!hasAllowedPrefix) {\n      throw new Error(`Acesso negado: O diretório '${p}' não está na lista de locais permitidos para listagem.`);\n    }\n\n    // --- PREPARAÇÃO DO OUTPUT ---\n    newItems.push({\n      json: { safePath: p }\n    });\n  }\n}\n\nreturn newItems;"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -16,
+          144
+        ],
+        "id": "efeca0e7-2dfd-49db-9cf3-01b2c3981e18",
+        "name": "garanteRestricoesLs"
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          208,
+          144
+        ],
+        "id": "022e6f02-49ce-4b23-95f2-3a8a03b65645",
+        "name": "forSafePath"
+      },
+      {
+        "parameters": {
+          "command": "=ls -R \"/data/repos/agente-analise-neat{{ $json.safePath }}\""
+        },
+        "type": "n8n-nodes-base.executeCommand",
+        "typeVersion": 1,
+        "position": [
+          432,
+          64
+        ],
+        "id": "e49eeabd-4070-42d7-90e6-f57b74f3361d",
+        "name": "executaLs"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "598c68f1-511f-4a40-b913-059e8408e740",
+                "name": "dir",
+                "value": "={{ $('forSafePath').item.json.safePath }}",
+                "type": "string"
+              },
+              {
+                "id": "0f355766-a5a4-4db4-94f7-3ea7f1b315cb",
+                "name": "content",
+                "value": "={{ $json.stdout }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          656,
+          144
+        ],
+        "id": "bd32491b-51ad-40e3-8c69-c57f2c0102a1",
+        "name": "preparaResultado"
+      }
+    ],
+    "connections": {
+      "chamadaChatbot": {
+        "main": [
+          [
+            {
+              "node": "garanteRestricoesLs",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "garanteRestricoesLs": {
+        "main": [
+          [
+            {
+              "node": "forSafePath",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "preparaResultado": {
+        "main": [
+          [
+            {
+              "node": "forSafePath",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "forSafePath": {
+        "main": [
+          [],
+          [
+            {
+              "node": "executaLs",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "executaLs": {
+        "main": [
+          [
+            {
+              "node": "preparaResultado",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Miguel Kubrusly",
+    "name": "Version 59f373c5",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-06T16:36:04.666Z",
+        "id": 66,
+        "workflowId": "G2aVtCDEFOeDvx-aWpvX3",
+        "versionId": "59f373c5-974b-4315-9e92-8638a8d54772",
+        "event": "activated",
+        "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e"
+      }
+    ]
+  }
+}
