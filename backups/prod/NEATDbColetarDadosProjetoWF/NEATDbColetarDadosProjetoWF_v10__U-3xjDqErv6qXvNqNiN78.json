@@ -1,0 +1,1635 @@
+{
+  "updatedAt": "2026-03-10T04:26:41.874Z",
+  "createdAt": "2026-03-10T03:56:44.909Z",
+  "id": "U-3xjDqErv6qXvNqNiN78",
+  "name": "[NEAT]Db.ColetarDadosProjeto.WF_v1.0",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "projeto_id",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        2192,
+        1936
+      ],
+      "id": "f1d7781a-c898-495b-8bf4-f916bc8a19c2",
+      "name": "receberInput"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "ur7OIZKzXqKP38XqlrRY5",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/ur7OIZKzXqKP38XqlrRY5",
+          "cachedResultName": "[NEAT]Auth.AutenticarNeat.WF_v1.0"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "baseUrl": "={{ $('configInicial').item.json.baseUrl }}",
+            "loginPath": "/login/"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "baseUrl",
+              "displayName": "baseUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "loginPath",
+              "displayName": "loginPath",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        2624,
+        1936
+      ],
+      "id": "28607341-9770-4c15-9401-645df720c4ad",
+      "name": "executarLogin"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('configInicial').item.json.baseUrl }}/api/fase/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('executarLogin').item.json.accessToken }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Referer",
+              "value": "/"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2800,
+        1808
+      ],
+      "id": "034a113f-3746-438b-b172-1abd6e4fd9bb",
+      "name": "buscarFases"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n// NÓ: criarMapaFases (VERSÃO 2.0 - COM METADADOS)\n// Preserva ordem, fase_conclusao, fase_testes, fase_reprovacao\n// para evitar dependência de nomes hardcoded\n// ============================================\n\nconst fases = $input.all().map(item => item.json);\nconsole.log(`Total de fases encontradas: ${fases.length}`);\n\n// Cria mapa rico: { id: { nome, ordem, conclusao, testes, reprovacao, arquivamento } }\nconst mapaFases = {};\nfases.forEach(fase => {\n  mapaFases[fase.id] = {\n    nome: fase.nome,\n    ordem: fase.ordem,\n    conclusao: fase.fase_conclusao,\n    testes: fase.fase_testes,\n    reprovacao: fase.fase_reprovacao,\n    arquivamento: fase.fase_arquivamento\n  };\n});\n\nconsole.log('Mapa de fases criado:', JSON.stringify(mapaFases, null, 2));\n\n// Log de validação: mostra quais fases são de conclusão, testes e reprovação\nconst fasesConclusao = Object.entries(mapaFases).filter(([_, f]) => f.conclusao).map(([id, f]) => `${f.nome} (id:${id})`);\nconst fasesTestes = Object.entries(mapaFases).filter(([_, f]) => f.testes).map(([id, f]) => `${f.nome} (id:${id})`);\nconst fasesReprovacao = Object.entries(mapaFases).filter(([_, f]) => f.reprovacao).map(([id, f]) => `${f.nome} (id:${id})`);\n\nconsole.log(`Fases de conclusão: ${fasesConclusao.join(', ') || 'nenhuma'}`);\nconsole.log(`Fases de testes: ${fasesTestes.join(', ') || 'nenhuma'}`);\nconsole.log(`Fases de reprovação: ${fasesReprovacao.join(', ') || 'nenhuma'}`);\n\nreturn [{\n  json: {\n    fases_map: mapaFases\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2992,
+        1904
+      ],
+      "id": "157d5c56-3b26-48fa-b18d-a543ff7168e5",
+      "name": "criarMapaFases"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('configInicial').item.json.baseUrl }}/api/chamado/",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "projeto__id",
+              "value": "={{ $('configInicial').item.json.projeto_id }}"
+            },
+            {
+              "name": "limit",
+              "value": "100000"
+            },
+            {}
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.accessToken }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Referer",
+              "value": "/"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3616,
+        1552
+      ],
+      "id": "abcc06ca-1268-43ef-93c9-4b39d42a33ea",
+      "name": "buscarCards"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3344,
+        1776
+      ],
+      "id": "f2008767-2fd1-4934-80b4-b5b14f255191",
+      "name": "juntarTokenEFases"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pega resposta da API de cards\nconst response = $input.first().json;\nconst cards = response.results || [];\n\n// Pega accessToken do nó fazLogin\nconst accessToken = $('executarLogin').item.json.accessToken;\n\n// Pega baseUrl do nó configInicial\nconst baseUrl = $('configInicial').item.json.baseUrl;\n\n// Pega mapa de fases do nó criarMapaFases (v2: objeto rico)\nconst mapaFases = $('criarMapaFases').item.json.fases_map;\n\n// Pega todo o config pra passar adiante\nconst config = $('configInicial').item.json;\n\nconsole.log(`Total de cards encontrados na API: ${cards.length}`);\nconsole.log(`VERSÃO 4.0: Passando TODOS os cards para buscar logs`);\nconsole.log(`Filtro de ${config.PERIODO_ANALISE_DIAS} dias será aplicado APÓS buscar logs`);\n\n// Função para limpar HTML\nfunction limparHTML(html) {\n  if (!html) return '';\n  \n  let limpo = html;\n  \n  // Remove imagens base64\n  limpo = limpo.replace(/data:image\\/[^;]+;base64,[A-Za-z0-9+/=]+/gi, '[imagem]');\n  \n  // Remove tags de imagem\n  limpo = limpo.replace(/<img[^>]*>/gi, '[imagem]');\n  \n  // Remove anexos\n  limpo = limpo.replace(/<span[^>]*attachment-block[^>]*>.*?<\\/span>/gi, '[anexo]');\n  \n  // Remove tags HTML mas mantém o texto\n  limpo = limpo.replace(/<[^>]+>/g, ' ');\n  \n  // Remove espaços múltiplos\n  limpo = limpo.replace(/\\s+/g, ' ').trim();\n  \n  return limpo;\n}\n\n// Converte tempo \"HH:MM:SS\" para horas decimais\nfunction parseTempoParaHoras(tempoStr) {\n  if (!tempoStr || tempoStr === \"00:00:00\") return 0;\n  \n  const partes = tempoStr.split(':');\n  if (partes.length < 2) return 0;\n  \n  const horas = parseInt(partes[0]) || 0;\n  const minutos = parseInt(partes[1]) || 0;\n  const segundos = parseInt(partes[2]) || 0;\n  \n  return horas + (minutos / 60) + (segundos / 3600);\n}\n\n// Fase fallback caso o ID não exista no mapa\nconst faseFallback = {\n  nome: 'Desconhecida',\n  ordem: 999,\n  conclusao: false,\n  testes: false,\n  reprovacao: false,\n  arquivamento: false\n};\n\n// Processa TODOS os cards (sem filtro)\nconst cardsLimpos = cards.map(card => {\n  const tempoTrabalhadoHoras = parseTempoParaHoras(card.tempo_decorrido);\n  const orcadoHoras = parseTempoParaHoras(card.orcado);\n  \n  // Resolve fase do mapa rico (v2)\n  const faseInfo = mapaFases[card.fase] || faseFallback;\n  \n  return {\n    // IDs\n    id: card.id,\n    chamado: card.id,\n    \n    // Informações do card\n    titulo: card.titulo || `Card #${card.id}`,\n    descricao_limpa: limparHTML(card.descricao),\n    \n    // Fase (objeto rico do criarMapaFases v2)\n    fase_atual: card.fase,\n    fase_atual_nome: faseInfo,\n    \n    // Responsáveis (agora com id e nome)\n    responsaveis: (card.responsaveis || []).map(r => ({ id: r.id, nome: r.nome })),\n    \n    // Métricas\n    tempo_decorrido: card.tempo_decorrido,\n    tempo_trabalhado_horas: tempoTrabalhadoHoras,\n    orcado: card.orcado,\n    orcado_horas: orcadoHoras,\n    // CORREÇÃO: preserva null para distinguir \"não estimado\" de \"estimado como 0\"\n    pontos_totais: card.pontos_totais !== null && card.pontos_totais !== undefined \n      ? card.pontos_totais \n      : null,\n    em_andamento: card.em_andamento,\n    \n    // Datas\n    data_criacao: card.data_criacao,\n    // CORREÇÃO: data_atualizacao removido (não existe na API)\n    data_conclusao: card.data_conclusao,\n    data_prevista: card.data_prevista,\n    // NOVO: campo que existia na API mas era ignorado\n    data_desejada: card.data_desejada || null,\n    \n    // CORREÇÃO: campo na API é \"tag\" (array de IDs), não \"tags\"\n    tags: card.tag || [],\n    \n    // NOVO: sub_projeto (pode ser útil para agrupamento)\n    sub_projeto: card.sub_projeto || null,\n    \n    // Projeto\n    projeto_info: card.projeto_info,\n    \n    // Auth\n    _auth: {\n      accessToken: accessToken,\n      baseUrl: baseUrl\n    },\n    \n    // Config (passa adiante para os próximos nós)\n    _config: config\n  };\n});\n\n// Log de validação\nconsole.log(`Cards preparados para buscar logs: ${cardsLimpos.length}`);\n\n// Log de exemplo\nif (cardsLimpos.length > 0) {\n  const exemplo = cardsLimpos.find(c => c.tempo_trabalhado_horas > 0) || cardsLimpos[0];\n  console.log(`Exemplo - Card #${exemplo.id}: tempo_decorrido=\"${exemplo.tempo_decorrido}\" → ${exemplo.tempo_trabalhado_horas.toFixed(2)}h`);\n  console.log(`  fase: ${exemplo.fase_atual_nome.nome} (conclusao=${exemplo.fase_atual_nome.conclusao})`);\n  console.log(`  pontos: ${exemplo.pontos_totais === null ? 'não estimado' : exemplo.pontos_totais}`);\n  console.log(`  tags: [${exemplo.tags.join(', ')}]`);\n}\n\n// Stats de qualidade dos dados\nconst stats = {\n  com_descricao: cardsLimpos.filter(c => c.descricao_limpa && c.descricao_limpa.length > 0).length,\n  com_tempo: cardsLimpos.filter(c => c.tempo_trabalhado_horas > 0).length,\n  com_orcado: cardsLimpos.filter(c => c.orcado_horas > 0).length,\n  com_pontos: cardsLimpos.filter(c => c.pontos_totais !== null && c.pontos_totais > 0).length,\n  sem_pontos: cardsLimpos.filter(c => c.pontos_totais === null).length,\n  com_tags: cardsLimpos.filter(c => c.tags.length > 0).length,\n  com_conclusao: cardsLimpos.filter(c => c.data_conclusao).length,\n  por_fase_conclusao: cardsLimpos.filter(c => c.fase_atual_nome.conclusao === true).length,\n  por_fase_testes: cardsLimpos.filter(c => c.fase_atual_nome.testes === true).length,\n  por_fase_reprovacao: cardsLimpos.filter(c => c.fase_atual_nome.reprovacao === true).length\n};\nconsole.log(`Stats: ${stats.com_descricao} com descrição, ${stats.com_tempo} com tempo, ${stats.com_orcado} com orçado`);\nconsole.log(`Pontos: ${stats.com_pontos} estimados, ${stats.sem_pontos} não estimados`);\nconsole.log(`Tags: ${stats.com_tags} cards com tags`);\nconsole.log(`Fases: ${stats.por_fase_conclusao} concluídos, ${stats.por_fase_testes} em testes, ${stats.por_fase_reprovacao} reprovados`);\n\nreturn cardsLimpos.map(card => ({ json: card }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3920,
+        1360
+      ],
+      "id": "943c5cdd-371e-40cb-a6c0-e76d0d581654",
+      "name": "extrairLimparCards"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        4304,
+        1344
+      ],
+      "id": "2c72b5a1-a690-4024-a1c1-92c0904603b7",
+      "name": "loopCards"
+    },
+    {
+      "parameters": {
+        "url": "={{$json._auth.baseUrl}}/api/logalteracoeschamado/?chamado__id={{$json.chamado}}&data__gte={{new Date(Date.now() - $json._config.PERIODO_ANALISE_DIAS * 24 * 60 * 60 * 1000).toISOString().slice(0,19)}}&data__lte={{new Date().toISOString().slice(0,19)}}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "chamado__id",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json._auth.accessToken }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Referer",
+              "value": "/"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        4560,
+        1360
+      ],
+      "id": "18bb0611-01d5-4e4d-aea0-aadc8cac751e",
+      "name": "buscarLogsCard",
+      "retryOnFail": false,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('TODAS AS KEYS DO INPUT:', JSON.stringify(Object.keys($input.first().json)));\nconsole.log('TEM usuarios_map?', !!$input.first().json.usuarios_map);\nconsole.log('TEM horas_por_equipe?', !!$input.first().json.horas_por_equipe);\n\nconst input = $input.first().json;\nconst todosCards = input.data || [];\nconst fasesMap = input.fases_map || {};\n\n// ============================================\n// NOVO v2.0: Ler dados de usuários/times\n// ============================================\nconst usuariosMap = input.usuarios_map || {};\nconst horasPorEquipe = input.horas_por_equipe || {};\nconst totalHorasPeriodo = input.total_horas_periodo || 0;\nconst metaEquipes = input._meta_equipes || {};\nconst mapaFornecedorUser = input.mapa_fornecedor_user || {};\n\nconsole.log('=== PREPARANDO DADOS PARA WF2 (v2.1 corrigido) ===');\nconsole.log(`Total de cards: ${todosCards.length}`);\nconsole.log(`Usuários no mapa: ${Object.keys(usuariosMap).length}`);\nconsole.log(`Horas por equipe: ${JSON.stringify(horasPorEquipe)}`);\nconsole.log(`Total horas período: ${totalHorasPeriodo}h`);\n\n// Pega config do primeiro card (todos têm o mesmo)\nconst config = todosCards.length > 0 && todosCards[0]._config \n  ? todosCards[0]._config \n  : { DIAS_TRAVADO_RESUMO: 30, projeto_id: null, PERIODO_ANALISE_DIAS: 15 };\n\n// ✅ DINÂMICO: Pega info do projeto do primeiro card (todos têm a mesma)\nconst projetoInfo = todosCards.length > 0 && todosCards[0].projeto_info \n  ? todosCards[0].projeto_info \n  : {\n      id: config.projeto_id,\n      nome: \"Projeto Sem Nome\"\n    };\n\nconsole.log(`Projeto: ${projetoInfo.nome} (ID: ${projetoInfo.id})`);\n\n// ============================================\n// Helper: extrair nome da fase de forma segura\n// ============================================\n\nfunction getFaseNome(faseAtualNome) {\n  if (!faseAtualNome) return 'Sem Fase';\n  if (typeof faseAtualNome === 'string') return faseAtualNome;\n  if (typeof faseAtualNome === 'object' && faseAtualNome.nome) return faseAtualNome.nome;\n  return 'Sem Fase';\n}\n\nfunction getFaseFlag(faseAtualNome, flag) {\n  if (!faseAtualNome || typeof faseAtualNome !== 'object') return false;\n  return faseAtualNome[flag] === true;\n}\n\n// ============================================\n// NOVO v2.0: Enriquecer cards com times\n// ============================================\n\nconsole.log('');\nconsole.log('🏷️ Enriquecendo cards com informação de times...');\n\nlet cardsComTimeDesconhecido = 0;\nlet cardsComTime = 0;\n\nconst cardsEnriquecidos = todosCards.map(card => {\n  // Cruzar responsáveis com o mapa de usuários\n  const times = [];\n  const equipesSet = new Set();\n\n  if (card.responsaveis && Array.isArray(card.responsaveis)) {\n    card.responsaveis.forEach(resp => {\n      const userId = String(resp.id);\n      const infoUsuario = usuariosMap[userId];\n\n      if (infoUsuario) {\n        times.push({\n          equipe: infoUsuario.equipe,\n          nome: infoUsuario.nome,\n          user_id: resp.id,\n          nivel: infoUsuario.nivel,\n          cargo: infoUsuario.cargo,\n          ativo_no_projeto: infoUsuario.ativo_no_projeto,\n          horas_periodo: infoUsuario.horas_periodo\n        });\n        if (infoUsuario.equipe !== 'A definir' && infoUsuario.equipe !== 'Outros') {\n          equipesSet.add(infoUsuario.equipe);\n        }\n      } else {\n        // Responsável não encontrado no mapa (provavelmente cliente)\n        times.push({\n          equipe: 'Externo',\n          nome: resp.nome,\n          user_id: resp.id,\n          nivel: null,\n          cargo: null,\n          ativo_no_projeto: null,\n          horas_periodo: 0\n        });\n      }\n    });\n  }\n\n  const equipesEnvolvidas = [...equipesSet].sort();\n\n  if (equipesEnvolvidas.length > 0) {\n    cardsComTime++;\n  } else {\n    cardsComTimeDesconhecido++;\n  }\n\n  return {\n    ...card,\n    times: times,\n    equipes_envolvidas: equipesEnvolvidas\n  };\n});\n\nconsole.log(`✅ Cards com equipe identificada: ${cardsComTime}`);\nconsole.log(`⚠️ Cards sem equipe identificada: ${cardsComTimeDesconhecido}`);\n\n// ============================================\n// Calcula resumo por status\n// FIX v2.1: Categorias MUTUAMENTE EXCLUSIVAS\n//   Ordem de prioridade (primeiro match ganha):\n//   1. concluidos (conclusao=true OU nome inclui \"concluído\")\n//   2. cancelados (nome inclui \"cancelado\")\n//   3. em_andamento (nome inclui \"andamento\")\n//   4. em_testes (testes=true OU nome inclui \"teste\")\n//   5. aguardando_deploy (nome inclui \"deploy\")\n//   6. pendentes (tudo que sobrou que não é \"outros\")\n// ============================================\n\n// FIX v2.1: Classificação mutuamente exclusiva\nfunction classificarStatus(card) {\n  const info = card.fase_atual_nome;\n  const nome = getFaseNome(info).toLowerCase();\n  \n  // 1. Concluídos: flag conclusao=true OU nome \"concluído\"\n  if (getFaseFlag(info, 'conclusao')) return 'concluidos';\n  if (nome.includes('concluído') || nome.includes('concluido')) return 'concluidos';\n  \n  // 2. Cancelados\n  if (nome.includes('cancelado')) return 'cancelados';\n  \n  // 3. Em Andamento\n  if (nome.includes('andamento')) return 'em_andamento';\n  \n  // 4. Em Testes\n  if (getFaseFlag(info, 'testes')) return 'em_testes';\n  if (nome.includes('teste')) return 'em_testes';\n  \n  // 5. Aguardando Deploy\n  if (nome.includes('deploy')) return 'aguardando_deploy';\n  \n  // 6. Pendentes (backlog, fila, sprint atual, standby, pendente cliente)\n  if (nome.includes('sprint') || nome.includes('backlog') || \n      nome.includes('fila') || nome.includes('standby') || \n      nome.includes('pendente')) return 'pendentes';\n  \n  // 7. Outros\n  return 'outros';\n}\n\nconst statusCounts = {\n  concluidos: 0,\n  cancelados: 0,\n  em_andamento: 0,\n  em_testes: 0,\n  aguardando_deploy: 0,\n  pendentes: 0,\n  outros: 0\n};\n\nconst cardsPorStatus = {\n  concluidos: [],\n  cancelados: [],\n  em_andamento: [],\n  em_testes: [],\n  aguardando_deploy: [],\n  pendentes: [],\n  outros: []\n};\n\ncardsEnriquecidos.forEach(card => {\n  const status = classificarStatus(card);\n  statusCounts[status]++;\n  cardsPorStatus[status].push(card);\n});\n\n// VALIDAÇÃO: soma deve ser igual ao total\nconst somaStatus = Object.values(statusCounts).reduce((a, b) => a + b, 0);\nif (somaStatus !== cardsEnriquecidos.length) {\n  console.log(`🔴 ERRO: por_status soma ${somaStatus} ≠ ${cardsEnriquecidos.length} cards!`);\n} else {\n  console.log(`✅ por_status soma ${somaStatus} = ${cardsEnriquecidos.length} cards (mutuamente exclusivo)`);\n}\n\n// Atalhos para uso posterior\nconst concluidos = cardsPorStatus.concluidos;\nconst cancelados = cardsPorStatus.cancelados;\nconst emAndamento = cardsPorStatus.em_andamento;\nconst emTestes = cardsPorStatus.em_testes;\nconst aguardandoDeploy = cardsPorStatus.aguardando_deploy;\nconst pendentes = cardsPorStatus.pendentes;\nconst outros = cardsPorStatus.outros;\n\n// Resumo de anomalias\nconst cardsComAnomalias = cardsEnriquecidos.filter(c => c.total_anomalias > 0);\nconst cardsComAlertasCriticos = cardsEnriquecidos.filter(c => c.tem_alertas_criticos === true);\n\nconst resumo = {\n  total_cards: cardsEnriquecidos.length,\n  por_status: statusCounts,\n  por_fase: {},\n  alertas: {\n    cards_travados: cardsEnriquecidos.filter(c => \n      c.dias_na_fase_atual && c.dias_na_fase_atual >= config.DIAS_TRAVADO_RESUMO\n    ).length,\n    cards_travados_ids: cardsEnriquecidos\n      .filter(c => c.dias_na_fase_atual && c.dias_na_fase_atual >= config.DIAS_TRAVADO_RESUMO)\n      .map(c => c.id),\n    cards_com_anomalias: cardsComAnomalias.length,\n    cards_com_alertas_criticos: cardsComAlertasCriticos.length,\n    cards_com_alertas_criticos_ids: cardsComAlertasCriticos.map(c => c.id)\n  },\n  // NOVO v2.0: Resumo de horas e times\n  horas: {\n    total_horas_periodo: totalHorasPeriodo,\n    horas_por_equipe: horasPorEquipe,\n    equipes_ativas: Object.keys(horasPorEquipe),\n    total_pessoas_ativas: metaEquipes.ativos_no_projeto || 0\n  }\n};\n\n// por_fase agrupa por NOME da fase (string)\ncardsEnriquecidos.forEach(card => {\n  const faseNome = getFaseNome(card.fase_atual_nome);\n  if (!resumo.por_fase[faseNome]) {\n    resumo.por_fase[faseNome] = 0;\n  }\n  resumo.por_fase[faseNome]++;\n});\n\n// ============================================\n// NOVO v2.0: Resumo de equipes por status\n// ============================================\n\nconst equipePorStatus = {};\nconst statusGroups = {\n  concluidos,\n  em_andamento: emAndamento,\n  em_testes: emTestes,\n  aguardando_deploy: aguardandoDeploy,\n  pendentes\n};\n\nfor (const [status, cards] of Object.entries(statusGroups)) {\n  const equipesNoStatus = new Set();\n  cards.forEach(card => {\n    (card.equipes_envolvidas || []).forEach(eq => equipesNoStatus.add(eq));\n  });\n  equipePorStatus[status] = [...equipesNoStatus].sort();\n}\n\nresumo.equipes_por_status = equipePorStatus;\n\n// ============================================\n// NOVO v2.0: Horas por card concluído (para seção \"Entregas\")\n// ============================================\n\nconst entregasComHoras = concluidos.map(card => ({\n  id: card.id,\n  titulo: card.titulo,\n  tempo_trabalhado_horas: card.tempo_trabalhado_horas || 0,\n  equipes_envolvidas: card.equipes_envolvidas || [],\n  data_conclusao: card.data_conclusao\n}));\n\nresumo.entregas_com_horas = entregasComHoras;\n\nconst totalHorasEntregas = entregasComHoras.reduce((sum, e) => sum + e.tempo_trabalhado_horas, 0);\nresumo.total_horas_entregas = Math.round(totalHorasEntregas * 100) / 100;\n\n// ============================================\n// LOGS\n// ============================================\n\nconsole.log('');\nconsole.log('📊 Resumo gerado:');\nconsole.log(`   Total: ${resumo.total_cards}`);\nconsole.log(`   Concluídos: ${resumo.por_status.concluidos}`);\nconsole.log(`   Cancelados: ${resumo.por_status.cancelados}`);\nconsole.log(`   Em Andamento: ${resumo.por_status.em_andamento}`);\nconsole.log(`   Em Testes: ${resumo.por_status.em_testes}`);\nconsole.log(`   Aguardando Deploy: ${resumo.por_status.aguardando_deploy}`);\nconsole.log(`   Pendentes: ${resumo.por_status.pendentes}`);\nconsole.log(`   Outros: ${resumo.por_status.outros}`);\nconsole.log(`   SOMA: ${somaStatus} (deve ser ${resumo.total_cards})`);\nconsole.log(`   Travados: ${resumo.alertas.cards_travados}`);\nconsole.log(`   Com anomalias: ${resumo.alertas.cards_com_anomalias}`);\nconsole.log(`   Com alertas críticos: ${resumo.alertas.cards_com_alertas_criticos}`);\nconsole.log(`   Período de análise: ${config.PERIODO_ANALISE_DIAS} dias`);\n\nconsole.log('');\nconsole.log('⏱️ Horas no período:');\nconsole.log(`   Total: ${totalHorasPeriodo}h`);\nfor (const [equipe, horas] of Object.entries(horasPorEquipe)) {\n  console.log(`   ${equipe}: ${horas}h`);\n}\n\nconsole.log('');\nconsole.log('📦 Entregas (concluídos):');\nconsole.log(`   Total entregas: ${entregasComHoras.length}`);\nconsole.log(`   Horas nas entregas: ${resumo.total_horas_entregas}h`);\nentregasComHoras.forEach(e => {\n  console.log(`   - #${e.id}: ${e.titulo} (${e.tempo_trabalhado_horas}h) [${e.equipes_envolvidas.join(', ')}]`);\n});\n\nconsole.log('');\nconsole.log('   Por fase:');\nfor (const [fase, count] of Object.entries(resumo.por_fase)) {\n  console.log(`     ${fase}: ${count}`);\n}\n\n// ============================================\n// OUTPUT — Formato que o WF2 espera\n// FIX v2.1: Removidas chaves top-level redundantes\n//   - usuarios → dados já estão em cards[].times[]\n//   - horas_por_equipe → já está em resumo.horas.horas_por_equipe\n//   - total_horas_periodo → já está em resumo.horas.total_horas_periodo\n// ============================================\n\nreturn [{\n  json: {\n    projeto_info: projetoInfo,\n    cards: cardsEnriquecidos,\n    fases: fasesMap,\n    resumo: resumo,\n    metadados_coleta: {\n      periodo_analise_dias: config.PERIODO_ANALISE_DIAS,\n      data_coleta: new Date().toISOString(),\n      total_cards_coletados: cardsEnriquecidos.length\n    },\n    _config: config  // Passa config adiante (será removido pelo limparParaIA)\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5712,
+        1888
+      ],
+      "id": "163564b4-b0a9-47da-b1f3-0fa847408432",
+      "name": "prepararOutputFinal"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 3,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        5472,
+        1888
+      ],
+      "id": "544e1b47-d312-4702-9428-77300d12fadf",
+      "name": "juntarComMapaFases"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        4896,
+        1760
+      ],
+      "id": "825dcbc3-8bf7-4393-8e1b-a40fcfc56843",
+      "name": "juntarTodosCards"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst todosCards = input.cards || [];\n\nconsole.log('=== IDENTIFICANDO SPRINTS v5.0 (SEMANAS ISO) ===');\nconsole.log('Total de cards para analisar: ' + todosCards.length);\n\n// ============================================\n// CONFIGURAÇÕES\n// ============================================\n\n// Fases de trabalho ativo (fallback para string matching em logs)\nconst FASES_TRABALHO_NOMES = [\n  'sprint atual',\n  'em andamento',\n  'conclusão da sprint',\n  'aguardando deploy',\n  'em testes'\n];\n\n// Fases a ignorar (fallback para string matching em logs)\nconst FASES_IGNORAR_NOMES = [\n  'backlog',\n  'na fila',\n  'standby',\n  'cancelado',\n  'pendente cliente'\n];\n\n// ============================================\n// HELPER: extrair nome da fase de forma segura\n// Suporta objeto rico E string legada\n// ============================================\n\nfunction getFaseNome(faseAtualNome) {\n  if (!faseAtualNome) return null;\n  if (typeof faseAtualNome === 'string') return faseAtualNome;\n  if (typeof faseAtualNome === 'object' && faseAtualNome.nome) return faseAtualNome.nome;\n  return null;\n}\n\n// ============================================\n// FUNÇÕES DE CLASSIFICAÇÃO DE FASE\n// ============================================\n\n// Verifica se é fase de trabalho ativo\n// Prioriza flags do objeto rico, fallback para string matching\nfunction isFaseTrabalho(faseAtualNome) {\n  if (!faseAtualNome) return false;\n\n  // Se é objeto rico, usar flags booleanos\n  if (typeof faseAtualNome === 'object') {\n    // Fases de conclusão/arquivamento NÃO são trabalho\n    if (faseAtualNome.conclusao === true) return false;\n    if (faseAtualNome.arquivamento === true) return false;\n    \n    // Testes, reprovação = são trabalho ativo\n    if (faseAtualNome.testes === true) return true;\n    if (faseAtualNome.reprovacao === true) return true;\n    \n    // Para fases sem flags específicos, verificar por nome\n    const nome = (faseAtualNome.nome || '').toLowerCase();\n    if (FASES_IGNORAR_NOMES.some(f => nome.includes(f))) return false;\n    if (FASES_TRABALHO_NOMES.some(f => nome.includes(f))) return true;\n    \n    // Se tem ordem intermediária (entre backlog e conclusão), provavelmente é trabalho\n    // Ordem típica: Backlog(5) → Na Fila(10) → Sprint(20) → Andamento(30) → Deploy(40) → Testes(50) → Conclusão(55) → Concluído(60)\n    if (faseAtualNome.ordem && faseAtualNome.ordem >= 20 && faseAtualNome.ordem <= 50) return true;\n    \n    return false;\n  }\n\n  // Fallback: string matching (compatibilidade legada)\n  const fase = faseAtualNome.toLowerCase();\n  if (FASES_IGNORAR_NOMES.some(f => fase.includes(f))) return false;\n  if (FASES_TRABALHO_NOMES.some(f => fase.includes(f))) return true;\n  return false;\n}\n\n// Verifica se um NOME de fase (string dos logs) é fase de trabalho\n// Logs sempre retornam nomes como strings, nunca objetos\nfunction isFaseTrabalhoNome(nomeFase) {\n  if (!nomeFase) return false;\n  const fase = nomeFase.toLowerCase();\n  if (FASES_IGNORAR_NOMES.some(f => fase.includes(f))) return false;\n  if (FASES_TRABALHO_NOMES.some(f => fase.includes(f))) return true;\n  return false;\n}\n\n// ============================================\n// FUNÇÕES DE DATA (sem alteração)\n// ============================================\n\nfunction getNumeroSemanaISO(data) {\n  const d = new Date(Date.UTC(data.getFullYear(), data.getMonth(), data.getDate()));\n  const dayNum = d.getUTCDay() || 7;\n  d.setUTCDate(d.getUTCDate() + 4 - dayNum);\n  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));\n  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);\n}\n\nfunction getAnoISO(data) {\n  const d = new Date(Date.UTC(data.getFullYear(), data.getMonth(), data.getDate()));\n  const dayNum = d.getUTCDay() || 7;\n  d.setUTCDate(d.getUTCDate() + 4 - dayNum);\n  return d.getUTCFullYear();\n}\n\nfunction getSegundaDaSemana(data) {\n  const d = new Date(data);\n  const day = d.getDay();\n  const diff = d.getDate() - day + (day === 0 ? -6 : 1);\n  return new Date(d.setDate(diff));\n}\n\nfunction getDomingoDaSemana(data) {\n  const segunda = getSegundaDaSemana(data);\n  const domingo = new Date(segunda);\n  domingo.setDate(segunda.getDate() + 6);\n  return domingo;\n}\n\nfunction formatarData(data) {\n  const dia = String(data.getDate()).padStart(2, '0');\n  const mes = String(data.getMonth() + 1).padStart(2, '0');\n  return dia + '/' + mes;\n}\n\n// ============================================\n// PASSO 1: Extrair data de entrada em trabalho\n// ============================================\n\nconsole.log('📊 Analisando logs de movimentação...');\n\nconst cardsComDataEntrada = todosCards.map(card => {\n  let dataEntradaTrabalho = null;\n  let faseEntrada = null;\n  \n  // Procura PRIMEIRO log onde entrou em fase de trabalho\n  // Nota: logs_fase contém {de, para, data, usuario, frase}\n  // Os campos de/para são NOMES (strings), não objetos\n  if (card.logs_fase && card.logs_fase.length > 0) {\n    for (const log of card.logs_fase) {\n      if (isFaseTrabalhoNome(log.para)) {\n        dataEntradaTrabalho = new Date(log.data);\n        faseEntrada = log.para;\n        break;\n      }\n    }\n  }\n  \n  // CORREÇÃO: fallback usa isFaseTrabalho com objeto rico\n  if (!dataEntradaTrabalho && isFaseTrabalho(card.fase_atual_nome)) {\n    if (card.data_criacao) {\n      dataEntradaTrabalho = new Date(card.data_criacao);\n      faseEntrada = getFaseNome(card.fase_atual_nome);\n    }\n  }\n  \n  return {\n    ...card,\n    _analise: {\n      data_entrada_trabalho: dataEntradaTrabalho,\n      fase_entrada: faseEntrada\n    }\n  };\n});\n\n// ============================================\n// PASSO 2: Agrupar por semana ISO\n// ============================================\n\nconst sprintsPorSemana = {};\n\ncardsComDataEntrada.forEach(card => {\n  if (!card._analise.data_entrada_trabalho) return;\n  \n  const data = card._analise.data_entrada_trabalho;\n  const anoISO = getAnoISO(data);\n  const semanaISO = getNumeroSemanaISO(data);\n  const chave = anoISO + '-W' + String(semanaISO).padStart(2, '0');\n  \n  if (!sprintsPorSemana[chave]) {\n    const segunda = getSegundaDaSemana(data);\n    const domingo = getDomingoDaSemana(data);\n    \n    sprintsPorSemana[chave] = {\n      codigo: chave,\n      inicio: segunda,\n      fim: domingo,\n      cards: []\n    };\n  }\n  \n  sprintsPorSemana[chave].cards.push(card.id);\n});\n\n// Converter para array e ordenar\nconst sprints = Object.values(sprintsPorSemana)\n  .sort((a, b) => a.inicio - b.inicio);\n\nconsole.log('');\nconsole.log('🏃 Sprints identificadas: ' + sprints.length);\n\n// ============================================\n// PASSO 3: Nomear sprints e mapear cards\n// ============================================\n\nconst mapaCardSprint = {};\n\nsprints.forEach(sprint => {\n  sprint.nome = 'Sprint ' + formatarData(sprint.inicio) + ' a ' + formatarData(sprint.fim);\n  \n  sprint.cards.forEach(cardId => {\n    mapaCardSprint[cardId] = {\n      nome: sprint.nome,\n      codigo: sprint.codigo,\n      periodo: {\n        inicio: sprint.inicio.toISOString(),\n        fim: sprint.fim.toISOString()\n      },\n      total_cards_sprint: sprint.cards.length\n    };\n  });\n  \n  console.log('   ' + sprint.nome + ' (' + sprint.codigo + '): ' + sprint.cards.length + ' cards');\n});\n\n// ============================================\n// PASSO 4: Enriquecer cards\n// ============================================\n\nconst cardsEnriquecidos = todosCards.map(card => {\n  const infoSprint = mapaCardSprint[card.id] || null;\n  \n  return {\n    ...card,\n    sprint_identificada: infoSprint ? infoSprint.nome : null,\n    sprint_codigo: infoSprint ? infoSprint.codigo : null,\n    sprint_info: infoSprint\n  };\n});\n\n// ============================================\n// OUTPUT\n// ============================================\n\nconsole.log('');\nconsole.log('✅ Identificação de sprints concluída');\nconsole.log(`   Cards com sprint: ${Object.keys(mapaCardSprint).length}`);\nconsole.log(`   Cards sem sprint: ${todosCards.length - Object.keys(mapaCardSprint).length}`);\n\nreturn [{\n  json: {\n    projeto_info: input.projeto_info,\n    cards: cardsEnriquecidos,\n    fases: input.fases,\n    resumo: input.resumo,\n    sprints_identificadas: sprints.map(s => ({\n      nome: s.nome,\n      codigo: s.codigo,\n      periodo: {\n        inicio: s.inicio.toISOString(),\n        fim: s.fim.toISOString()\n      },\n      cards: s.cards,\n      total: s.cards.length\n    })),\n    metadados_coleta: input.metadados_coleta,\n    _config: input._config\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5920,
+        1888
+      ],
+      "id": "1d0f12d9-44f0-4dc6-a6c0-5a12fda5b8b7",
+      "name": "identificarSprints"
+    },
+    {
+      "parameters": {
+        "jsCode": "// processarLogsCard v2 - Compatível com filtro de data no buscarLogsCard\n// CORREÇÃO: filtra items vazios {} vindos do \"Always Output Data\"\n\n// Pega todos os logs retornados da API\n// CORREÇÃO v2: filtra items vazios que vêm quando o card não tem logs no período\nconst todosLogs = $input.all().map(item => item.json).filter(log => log && log.id);\nconst totalLogs = todosLogs.length;\nconsole.log('Total de logs recebidos: ' + totalLogs);\n\n// Pega o card COMPLETO do Loop Over Items\nconst cardCompleto = $('loopCards').item.json;\nconst cardId = cardCompleto.id;\n\n// Pega config que veio junto com o card\nconst config = cardCompleto._config;\n\n// CORREÇÃO: fase_atual_nome agora é objeto rico do criarMapaFases v2\n// Extrair dados da fase de forma segura\nconst faseInfo = cardCompleto.fase_atual_nome || {};\nconst faseNome = faseInfo.nome || 'Desconhecida';\nconst ehConclusao = faseInfo.conclusao === true;\nconst ehTestes = faseInfo.testes === true;\nconst ehReprovacao = faseInfo.reprovacao === true;\nconst ehArquivamento = faseInfo.arquivamento === true;\n\nconsole.log(`Processando logs do card #${cardId} (fase: ${faseNome})`);\n\n// Define período de análise\nconst periodoAnaliseDias = config.PERIODO_ANALISE_DIAS;\nconst dataLimite = new Date();\ndataLimite.setDate(dataLimite.getDate() - periodoAnaliseDias);\n\n// ============================================\n// Verificar se card teve atividade recente\n// ============================================\n\nlet teveAtividadeRecente = false;\nlet motivoAtividade = [];\n\n// 1. Verificar data de conclusão\nif (cardCompleto.data_conclusao) {\n  const dataConclusao = new Date(cardCompleto.data_conclusao);\n  if (dataConclusao >= dataLimite) {\n    teveAtividadeRecente = true;\n    motivoAtividade.push('data_conclusao');\n  }\n}\n\n// 2. REMOVIDO: data_atualizacao não existe na API de cards\n// Era sempre null, código morto removido\n\n// 3. Verificar data de criação\nif (cardCompleto.data_criacao) {\n  const dataCriacao = new Date(cardCompleto.data_criacao);\n  if (dataCriacao >= dataLimite) {\n    teveAtividadeRecente = true;\n    motivoAtividade.push('data_criacao');\n  }\n}\n\n// 4. Verificar se tem logs recentes (qualquer tipo de log)\nconst logsRecentes = todosLogs.filter(log => {\n  if (!log.data) return false;\n  const dataLog = new Date(log.data);\n  return dataLog >= dataLimite;\n});\n\nif (logsRecentes.length > 0) {\n  teveAtividadeRecente = true;\n  motivoAtividade.push(`logs_recentes (${logsRecentes.length})`);\n}\n\n// 5. NOVO: Verificar data_desejada (deadline pode indicar relevância)\nif (cardCompleto.data_desejada) {\n  const dataDesejada = new Date(cardCompleto.data_desejada);\n  const agora = new Date();\n  // Se o deadline é recente ou futuro, o card é relevante\n  if (dataDesejada >= dataLimite) {\n    teveAtividadeRecente = true;\n    motivoAtividade.push('data_desejada_recente');\n  }\n}\n\nconsole.log(`Card #${cardId}: atividade recente = ${teveAtividadeRecente} [${motivoAtividade.join(', ')}]`);\n\n// ============================================\n// Filtra apenas mudanças de fase no período (para análise de anomalias)\n// Nota: valor_anterior e valor_posterior nos logs de fase vêm como NOMES\n// (ex: \"Em Andamento\", \"Cancelado\") - confirmado pela API\n// ============================================\n\nconst logsFiltrados = todosLogs\n  .filter(log => {\n    if (log.campo_back !== 'fase') return false;\n    const dataLog = new Date(log.data);\n    if (dataLog < dataLimite) return false;\n    return true;\n  })\n  .map(log => ({\n    data: log.data,\n    de: log.valor_anterior || 'Criação',\n    para: log.valor_posterior,\n    usuario: log.usuario || 'Sistema',\n    frase: log.frase\n  }))\n  .sort((a, b) => new Date(a.data) - new Date(b.data));\n\nconst totalLogsFiltrados = logsFiltrados.length;\nconsole.log(`Card #${cardId}: ${totalLogsFiltrados} logs de fase relevantes`);\n\n// Calcula tempo em cada fase (tempo decorrido, não trabalhado)\nfunction calcularTempoPorFase(logs) {\n  const temposPorFase = {};\n  \n  for (let i = 0; i < logs.length - 1; i++) {\n    const logAtual = logs[i];\n    const logProximo = logs[i + 1];\n    \n    const inicio = new Date(logAtual.data);\n    const fim = new Date(logProximo.data);\n    const horas = (fim - inicio) / (1000 * 60 * 60);\n    \n    if (!temposPorFase[logAtual.para]) {\n      temposPorFase[logAtual.para] = 0;\n    }\n    temposPorFase[logAtual.para] += horas;\n  }\n  \n  if (logs.length > 0) {\n    const ultimoLog = logs[logs.length - 1];\n    const inicio = new Date(ultimoLog.data);\n    const agora = new Date();\n    const horas = (agora - inicio) / (1000 * 60 * 60);\n    \n    const faseAtualDoLog = ultimoLog.para;\n    if (!temposPorFase[faseAtualDoLog]) {\n      temposPorFase[faseAtualDoLog] = 0;\n    }\n    temposPorFase[faseAtualDoLog] += horas;\n  }\n  \n  return temposPorFase;\n}\n\nconst tempoPorFase = calcularTempoPorFase(logsFiltrados);\n\n// Identifica qual fase teve maior tempo\nlet maiorTempoFase = null;\nlet maiorTempo = 0;\nfor (const [fase, horas] of Object.entries(tempoPorFase)) {\n  if (horas > maiorTempo) {\n    maiorTempo = horas;\n    maiorTempoFase = fase;\n  }\n}\n\n// Calcula dias na fase atual\nlet diasNaFaseAtual = null;\nif (logsFiltrados.length > 0) {\n  const ultimoLog = logsFiltrados[logsFiltrados.length - 1];\n  const dataUltimaMovimentacao = new Date(ultimoLog.data);\n  const agora = new Date();\n  const diffMs = agora - dataUltimaMovimentacao;\n  diasNaFaseAtual = Math.floor(diffMs / (1000 * 60 * 60 * 24));\n  \n  console.log(`Card #${cardId}: última movimentação em ${ultimoLog.data}, há ${diasNaFaseAtual} dias na fase ${ultimoLog.para}`);\n}\n\n// CORREÇÃO: usa objeto rico em vez de string\nconsole.log(`Card #${cardId} está atualmente em: ${faseNome} (conclusao=${ehConclusao})`);\nconsole.log(`Card #${cardId} tempo trabalhado: ${(cardCompleto.tempo_trabalhado_horas || 0).toFixed(2)}h`);\nconsole.log(`Card #${cardId} tempo orçado: ${(cardCompleto.orcado_horas || 0).toFixed(2)}h`);\n\n// ========================================\n// DETECTAR ANOMALIAS DO CARD\n// ========================================\n\nconsole.log(`Analisando anomalias do card #${cardId}...`);\n\nconst anomalias = [];\n\n// Helper: verificar se nome de fase indica testes/validação\n// Nota: nos logs, as fases vêm como NOMES (strings), não como objetos ricos\n// Então para logs históricos ainda precisamos de string matching\n// Mas para a fase ATUAL do card, usamos os flags booleanos\nfunction ehFaseDeTestesPorNome(nomeFase) {\n  if (!nomeFase) return false;\n  const lower = nomeFase.toLowerCase();\n  return lower.includes('teste') || \n         lower.includes('validação') ||\n         lower.includes('validacao') ||\n         lower.includes('homologação') ||\n         lower.includes('homologacao');\n}\n\nfunction ehFaseConclusaoPorNome(nomeFase) {\n  if (!nomeFase) return false;\n  const lower = nomeFase.toLowerCase();\n  return lower.includes('concluído') || \n         lower.includes('concluido') ||\n         lower.includes('conclusão') ||\n         lower.includes('conclusao');\n}\n\n// NOVO v2: Helper para detectar fase de reprovação por nome (logs históricos)\nfunction ehFaseReprovacaoPorNome(nomeFase) {\n  if (!nomeFase) return false;\n  const lower = nomeFase.toLowerCase();\n  return lower.includes('reprovad');\n}\n\n// 1. REPROVAÇÕES (voltou de testes/validação para fase anterior OU entrou em fase de reprovação)\nconst reprovacoes = logsFiltrados.filter((log, index) => {\n  // Detecta entrada em fase de reprovação\n  if (ehFaseReprovacaoPorNome(log.para)) return true;\n  // Detecta saída de testes para fase não-conclusão\n  if (index === 0) return false;\n  const logAnterior = logsFiltrados[index - 1];\n  return ehFaseDeTestesPorNome(logAnterior.para) &&\n         !ehFaseConclusaoPorNome(log.para);\n}).length;\n\nif (reprovacoes >= config.REPROVACOES_CRITICO) {\n  anomalias.push({\n    tipo: \"MUITAS_REPROVACOES\",\n    severidade: \"ALTA\",\n    valor: reprovacoes,\n    mensagem: `Reprovou ${reprovacoes}x nos testes`,\n    acao: \"Revisar critérios de aceite e qualidade do código\"\n  });\n  console.log(`  [CRITICO] Card #${cardId}: ${reprovacoes} reprovações detectadas`);\n} else if (reprovacoes >= config.REPROVACOES_ATENCAO) {\n  anomalias.push({\n    tipo: \"REPROVACOES\",\n    severidade: \"MEDIA\",\n    valor: reprovacoes,\n    mensagem: `Reprovou ${reprovacoes}x nos testes`,\n    acao: \"Monitorar qualidade das entregas\"\n  });\n  console.log(`  [ATENCAO] Card #${cardId}: ${reprovacoes} reprovações detectadas`);\n}\n\n// 2. TRAVADO HÁ MUITO TEMPO\n// CORREÇÃO: usa flags booleanos do objeto rico em vez de string matching\nif (diasNaFaseAtual !== null) {\n  const ehFaseFinal = ehConclusao || ehArquivamento;\n  const ehFaseInicial = faseNome.toLowerCase().includes('backlog');\n  const ehCancelado = faseNome.toLowerCase().includes('cancelado');\n  \n  // Só detecta \"travado\" se NÃO estiver em fase final, backlog ou cancelado\n  if (!ehFaseFinal && !ehFaseInicial && !ehCancelado) {\n    if (diasNaFaseAtual >= config.DIAS_TRAVADO_CRITICO) {\n      anomalias.push({\n        tipo: \"TRAVADO_CRITICO\",\n        severidade: \"ALTA\",\n        valor: diasNaFaseAtual,\n        mensagem: `Em ${faseNome} há ${diasNaFaseAtual} dias sem progresso`,\n        acao: \"Verificar bloqueios técnicos ou falta de priorização\"\n      });\n      console.log(`  [CRITICO] Card #${cardId}: travado há ${diasNaFaseAtual} dias`);\n    } else if (diasNaFaseAtual >= config.DIAS_TRAVADO_ATENCAO) {\n      anomalias.push({\n        tipo: \"TRAVADO_ATENCAO\",\n        severidade: \"MEDIA\",\n        valor: diasNaFaseAtual,\n        mensagem: `Em ${faseNome} há ${diasNaFaseAtual} dias`,\n        acao: \"Monitorar progresso do card\"\n      });\n      console.log(`  [ATENCAO] Card #${cardId}: sem progresso há ${diasNaFaseAtual} dias`);\n    }\n  }\n}\n\n// 3. TEMPO TRABALHADO MUITO ALTO\nconst tempoTrabalhado = cardCompleto.tempo_trabalhado_horas || 0;\nif (tempoTrabalhado >= config.TEMPO_ALTO_CRITICO) {\n  anomalias.push({\n    tipo: \"TEMPO_EXCESSIVO\",\n    severidade: \"ALTA\",\n    valor: Math.round(tempoTrabalhado),\n    mensagem: `Tempo trabalhado de ${Math.round(tempoTrabalhado)}h`,\n    acao: \"Card muito complexo, considerar quebrar\"\n  });\n  console.log(`  [CRITICO] Card #${cardId}: tempo excessivo de ${Math.round(tempoTrabalhado)}h`);\n} else if (tempoTrabalhado >= config.TEMPO_ALTO_ATENCAO) {\n  anomalias.push({\n    tipo: \"TEMPO_ALTO\",\n    severidade: \"MEDIA\",\n    valor: Math.round(tempoTrabalhado),\n    mensagem: `Tempo trabalhado de ${Math.round(tempoTrabalhado)}h`,\n    acao: \"Monitorar evolução do card\"\n  });\n  console.log(`  [ATENCAO] Card #${cardId}: tempo alto de ${Math.round(tempoTrabalhado)}h`);\n}\n\n// 4. TEMPO ORÇADO MUITO ALTO\nconst tempoOrcado = cardCompleto.orcado_horas || 0;\nif (tempoOrcado >= config.ORCADO_ALTO_CRITICO) {\n  anomalias.push({\n    tipo: \"ORCADO_EXCESSIVO\",\n    severidade: \"ALTA\",\n    valor: Math.round(tempoOrcado),\n    mensagem: `Tempo orçado de ${Math.round(tempoOrcado)}h`,\n    acao: \"Card muito complexo, considerar quebrar\"\n  });\n  console.log(`  [CRITICO] Card #${cardId}: orçado excessivo de ${Math.round(tempoOrcado)}h`);\n} else if (tempoOrcado >= config.ORCADO_ALTO_ATENCAO) {\n  anomalias.push({\n    tipo: \"ORCADO_ALTO\",\n    severidade: \"MEDIA\",\n    valor: Math.round(tempoOrcado),\n    mensagem: `Tempo orçado de ${Math.round(tempoOrcado)}h`,\n    acao: \"Monitorar complexidade do card\"\n  });\n  console.log(`  [ATENCAO] Card #${cardId}: orçado alto de ${Math.round(tempoOrcado)}h`);\n}\n\n// 5. REABERTURAS (voltou de concluído)\nconst reaberturas = logsFiltrados.filter((log, index) => {\n  if (index === 0) return false;\n  const logAnterior = logsFiltrados[index - 1];\n  return ehFaseConclusaoPorNome(logAnterior.para);\n}).length;\n\nif (reaberturas >= 2) {\n  anomalias.push({\n    tipo: \"REABERTURAS\",\n    severidade: \"MEDIA\",\n    valor: reaberturas,\n    mensagem: `Reaberto ${reaberturas}x após conclusão`,\n    acao: \"Melhorar cobertura de testes ou critérios de aceite\"\n  });\n  console.log(`  [ATENCAO] Card #${cardId}: ${reaberturas} reaberturas detectadas`);\n} else if (reaberturas >= 1) {\n  anomalias.push({\n    tipo: \"REABERTURA\",\n    severidade: \"BAIXA\",\n    valor: reaberturas,\n    mensagem: 'Reaberto após conclusão',\n    acao: \"Verificar motivo da reabertura\"\n  });\n  console.log(`  [INFO] Card #${cardId}: 1 reabertura detectada`);\n}\n\n// 6. MUITAS MOVIMENTAÇÕES (card ping-pong entre fases)\nconst totalMovimentacoes = logsFiltrados.length;\nif (totalMovimentacoes >= config.MOVIMENTACOES_CRITICO) {\n  anomalias.push({\n    tipo: \"MUITAS_MOVIMENTACOES\",\n    severidade: \"ALTA\",\n    valor: totalMovimentacoes,\n    mensagem: `Card movimentado ${totalMovimentacoes}x em ${periodoAnaliseDias} dias`,\n    acao: \"Revisar clareza de requisitos e processo\"\n  });\n  console.log(`  [CRITICO] Card #${cardId}: ${totalMovimentacoes} movimentações detectadas`);\n} else if (totalMovimentacoes >= config.MOVIMENTACOES_ATENCAO) {\n  anomalias.push({\n    tipo: \"MOVIMENTACOES_ALTAS\",\n    severidade: \"MEDIA\",\n    valor: totalMovimentacoes,\n    mensagem: `Card movimentado ${totalMovimentacoes}x em ${periodoAnaliseDias} dias`,\n    acao: \"Monitorar estabilidade do card\"\n  });\n  console.log(`  [ATENCAO] Card #${cardId}: ${totalMovimentacoes} movimentações detectadas`);\n}\n\n// 7. ESTIMATIVA MUITO ALTA (pontos)\n// CORREÇÃO: pontos_totais pode ser null (não estimado) - tratar separadamente\nconst pontos = cardCompleto.pontos_totais;\nconst pontosNumerico = pontos !== null && pontos !== undefined ? pontos : 0;\n\nif (pontosNumerico >= config.PONTOS_MUITO_ALTO) {\n  anomalias.push({\n    tipo: \"ESTIMATIVA_MUITO_ALTA\",\n    severidade: \"ALTA\",\n    valor: pontosNumerico,\n    mensagem: `Estimativa muito alta (${pontosNumerico} pontos)`,\n    acao: \"Considerar quebrar em cards menores\"\n  });\n  console.log(`  [CRITICO] Card #${cardId}: estimativa muito alta de ${pontosNumerico} pontos`);\n} else if (pontosNumerico >= config.PONTOS_ALTO) {\n  anomalias.push({\n    tipo: \"ESTIMATIVA_ALTA\",\n    severidade: \"MEDIA\",\n    valor: pontosNumerico,\n    mensagem: `Estimativa alta (${pontosNumerico} pontos)`,\n    acao: \"Monitorar complexidade e tempo\"\n  });\n  console.log(`  [ATENCAO] Card #${cardId}: estimativa alta de ${pontosNumerico} pontos`);\n}\n\n// 8. ALTERAÇÕES DE ESTIMATIVA\n// CORREÇÃO: filtro mais preciso - apenas campo pontos_totais, não \"alterou para\" genérico\nconst alteracoesEstimativa = todosLogs.filter(log => {\n  return log.campo_back === 'pontos_totais';\n}).length;\n\nif (alteracoesEstimativa >= config.REESTIMATIVAS_CRITICO) {\n  anomalias.push({\n    tipo: \"MUITAS_REESTIMATIVAS\",\n    severidade: \"ALTA\",\n    valor: alteracoesEstimativa,\n    mensagem: `Estimativa alterada ${alteracoesEstimativa}x`,\n    acao: \"Revisar definição de escopo e requisitos\"\n  });\n  console.log(`  [CRITICO] Card #${cardId}: ${alteracoesEstimativa} alterações de estimativa`);\n} else if (alteracoesEstimativa >= config.REESTIMATIVAS_ATENCAO) {\n  anomalias.push({\n    tipo: \"REESTIMATIVAS\",\n    severidade: \"MEDIA\",\n    valor: alteracoesEstimativa,\n    mensagem: `Estimativa alterada ${alteracoesEstimativa}x`,\n    acao: \"Monitorar mudanças de escopo\"\n  });\n  console.log(`  [ATENCAO] Card #${cardId}: ${alteracoesEstimativa} alterações de estimativa`);\n}\n\n// 9. NOVO: DEADLINE ESTOURADO (data_desejada no passado e card não concluído)\nif (cardCompleto.data_desejada && !ehConclusao && !ehArquivamento) {\n  const dataDesejada = new Date(cardCompleto.data_desejada);\n  const agora = new Date();\n  if (dataDesejada < agora) {\n    const diasAtraso = Math.floor((agora - dataDesejada) / (1000 * 60 * 60 * 24));\n    if (diasAtraso > 0) {\n      const severidade = diasAtraso >= 14 ? \"ALTA\" : diasAtraso >= 7 ? \"MEDIA\" : \"BAIXA\";\n      anomalias.push({\n        tipo: \"DEADLINE_ESTOURADO\",\n        severidade: severidade,\n        valor: diasAtraso,\n        mensagem: `Deadline (${cardCompleto.data_desejada}) estourado há ${diasAtraso} dias`,\n        acao: \"Repriorizar ou atualizar deadline\"\n      });\n      console.log(`  [${severidade === \"ALTA\" ? \"CRITICO\" : \"ATENCAO\"}] Card #${cardId}: deadline estourado há ${diasAtraso} dias`);\n    }\n  }\n}\n\n// 10. NOVO: ESTOURO DE ORÇAMENTO (tempo trabalhado > orçado, quando ambos > 0)\nif (tempoOrcado > 0 && tempoTrabalhado > tempoOrcado) {\n  const percentEstouro = Math.round(((tempoTrabalhado - tempoOrcado) / tempoOrcado) * 100);\n  if (percentEstouro >= 100) {\n    anomalias.push({\n      tipo: \"ESTOURO_ORCAMENTO_CRITICO\",\n      severidade: \"ALTA\",\n      valor: percentEstouro,\n      mensagem: `Estourou orçamento em ${percentEstouro}% (${tempoTrabalhado.toFixed(1)}h / ${tempoOrcado}h orçadas)`,\n      acao: \"Revisar escopo e parar work-in-progress se possível\"\n    });\n    console.log(`  [CRITICO] Card #${cardId}: estouro de ${percentEstouro}% do orçamento`);\n  } else if (percentEstouro >= 30) {\n    anomalias.push({\n      tipo: \"ESTOURO_ORCAMENTO\",\n      severidade: \"MEDIA\",\n      valor: percentEstouro,\n      mensagem: `Acima do orçamento em ${percentEstouro}% (${tempoTrabalhado.toFixed(1)}h / ${tempoOrcado}h orçadas)`,\n      acao: \"Monitorar e comunicar ao time\"\n    });\n    console.log(`  [ATENCAO] Card #${cardId}: acima do orçamento em ${percentEstouro}%`);\n  }\n}\n\n// Determinar severidade máxima\nconst temAlertasCriticos = anomalias.some(a => a.severidade === \"ALTA\");\n\nif (anomalias.length === 0) {\n  console.log(`  [OK] Card #${cardId}: nenhuma anomalia detectada`);\n} else {\n  console.log(`  [RESUMO] Card #${cardId}: ${anomalias.length} anomalia(s) - Críticos: ${temAlertasCriticos ? 'SIM' : 'NÃO'}`);\n}\n\n// ========================================\n// RETORNA O CARD COMPLETO com dados de trajetória + anomalias\n// ========================================\n\nreturn [{\n  json: {\n    // Dados originais do card\n    id: cardCompleto.id,\n    chamado: cardCompleto.chamado,\n    titulo: cardCompleto.titulo,\n    descricao_limpa: cardCompleto.descricao_limpa,\n    fase_atual: cardCompleto.fase_atual,\n    fase_atual_nome: cardCompleto.fase_atual_nome,  // objeto rico\n    responsaveis: cardCompleto.responsaveis,\n    tempo_decorrido: cardCompleto.tempo_decorrido,\n    tempo_trabalhado_horas: cardCompleto.tempo_trabalhado_horas,\n    orcado: cardCompleto.orcado,\n    orcado_horas: cardCompleto.orcado_horas,\n    pontos_totais: cardCompleto.pontos_totais,  // preserva null\n    em_andamento: cardCompleto.em_andamento,\n    data_criacao: cardCompleto.data_criacao,\n    data_conclusao: cardCompleto.data_conclusao,\n    data_prevista: cardCompleto.data_prevista,\n    data_desejada: cardCompleto.data_desejada,\n    sub_projeto: cardCompleto.sub_projeto,\n    tags: cardCompleto.tags,\n    projeto_info: cardCompleto.projeto_info,\n    \n    // Config (continua passando adiante)\n    _config: cardCompleto._config,\n    \n    // Dados calculados dos logs\n    logs_fase: logsFiltrados,\n    tempo_por_fase: tempoPorFase,\n    dias_na_fase_atual: diasNaFaseAtual,\n    maior_tempo_fase: maiorTempoFase ? {\n      fase: maiorTempoFase,\n      horas: Math.round(maiorTempo)\n    } : null,\n    \n    dados_usuario: todosLogs.length > 0 ? todosLogs[0].dados_usuario : null,\n    \n    // DADOS DE ANOMALIAS (COMPLETOS)\n    anomalias: anomalias,\n    total_anomalias: anomalias.length,\n    tem_alertas_criticos: temAlertasCriticos,\n    metricas_deteccao: {\n      reprovacoes: reprovacoes,\n      reaberturas: reaberturas,\n      total_movimentacoes: totalMovimentacoes,\n      dias_sem_movimentacao: diasNaFaseAtual,\n      alteracoes_estimativa: alteracoesEstimativa,\n      tempo_orcado: tempoOrcado,\n      tempo_trabalhado: tempoTrabalhado,\n      pontos: pontos,\n      estouro_orcamento_percent: tempoOrcado > 0 \n        ? Math.round(((tempoTrabalhado - tempoOrcado) / tempoOrcado) * 100) \n        : null\n    },\n    \n    // Marcação de atividade recente\n    _teve_atividade_recente: teveAtividadeRecente,\n    _motivo_atividade: motivoAtividade,\n    _total_logs_recentes: logsRecentes.length\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4848,
+        1488
+      ],
+      "id": "7e30863a-e56a-475f-8395-cac53347b8ad",
+      "name": "processarLogsCard"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pega o projeto_id que vem do input\nconst projetoId = $input.first().json.projeto_id;\nreturn [{\n  json: {\n    // ========================================\n    // CONFIGURAÇÕES BÁSICAS\n    // ========================================\n    projeto_id: projetoId,\n    baseUrl: \"https://hub.novadata.com.br\",\n    // ========================================\n    // FILTROS GERAIS\n    // ========================================\n    PERIODO_ANALISE_DIAS: 15,\n    LIMIT_API_CARDS: 1000000,\n    // ========================================\n    // CARD TRAVADO (dias sem movimentação)\n    // ========================================\n    DIAS_TRAVADO_ATENCAO: 7,\n    DIAS_TRAVADO_CRITICO: 14,\n    DIAS_TRAVADO_RESUMO: 30,\n    // ========================================\n    // TEMPO TRABALHADO (horas)\n    // ========================================\n    TEMPO_ALTO_ATENCAO: 40,\n    TEMPO_ALTO_CRITICO: 80,\n    // ========================================\n    // TEMPO ORÇADO (horas)\n    // ========================================\n    ORCADO_ALTO_ATENCAO: 40,\n    ORCADO_ALTO_CRITICO: 80,\n    // ========================================\n    // REPROVAÇÕES (quantidade)\n    // ========================================\n    REPROVACOES_ATENCAO: 2,\n    REPROVACOES_CRITICO: 3,\n    // ========================================\n    // MOVIMENTAÇÕES (quantidade)\n    // ========================================\n    MOVIMENTACOES_ATENCAO: 8,\n    MOVIMENTACOES_CRITICO: 10,\n    // ========================================\n    // ESTIMATIVA - PONTOS (quantidade)\n    // ========================================\n    PONTOS_ALTO: 8,\n    PONTOS_MUITO_ALTO: 13,\n    // ========================================\n    // ALTERAÇÕES DE ESTIMATIVA (quantidade)\n    // ========================================\n    REESTIMATIVAS_ATENCAO: 2,\n    REESTIMATIVAS_CRITICO: 3\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        1936
+      ],
+      "id": "5fb38904-1532-42c6-ac01-4df8b6a09041",
+      "name": "configInicial"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst todosCards = input.cards || [];\n\nconsole.log('=== LIMPANDO DADOS PARA IA (v2.0) ===');\nconsole.log('Total de cards: ' + todosCards.length);\n\n// Campos a remover de cada card\nconst CAMPOS_REMOVER = new Set([\n  'projeto_info',      // FIX #3: já existe no top-level\n  'chamado',           // FIX #4: === id em 100% dos cards\n  'tempo_decorrido',   // FIX #5: já tem tempo_trabalhado_horas (decimal)\n  'orcado',            // FIX #6: já tem orcado_horas (decimal)\n]);\n\nconst cardsLimpos = todosCards.map(card => {\n  const cardLimpo = {};\n  \n  for (const [key, value] of Object.entries(card)) {\n    // FIX #1: Remove TODOS os campos com prefixo _ (internos do pipeline)\n    if (key.startsWith('_')) continue;\n    \n    // FIX #3, #4, #5, #6: Remove campos redundantes\n    if (CAMPOS_REMOVER.has(key)) continue;\n    \n    cardLimpo[key] = value;\n  }\n  \n  // FIX #2: Remove foto de dados_usuario (URL inútil para IA)\n  if (cardLimpo.dados_usuario && cardLimpo.dados_usuario.foto) {\n    delete cardLimpo.dados_usuario.foto;\n  }\n  \n  return cardLimpo;\n});\n\n// Output mantém estrutura top-level intacta\nconst outputParaIA = {\n  projeto_info: input.projeto_info,\n  cards: cardsLimpos,\n  fases: input.fases,\n  resumo: input.resumo,\n  sprints_identificadas: input.sprints_identificadas,\n  metadados_coleta: input.metadados_coleta\n};\n\n// Log de resultado\nconst tamanhoKB = (JSON.stringify(outputParaIA).length / 1024).toFixed(1);\nconsole.log('📊 Tamanho do JSON: ' + tamanhoKB + ' KB');\nconsole.log('📅 Período de análise: ' + (input.metadados_coleta?.periodo_analise_dias || 'N/A') + ' dias');\nconsole.log('✅ Removidos de ' + cardsLimpos.length + ' cards:');\nconsole.log('   - Campos _ (internos pipeline)');\nconsole.log('   - projeto_info (duplicado do top-level)');\nconsole.log('   - chamado (=== id)');\nconsole.log('   - tempo_decorrido/orcado (strings, já tem versão decimal)');\nconsole.log('   - dados_usuario.foto (URLs)');\n\nreturn [{\n  json: outputParaIA\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6128,
+        1888
+      ],
+      "id": "a3db4e1c-0bd2-4977-949e-0abf46d80dd0",
+      "name": "limparParaIA"
+    },
+    {
+      "parameters": {
+        "content": "## THRESHOLDS (configInicial):\n- Período: 15 dias | Travado: 7/14 dias | Tempo: 40/80h | Orçado: 40/80h\n- Reprovações: 2/3x | Movimentações: 8/10x | Reestimativas: 2/3x\n- Pontos: 8 (alto), 13 (muito alto)\n\n## LÓGICA DE DETECÇÃO (JS puro, sem IA):\n- Reprovação: saiu de \"Em Testes\" → fase ≠ \"Concluído/Concluído da Sprint\"\n- Travado: dias na fase atual ≥ limite da fase\n- Tempo excessivo: horas trabalhadas ≥ threshold\n- Orçado alto: horas orçadas ≥ threshold\n- Reabertura: saiu de \"Concluído\" → outra fase\n- Muitas movimentações: total de mudanças de fase ≥ threshold\n- Reestimativas: alterações de pontuação ≥ threshold\n- Pontos alto: pontos_totais ≥ threshold\n- Sprint: agrupa cards por semana ISO fixa (segunda a domingo)\n\n## CONVERSÕES:\n- tempo_decorrido (HH:MM:SS) → tempo_trabalhado_horas\n- orcado (HH:MM:SS) → orcado_horas\n\n## FILTRO DE ATIVIDADE:\n- Busca logs de TODOS os cards antes de filtrar\n- Card passa se teve atividade nos últimos 15 dias:\n  • data_conclusao, data_atualizacao ou data_criacao recente\n  • OU qualquer log recente (fase, descrição, anexo, tag, título, etc.)",
+        "height": 656,
+        "width": 592,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1888,
+        1120
+      ],
+      "typeVersion": 1,
+      "id": "61115b7c-29f2-4bb9-a7ab-c875e8a14541",
+      "name": "docLogicaColeta"
+    },
+    {
+      "parameters": {
+        "content": "## SPRINT POR SEMANA ISO FIXA:\n- Agrupa cards pela semana do calendário (segunda a domingo)\n- Usa data de entrada em fase de trabalho (Sprint Atual, Em Andamento, etc)\n- Fallback: data_criacao se não tiver log de entrada\n- Cards em Backlog/Standby não recebem sprint\n- Nome: \"Sprint 27/01 a 02/02\"\n- Código: \"2026-W05\"",
+        "height": 272,
+        "width": 384,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2576,
+        1424
+      ],
+      "typeVersion": 1,
+      "id": "3062e8e2-c431-4a7a-9c06-89bcdb6484c1",
+      "name": "docFluxoDados"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n// NÓ: filtrarCardsAtivos (VERSÃO 1.0)\n// Filtra apenas cards que tiveram atividade nos últimos X dias\n// Roda APÓS buscar logs de todos os cards\n// ============================================\nconst input = $input.first().json;\nconst todosCards = input.data || [];\n// Pega config do primeiro card\nconst config = todosCards.length > 0 && todosCards[0]._config \n  ? todosCards[0]._config \n  : { PERIODO_ANALISE_DIAS: 15 };\nconst periodoAnaliseDias = config.PERIODO_ANALISE_DIAS;\nconsole.log('=== FILTRO FINAL DE ATIVIDADE ===');\nconsole.log(`Total de cards recebidos: ${todosCards.length}`);\nconsole.log(`Período de análise: ${periodoAnaliseDias} dias`);\n// Filtra apenas cards com atividade recente\nconst cardsFiltrados = todosCards.filter(card => {\n  return card._teve_atividade_recente === true;\n});\n// Cards removidos (para log)\nconst cardsRemovidos = todosCards.filter(card => {\n  return card._teve_atividade_recente !== true;\n});\nconsole.log(`[OK] Cards COM atividade recente: ${cardsFiltrados.length}`);\nconsole.log(`[REMOVIDO] Cards SEM atividade recente (removidos): ${cardsRemovidos.length}`);\n// Log de alguns cards removidos para debug\nif (cardsRemovidos.length > 0 && cardsRemovidos.length <= 10) {\n  console.log('Cards removidos:');\n  cardsRemovidos.forEach(card => {\n    console.log(`  - #${card.id}: ${card.titulo}`);\n  });\n} else if (cardsRemovidos.length > 10) {\n  console.log(`Primeiros 10 cards removidos:`);\n  cardsRemovidos.slice(0, 10).forEach(card => {\n    console.log(`  - #${card.id}: ${card.titulo}`);\n  });\n}\n// Retorna no mesmo formato que juntarTodosCards\nreturn [{\n  json: {\n    data: cardsFiltrados\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5136,
+        1872
+      ],
+      "id": "9e1c9ceb-90fb-4bd4-90e2-c0fe2350e045",
+      "name": "filtrarCardsAtivos"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('configInicial').item.json.baseUrl }}/api/fornecedor/",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "limit",
+              "value": "10000"
+            },
+            {
+              "name": "agrupamento",
+              "value": "usuario"
+            },
+            {
+              "name": "projetoid",
+              "value": "={{ $('receberInput').item.json.projeto_id }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('executarLogin').item.json.accessToken }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2880,
+        2064
+      ],
+      "id": "922c68c0-e309-4389-a2a6-905865ad198d",
+      "name": "buscarFornecedores"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('configInicial').item.json.baseUrl }}/api/tempotask/tempo_projeto/",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "projetoid",
+              "value": "={{ $('receberInput').item.json.projeto_id }}"
+            },
+            {
+              "name": "datainicial",
+              "value": "={{ new Date(Date.now() - $('configInicial').item.json.PERIODO_ANALISE_DIAS * 24 * 60 * 60 * 1000).toISOString().slice(0, 10) }}"
+            },
+            {
+              "name": "datafinal",
+              "value": "={{ new Date().toISOString().split('T')[0] }}"
+            },
+            {
+              "name": "agrupamento",
+              "value": "usuario"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('executarLogin').item.json.accessToken }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2864,
+        2224
+      ],
+      "id": "69c95815-ca5e-4b1f-9cc3-c3da271e1edc",
+      "name": "buscarTemposProjeto"
+    },
+    {
+      "parameters": {
+        "jsCode": "const todosItens = $input.all().map(item => item.json);\nconst fornecedores = todosItens.filter(item => item.id !== undefined && item.id !== null);\nconsole.log('=== CRIANDO MAPA USUARIO → TIME (v2.0 — indexado por USER) ===');\nconsole.log(`Total de fornecedores recebidos: ${fornecedores.length}`);\n// ============================================\n// PASSO 1: Ler tempos do projeto por REFERÊNCIA DE NÓ\n// ============================================\nlet temposDisponiveis = false;\n// Mapa: fornecedor_id → { totalSegundos, totalHoras }\nconst horasPorFornecedorId = {};\ntry {\n  const todosTempos = $('buscarTemposProjeto').all();\n  if (todosTempos && todosTempos.length > 0) {\n    temposDisponiveis = true;\n    console.log(`Tempos do projeto carregados: ${todosTempos.length} usuários com registros`);\n    for (const item of todosTempos) {\n      const dados = item.json;\n      const idFornecedor = dados.id_fornecedor;\n      if (idFornecedor === undefined || idFornecedor === null) {\n        console.log(`Registro de tempo sem id_fornecedor: ${dados.item || 'desconhecido'}`);\n        continue;\n      }\n      // Soma todas as durações do período (em segundos)\n      let totalSegundos = 0;\n      if (dados.datas && Array.isArray(dados.datas)) {\n        totalSegundos = dados.datas.reduce((sum, d) => sum + (d.duracao || 0), 0);\n      }\n      const totalHoras = totalSegundos / 3600;\n      // Guarda no mapa por fornecedor_id\n      horasPorFornecedorId[String(idFornecedor)] = {\n        totalSegundos,\n        totalHoras: Math.round(totalHoras * 100) / 100  // 2 casas decimais\n      };\n      if (totalSegundos > 0) {\n        console.log(`   [fornecedor_id:${idFornecedor}] ${dados.item}: ${totalHoras.toFixed(1)}h (${totalSegundos}s)`);\n      }\n    }\n    console.log(`Usuários com horas lançadas: ${Object.keys(horasPorFornecedorId).length}`);\n  } else {\n    console.log('buscarTemposProjeto retornou vazio.');\n  }\n} catch (e) {\n  console.log(`Não foi possível acessar buscarTemposProjeto: ${e.message}`);\n  console.log('   Continuando sem dados de tempo.');\n}\n// ============================================\n// REGRAS DE CLASSIFICAÇÃO DE EQUIPE\n// (sem alteração — mesmas regras da v1)\n// ============================================\nconst REGRAS_EQUIPE = [\n  { palavras: ['fullstack', 'full stack', 'full-stack'], equipe: 'Fullstack' },\n  { palavras: ['frontend', 'front end', 'front-end', 'front'], equipe: 'Frontend' },\n  { palavras: ['backend', 'back end', 'back-end', 'back'], equipe: 'Backend' },\n  { palavras: ['mobile', 'android', 'ios', 'flutter', 'react native', 'react-native', 'kotlin', 'swift'], equipe: 'Mobile' },\n  { palavras: ['infra', 'devops', 'dev ops', 'dev-ops', 'sre', 'cloud', 'plataforma', 'infraestrutura', 'redes', 'segurança da informação', 'sysadmin'], equipe: 'Infra' },\n  { palavras: ['qa', 'teste', 'testes', 'qualidade', 'quality', 'automação de testes', 'test'], equipe: 'QA' },\n  { palavras: ['design', 'designer', 'ux', 'ui', 'ui/ux', 'ux/ui', 'produto visual', 'figma'], equipe: 'Design' },\n  { palavras: ['ia', 'inteligência artificial', 'inteligencia artificial', 'analista de ia'], equipe: 'IA' },\n  { palavras: ['dados', 'data', 'bi', 'analytics', 'engenheiro de dados', 'cientista de dados', 'machine learning', 'ml', 'etl'], equipe: 'Dados' },\n  { palavras: ['gerente', 'coordenador', 'scrum', 'scrum master', 'po', 'product owner', 'product manager', 'gestão', 'gestor', 'líder técnico', 'tech lead', 'lider', 'coordenação', 'direção', 'direcao', 'diretor'], equipe: 'Gestão' },\n  { palavras: ['suporte', 'atendimento', 'helpdesk', 'help desk', 'service desk'], equipe: 'Suporte' },\n  { palavras: ['desenvolvedor', 'developer', 'programador', 'dev', 'engenheiro de software', 'software engineer', 'desenvolvimento'], equipe: 'Desenvolvimento' },\n];\nconst CARGOS_VAZIOS = ['-', '', 'n/a', 'na', 'não informado', 'nao informado', 'sem cargo', 'null', 'undefined', '.', '...'];\nfunction classificarEquipe(cargoNome) {\n  if (!cargoNome || typeof cargoNome !== 'string') return 'A definir';\n  const cargoLower = cargoNome.toLowerCase().trim();\n  if (CARGOS_VAZIOS.includes(cargoLower)) return 'A definir';\n  for (const regra of REGRAS_EQUIPE) {\n    for (const palavra of regra.palavras) {\n      if (cargoLower.includes(palavra)) {\n        return regra.equipe;\n      }\n    }\n  }\n  return 'Outros';\n}\nfunction extrairNivel(cargoNome) {\n  if (!cargoNome || typeof cargoNome !== 'string') return null;\n  const cargoLower = cargoNome.toLowerCase();\n  if (CARGOS_VAZIOS.includes(cargoLower.trim())) return null;\n  if (cargoLower.includes('estagiário') || cargoLower.includes('estagiario') || cargoLower.includes('estágio') || cargoLower.includes('estagio') || cargoLower.includes('intern')) return 'Estagiário';\n  if (cargoLower.includes('júnior') || cargoLower.includes('junior') || cargoLower.includes(' jr') || cargoLower.endsWith(' jr')) return 'Júnior';\n  if (cargoLower.includes('pleno') || cargoLower.includes('mid') || cargoLower.includes('middle') || cargoLower.includes('nível ii') || cargoLower.includes('nivel ii')) return 'Pleno';\n  if (cargoLower.includes('sênior') || cargoLower.includes('senior') || cargoLower.includes(' sr') || cargoLower.endsWith(' sr')) return 'Sênior';\n  if (cargoLower.includes('especialista') || cargoLower.includes('staff') || cargoLower.includes('principal')) return 'Especialista';\n  if (cargoLower.includes('líder') || cargoLower.includes('lider') || cargoLower.includes('lead') || cargoLower.includes('tech lead')) return 'Líder';\n  if (cargoLower.includes('gerente') || cargoLower.includes('gestor') || cargoLower.includes('manager')) return 'Gerente';\n  if (cargoLower.includes('diretor') || cargoLower.includes('director') || cargoLower.includes('cto') || cargoLower.includes('ceo')) return 'Diretor';\n  return null;\n}\n// Override manual\nconst OVERRIDES_EQUIPE = {\n  // Chave agora é USER_ID (não fornecedor_id)\n  // '333': 'Dados'  // Miguel — ajustar se necessário\n};\n// ============================================\n// PROCESSAMENTO PRINCIPAL\n// ============================================\nconst mapaUsuarios = {};           // Indexado por USER_ID (novo!)\nconst mapaFornecedorParaUser = {}; // fornecedor_id → user_id (auxiliar)\nconst stats = {\n  total: 0,\n  com_cargo: 0,\n  sem_cargo: 0,\n  sem_user: 0,           // NOVO: fornecedores sem user (empresas, etc.)\n  ativos_no_projeto: 0,\n  por_equipe: {},\n  cargos_outros: [],\n  cargos_a_definir: [],\n};\nfornecedores.forEach(fornecedor => {\n  const fornecedorId = fornecedor.id;\n  const userId = fornecedor.user;  // ← CHAVE DA MUDANÇA\n  // Pular se não tem fornecedor_id\n  if (fornecedorId === undefined || fornecedorId === null) {\n    console.log(`Fornecedor sem ID ignorado: ${JSON.stringify(fornecedor).substring(0, 100)}`);\n    return;\n  }\n  // NOVO: Pular se não tem user (empresas, fornecedores PJ, etc.)\n  if (userId === undefined || userId === null) {\n    stats.sem_user++;\n    return;\n  }\n  // NOVO: Criar mapa auxiliar fornecedor_id → user_id\n  mapaFornecedorParaUser[String(fornecedorId)] = userId;\n  // Extrair dados\n  const nome = fornecedor.nome || fornecedor.name || fornecedor.nome_completo || fornecedor.razao_social || `Fornecedor ${fornecedorId}`;\n  const cargoRaw = fornecedor.cargo_nome_readonly || fornecedor.cargo || '';\n  const cargo = (typeof cargoRaw === 'string') ? cargoRaw.trim() : String(cargoRaw);\n  // Classificar\n  let equipe = classificarEquipe(cargo);\n  if (OVERRIDES_EQUIPE[String(userId)]) {\n    equipe = OVERRIDES_EQUIPE[String(userId)];\n  }\n  const nivel = extrairNivel(cargo);\n  // NOVO: Buscar horas do período usando o mapa de fornecedor_id\n  const horasInfo = horasPorFornecedorId[String(fornecedorId)];\n  const horasPeriodo = horasInfo ? horasInfo.totalHoras : 0;\n  const ativoNoProjeto = temposDisponiveis ? (horasPeriodo > 0) : null;\n  // NOVO: Indexar por USER_ID (não fornecedor_id)\n  mapaUsuarios[userId] = {\n    nome: nome,\n    cargo: cargo,\n    equipe: equipe,\n    nivel: nivel,\n    fornecedor_id: fornecedorId,  // NOVO: guarda para referência cruzada\n    ativo_no_projeto: ativoNoProjeto,\n    horas_periodo: horasPeriodo    // NOVO: horas trabalhadas no período\n  };\n  // Stats\n  stats.total++;\n  if (ativoNoProjeto) {\n    stats.ativos_no_projeto++;\n  }\n  if (equipe === 'A definir') {\n    stats.sem_cargo++;\n    stats.cargos_a_definir.push({ fornecedor_id: fornecedorId, user_id: userId, nome, cargo });\n  } else if (equipe === 'Outros') {\n    stats.com_cargo++;\n    stats.cargos_outros.push({ fornecedor_id: fornecedorId, user_id: userId, nome, cargo });\n  } else {\n    stats.com_cargo++;\n  }\n  if (!stats.por_equipe[equipe]) {\n    stats.por_equipe[equipe] = [];\n  }\n  stats.por_equipe[equipe].push({\n    fornecedor_id: fornecedorId,\n    user_id: userId,\n    nome,\n    cargo,\n    nivel,\n    ativoNoProjeto,\n    horasPeriodo\n  });\n});\n// ============================================\n// NOVO: AGREGAR HORAS POR EQUIPE\n// ============================================\nconst horasPorEquipe = {};\nlet totalHorasPeriodo = 0;\nfor (const [equipe, membros] of Object.entries(stats.por_equipe)) {\n  const horasEquipe = membros.reduce((sum, m) => sum + (m.horasPeriodo || 0), 0);\n  if (horasEquipe > 0) {\n    horasPorEquipe[equipe] = Math.round(horasEquipe * 100) / 100;\n    totalHorasPeriodo += horasEquipe;\n  }\n}\ntotalHorasPeriodo = Math.round(totalHorasPeriodo * 100) / 100;\n// ============================================\n// LOGS DE CALIBRAÇÃO\n// ============================================\nconsole.log('');\nconsole.log('RESULTADO DO MAPEAMENTO (v2.0):');\nconsole.log('============================');\nconsole.log(`   Total mapeados (com user): ${stats.total}`);\nconsole.log(`   Sem user (empresas/PJ): ${stats.sem_user}`);\nconsole.log(`   Com cargo identificado: ${stats.com_cargo}`);\nconsole.log(`   Sem cargo (A definir): ${stats.sem_cargo}`);\nconsole.log(`   Ativos no projeto (com horas): ${stats.ativos_no_projeto}`);\nconsole.log(`   Total horas no período: ${totalHorasPeriodo}h`);\nconsole.log('');\n// Equipes classificadas\nconst equipesReais = Object.entries(stats.por_equipe)\n  .filter(([equipe]) => equipe !== 'A definir' && equipe !== 'Outros')\n  .sort((a, b) => b[1].length - a[1].length);\nif (equipesReais.length > 0) {\n  console.log('EQUIPES CLASSIFICADAS:');\n  for (const [equipe, membros] of equipesReais) {\n    const ativos = membros.filter(m => m.ativoNoProjeto);\n    const horasEquipe = horasPorEquipe[equipe] || 0;\n    console.log(`   ${equipe}: ${membros.length} pessoa(s), ${ativos.length} ativo(s), ${horasEquipe}h no período`);\n    if (ativos.length > 0) {\n      ativos.forEach(m => {\n        console.log(`     [user:${m.user_id}|forn:${m.fornecedor_id}] ${m.nome} | \"${m.cargo}\" | ${m.horasPeriodo}h`);\n      });\n    }\n    const inativos = membros.filter(m => !m.ativoNoProjeto);\n    if (inativos.length > 0 && inativos.length <= 5) {\n      inativos.forEach(m => {\n        console.log(`     [user:${m.user_id}|forn:${m.fornecedor_id}] ${m.nome} (sem horas)`);\n      });\n    } else if (inativos.length > 5) {\n      console.log(`     ... e mais ${inativos.length} sem horas no projeto`);\n    }\n  }\n}\n// Cargos não classificados\nif (stats.cargos_outros.length > 0) {\n  console.log('');\n  console.log(`CARGOS NÃO CLASSIFICADOS (${stats.cargos_outros.length}):`);\n  stats.cargos_outros.forEach(c => {\n    console.log(`   - [user:${c.user_id}|forn:${c.fornecedor_id}] ${c.nome}: \"${c.cargo}\"`);\n  });\n}\n// Sem cargo mas com horas\nif (temposDisponiveis) {\n  const semCargoMasAtivos = stats.cargos_a_definir.filter(c => {\n    const horasInfo = horasPorFornecedorId[String(c.fornecedor_id)];\n    return horasInfo && horasInfo.totalHoras > 0;\n  });\n  if (semCargoMasAtivos.length > 0) {\n    console.log('');\n    console.log(`ATENÇÃO: ${semCargoMasAtivos.length} fornecedor(es) SEM CARGO mas COM HORAS:`);\n    semCargoMasAtivos.forEach(c => {\n      console.log(`   - [user:${c.user_id}|forn:${c.fornecedor_id}] ${c.nome}`);\n    });\n  }\n}\n// NOVO: Log de horas por equipe\nif (Object.keys(horasPorEquipe).length > 0) {\n  console.log('');\n  console.log('HORAS POR EQUIPE NO PERÍODO:');\n  const equipesOrdenadas = Object.entries(horasPorEquipe).sort((a, b) => b[1] - a[1]);\n  for (const [equipe, horas] of equipesOrdenadas) {\n    const percentual = totalHorasPeriodo > 0 ? Math.round((horas / totalHorasPeriodo) * 100) : 0;\n    console.log(`   ${equipe}: ${horas}h (${percentual}%)`);\n  }\n  console.log(`   TOTAL: ${totalHorasPeriodo}h`);\n}\n// Resumos\nconst resumoEquipes = {};\nfor (const [equipe, membros] of Object.entries(stats.por_equipe)) {\n  resumoEquipes[equipe] = membros.length;\n}\nconst resumoAtivos = {};\nfor (const [equipe, membros] of Object.entries(stats.por_equipe)) {\n  const ativos = membros.filter(m => m.ativoNoProjeto).length;\n  if (ativos > 0) {\n    resumoAtivos[equipe] = ativos;\n  }\n}\nconsole.log('');\nconsole.log('Resumo TOTAL por equipe:', JSON.stringify(resumoEquipes));\nconsole.log('Resumo ATIVOS no projeto:', JSON.stringify(resumoAtivos));\nconsole.log('Horas por equipe:', JSON.stringify(horasPorEquipe));\n// ============================================\n// OUTPUT — ÚNICO ITEM\n// ============================================\nreturn [{\n  json: {\n    usuarios_map: mapaUsuarios,            // Indexado por USER_ID\n    mapa_fornecedor_user: mapaFornecedorParaUser,  // NOVO: auxiliar\n    // NOVO: Horas agregadas\n    horas_por_equipe: horasPorEquipe,\n    total_horas_periodo: totalHorasPeriodo,\n    // Metadados\n    _meta_equipes: {\n      total_fornecedores: stats.total,\n      fornecedores_sem_user: stats.sem_user,\n      com_cargo_classificado: stats.com_cargo,\n      sem_cargo: stats.sem_cargo,\n      ativos_no_projeto: stats.ativos_no_projeto,\n      equipes_encontradas: equipesReais.map(([equipe]) => equipe),\n      contagem_por_equipe: resumoEquipes,\n      contagem_ativos: resumoAtivos,\n      horas_por_equipe: horasPorEquipe,\n      total_horas_periodo: totalHorasPeriodo,\n      cargos_nao_classificados: stats.cargos_outros.length,\n      fornecedores_sem_cargo: stats.cargos_a_definir.length,\n      ids_por_equipe: Object.fromEntries(\n        equipesReais.map(([equipe, membros]) => [\n          equipe,\n          membros.map(m => m.user_id)\n        ])\n      ),\n      ids_ativos_por_equipe: Object.fromEntries(\n        equipesReais.map(([equipe, membros]) => [\n          equipe,\n          membros.filter(m => m.ativoNoProjeto).map(m => m.user_id)\n        ]).filter(([_, ids]) => ids.length > 0)\n      ),\n      ids_outros: stats.cargos_outros.map(c => c.user_id),\n      ids_sem_cargo: stats.cargos_a_definir.map(c => c.user_id),\n      ids_sem_cargo_ativos: temposDisponiveis\n        ? stats.cargos_a_definir.filter(c => {\n            const horasInfo = horasPorFornecedorId[String(c.fornecedor_id)];\n            return horasInfo && horasInfo.totalHoras > 0;\n          }).map(c => c.user_id)\n        : []\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3328,
+        2144
+      ],
+      "id": "4f911f1e-f3d0-476f-8c7c-adb677fd1f41",
+      "name": "criarMapaUsuarioTime"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3136,
+        2144
+      ],
+      "id": "06a536e7-6465-4b1f-a544-50a907df8f0b",
+      "name": "juntarFornecedoresETempo"
+    },
+    {
+      "parameters": {
+        "content": "# ColetarDadosProjeto\n\nProjeto: NEAT\nGatilho: WF — chamado por [NEAT]Services.OrquestrarRelatorios\nSegurança: Nenhuma (execução interna)\nDocs: —\nDescrição: Recebe projeto_id, autentica na API Neat via sub-workflow, coleta fases, cards, logs, fornecedores e tempos do projeto. Retorna JSON estruturado com todos os dados para geração do relatório.",
+        "height": 360,
+        "width": 520,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2192,
+        640
+      ],
+      "id": "2e6ea83e-aed8-4ebf-be49-1ffb403354e2",
+      "name": "docWorkflow"
+    }
+  ],
+  "connections": {
+    "buscarFases": {
+      "main": [
+        [
+          {
+            "node": "criarMapaFases",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "criarMapaFases": {
+      "main": [
+        [
+          {
+            "node": "juntarTokenEFases",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "juntarComMapaFases",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "juntarTokenEFases": {
+      "main": [
+        [
+          {
+            "node": "buscarCards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscarCards": {
+      "main": [
+        [
+          {
+            "node": "extrairLimparCards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extrairLimparCards": {
+      "main": [
+        [
+          {
+            "node": "loopCards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "loopCards": {
+      "main": [
+        [
+          {
+            "node": "juntarTodosCards",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "buscarLogsCard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscarLogsCard": {
+      "main": [
+        [
+          {
+            "node": "processarLogsCard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "juntarComMapaFases": {
+      "main": [
+        [
+          {
+            "node": "prepararOutputFinal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "juntarTodosCards": {
+      "main": [
+        [
+          {
+            "node": "filtrarCardsAtivos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prepararOutputFinal": {
+      "main": [
+        [
+          {
+            "node": "identificarSprints",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "processarLogsCard": {
+      "main": [
+        [
+          {
+            "node": "loopCards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "configInicial": {
+      "main": [
+        [
+          {
+            "node": "executarLogin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "identificarSprints": {
+      "main": [
+        [
+          {
+            "node": "limparParaIA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filtrarCardsAtivos": {
+      "main": [
+        [
+          {
+            "node": "juntarComMapaFases",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscarFornecedores": {
+      "main": [
+        [
+          {
+            "node": "juntarFornecedoresETempo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscarTemposProjeto": {
+      "main": [
+        [
+          {
+            "node": "juntarFornecedoresETempo",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "juntarFornecedoresETempo": {
+      "main": [
+        [
+          {
+            "node": "criarMapaUsuarioTime",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "criarMapaUsuarioTime": {
+      "main": [
+        [
+          {
+            "node": "juntarComMapaFases",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "receberInput": {
+      "main": [
+        [
+          {
+            "node": "configInicial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "executarLogin": {
+      "main": [
+        [
+          {
+            "node": "buscarFases",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "juntarTokenEFases",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "buscarFornecedores",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "buscarTemposProjeto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "c0b42157-633e-4bcb-a71d-8b6b655ec4a8",
+  "activeVersionId": "c0b42157-633e-4bcb-a71d-8b6b655ec4a8",
+  "versionCounter": 15,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-10T03:56:44.909Z",
+      "createdAt": "2026-03-10T03:56:44.909Z",
+      "role": "workflow:owner",
+      "workflowId": "U-3xjDqErv6qXvNqNiN78",
+      "projectId": "aLeETedgrx3HypUV",
+      "project": {
+        "updatedAt": "2026-02-05T18:12:51.008Z",
+        "createdAt": "2026-02-05T17:11:33.764Z",
+        "id": "aLeETedgrx3HypUV",
+        "name": "Miguel Kubrusly <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-02-05T17:11:33.764Z",
+            "createdAt": "2026-02-05T17:11:33.764Z",
+            "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+            "projectId": "aLeETedgrx3HypUV",
+            "user": {
+              "updatedAt": "2026-03-10T03:07:07.287Z",
+              "createdAt": "2026-02-05T17:11:32.394Z",
+              "id": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+              "email": "infra@novadata.com.br",
+              "firstName": "Miguel",
+              "lastName": "Kubrusly",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-02-06T13:42:55.997Z",
+                "personalization_survey_n8n_version": "2.6.0",
+                "automationGoalDevops": [
+                  "data-syncing"
+                ],
+                "companyIndustryExtended": [
+                  "it-industry"
+                ],
+                "companySize": "<20",
+                "companyType": "other",
+                "role": "it",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "4oFgpwW3T5VYLBkmatmZt",
+                "userActivatedAt": 1772566324555,
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-03-10",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-10T03:50:23.543Z",
+      "createdAt": "2026-03-10T03:50:23.543Z",
+      "id": "K8hokRHb0lDBuuNn",
+      "name": "@neat-api"
+    },
+    {
+      "updatedAt": "2026-03-06T15:02:49.033Z",
+      "createdAt": "2026-03-06T15:02:49.033Z",
+      "id": "WefOyCNePUH6cMEC",
+      "name": "prod"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-03-10T04:26:43.268Z",
+    "createdAt": "2026-03-10T04:26:41.874Z",
+    "versionId": "c0b42157-633e-4bcb-a71d-8b6b655ec4a8",
+    "workflowId": "U-3xjDqErv6qXvNqNiN78",
+    "nodes": [
+      {
+        "parameters": {
+          "workflowInputs": {
+            "values": [
+              {
+                "name": "projeto_id",
+                "type": "number"
+              }
+            ]
+          }
+        },
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          2192,
+          1936
+        ],
+        "id": "f1d7781a-c898-495b-8bf4-f916bc8a19c2",
+        "name": "receberInput"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "ur7OIZKzXqKP38XqlrRY5",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/ur7OIZKzXqKP38XqlrRY5",
+            "cachedResultName": "[NEAT]Auth.AutenticarNeat.WF_v1.0"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "baseUrl": "={{ $('configInicial').item.json.baseUrl }}",
+              "loginPath": "/login/"
+            },
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "baseUrl",
+                "displayName": "baseUrl",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              },
+              {
+                "id": "loginPath",
+                "displayName": "loginPath",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.3,
+        "position": [
+          2624,
+          1936
+        ],
+        "id": "28607341-9770-4c15-9401-645df720c4ad",
+        "name": "executarLogin"
+      },
+      {
+        "parameters": {
+          "url": "={{ $('configInicial').item.json.baseUrl }}/api/fase/",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $('executarLogin').item.json.accessToken }}"
+              },
+              {
+                "name": "Accept",
+                "value": "application/json"
+              },
+              {
+                "name": "Referer",
+                "value": "/"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          2800,
+          1808
+        ],
+        "id": "034a113f-3746-438b-b172-1abd6e4fd9bb",
+        "name": "buscarFases"
+      },
+      {
+        "parameters": {
+          "jsCode": "// ============================================\n// NÓ: criarMapaFases (VERSÃO 2.0 - COM METADADOS)\n// Preserva ordem, fase_conclusao, fase_testes, fase_reprovacao\n// para evitar dependência de nomes hardcoded\n// ============================================\n\nconst fases = $input.all().map(item => item.json);\nconsole.log(`Total de fases encontradas: ${fases.length}`);\n\n// Cria mapa rico: { id: { nome, ordem, conclusao, testes, reprovacao, arquivamento } }\nconst mapaFases = {};\nfases.forEach(fase => {\n  mapaFases[fase.id] = {\n    nome: fase.nome,\n    ordem: fase.ordem,\n    conclusao: fase.fase_conclusao,\n    testes: fase.fase_testes,\n    reprovacao: fase.fase_reprovacao,\n    arquivamento: fase.fase_arquivamento\n  };\n});\n\nconsole.log('Mapa de fases criado:', JSON.stringify(mapaFases, null, 2));\n\n// Log de validação: mostra quais fases são de conclusão, testes e reprovação\nconst fasesConclusao = Object.entries(mapaFases).filter(([_, f]) => f.conclusao).map(([id, f]) => `${f.nome} (id:${id})`);\nconst fasesTestes = Object.entries(mapaFases).filter(([_, f]) => f.testes).map(([id, f]) => `${f.nome} (id:${id})`);\nconst fasesReprovacao = Object.entries(mapaFases).filter(([_, f]) => f.reprovacao).map(([id, f]) => `${f.nome} (id:${id})`);\n\nconsole.log(`Fases de conclusão: ${fasesConclusao.join(', ') || 'nenhuma'}`);\nconsole.log(`Fases de testes: ${fasesTestes.join(', ') || 'nenhuma'}`);\nconsole.log(`Fases de reprovação: ${fasesReprovacao.join(', ') || 'nenhuma'}`);\n\nreturn [{\n  json: {\n    fases_map: mapaFases\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2992,
+          1904
+        ],
+        "id": "157d5c56-3b26-48fa-b18d-a543ff7168e5",
+        "name": "criarMapaFases"
+      },
+      {
+        "parameters": {
+          "url": "={{ $('configInicial').item.json.baseUrl }}/api/chamado/",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "projeto__id",
+                "value": "={{ $('configInicial').item.json.projeto_id }}"
+              },
+              {
+                "name": "limit",
+                "value": "100000"
+              },
+              {}
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $json.accessToken }}"
+              },
+              {
+                "name": "Accept",
+                "value": "application/json"
+              },
+              {
+                "name": "Referer",
+                "value": "/"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          3616,
+          1552
+        ],
+        "id": "abcc06ca-1268-43ef-93c9-4b39d42a33ea",
+        "name": "buscarCards"
+      },
+      {
+        "parameters": {
+          "mode": "combine",
+          "combineBy": "combineByPosition",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.2,
+        "position": [
+          3344,
+          1776
+        ],
+        "id": "f2008767-2fd1-4934-80b4-b5b14f255191",
+        "name": "juntarTokenEFases"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Pega resposta da API de cards\nconst response = $input.first().json;\nconst cards = response.results || [];\n\n// Pega accessToken do nó fazLogin\nconst accessToken = $('executarLogin').item.json.accessToken;\n\n// Pega baseUrl do nó configInicial\nconst baseUrl = $('configInicial').item.json.baseUrl;\n\n// Pega mapa de fases do nó criarMapaFases (v2: objeto rico)\nconst mapaFases = $('criarMapaFases').item.json.fases_map;\n\n// Pega todo o config pra passar adiante\nconst config = $('configInicial').item.json;\n\nconsole.log(`Total de cards encontrados na API: ${cards.length}`);\nconsole.log(`VERSÃO 4.0: Passando TODOS os cards para buscar logs`);\nconsole.log(`Filtro de ${config.PERIODO_ANALISE_DIAS} dias será aplicado APÓS buscar logs`);\n\n// Função para limpar HTML\nfunction limparHTML(html) {\n  if (!html) return '';\n  \n  let limpo = html;\n  \n  // Remove imagens base64\n  limpo = limpo.replace(/data:image\\/[^;]+;base64,[A-Za-z0-9+/=]+/gi, '[imagem]');\n  \n  // Remove tags de imagem\n  limpo = limpo.replace(/<img[^>]*>/gi, '[imagem]');\n  \n  // Remove anexos\n  limpo = limpo.replace(/<span[^>]*attachment-block[^>]*>.*?<\\/span>/gi, '[anexo]');\n  \n  // Remove tags HTML mas mantém o texto\n  limpo = limpo.replace(/<[^>]+>/g, ' ');\n  \n  // Remove espaços múltiplos\n  limpo = limpo.replace(/\\s+/g, ' ').trim();\n  \n  return limpo;\n}\n\n// Converte tempo \"HH:MM:SS\" para horas decimais\nfunction parseTempoParaHoras(tempoStr) {\n  if (!tempoStr || tempoStr === \"00:00:00\") return 0;\n  \n  const partes = tempoStr.split(':');\n  if (partes.length < 2) return 0;\n  \n  const horas = parseInt(partes[0]) || 0;\n  const minutos = parseInt(partes[1]) || 0;\n  const segundos = parseInt(partes[2]) || 0;\n  \n  return horas + (minutos / 60) + (segundos / 3600);\n}\n\n// Fase fallback caso o ID não exista no mapa\nconst faseFallback = {\n  nome: 'Desconhecida',\n  ordem: 999,\n  conclusao: false,\n  testes: false,\n  reprovacao: false,\n  arquivamento: false\n};\n\n// Processa TODOS os cards (sem filtro)\nconst cardsLimpos = cards.map(card => {\n  const tempoTrabalhadoHoras = parseTempoParaHoras(card.tempo_decorrido);\n  const orcadoHoras = parseTempoParaHoras(card.orcado);\n  \n  // Resolve fase do mapa rico (v2)\n  const faseInfo = mapaFases[card.fase] || faseFallback;\n  \n  return {\n    // IDs\n    id: card.id,\n    chamado: card.id,\n    \n    // Informações do card\n    titulo: card.titulo || `Card #${card.id}`,\n    descricao_limpa: limparHTML(card.descricao),\n    \n    // Fase (objeto rico do criarMapaFases v2)\n    fase_atual: card.fase,\n    fase_atual_nome: faseInfo,\n    \n    // Responsáveis (agora com id e nome)\n    responsaveis: (card.responsaveis || []).map(r => ({ id: r.id, nome: r.nome })),\n    \n    // Métricas\n    tempo_decorrido: card.tempo_decorrido,\n    tempo_trabalhado_horas: tempoTrabalhadoHoras,\n    orcado: card.orcado,\n    orcado_horas: orcadoHoras,\n    // CORREÇÃO: preserva null para distinguir \"não estimado\" de \"estimado como 0\"\n    pontos_totais: card.pontos_totais !== null && card.pontos_totais !== undefined \n      ? card.pontos_totais \n      : null,\n    em_andamento: card.em_andamento,\n    \n    // Datas\n    data_criacao: card.data_criacao,\n    // CORREÇÃO: data_atualizacao removido (não existe na API)\n    data_conclusao: card.data_conclusao,\n    data_prevista: card.data_prevista,\n    // NOVO: campo que existia na API mas era ignorado\n    data_desejada: card.data_desejada || null,\n    \n    // CORREÇÃO: campo na API é \"tag\" (array de IDs), não \"tags\"\n    tags: card.tag || [],\n    \n    // NOVO: sub_projeto (pode ser útil para agrupamento)\n    sub_projeto: card.sub_projeto || null,\n    \n    // Projeto\n    projeto_info: card.projeto_info,\n    \n    // Auth\n    _auth: {\n      accessToken: accessToken,\n      baseUrl: baseUrl\n    },\n    \n    // Config (passa adiante para os próximos nós)\n    _config: config\n  };\n});\n\n// Log de validação\nconsole.log(`Cards preparados para buscar logs: ${cardsLimpos.length}`);\n\n// Log de exemplo\nif (cardsLimpos.length > 0) {\n  const exemplo = cardsLimpos.find(c => c.tempo_trabalhado_horas > 0) || cardsLimpos[0];\n  console.log(`Exemplo - Card #${exemplo.id}: tempo_decorrido=\"${exemplo.tempo_decorrido}\" → ${exemplo.tempo_trabalhado_horas.toFixed(2)}h`);\n  console.log(`  fase: ${exemplo.fase_atual_nome.nome} (conclusao=${exemplo.fase_atual_nome.conclusao})`);\n  console.log(`  pontos: ${exemplo.pontos_totais === null ? 'não estimado' : exemplo.pontos_totais}`);\n  console.log(`  tags: [${exemplo.tags.join(', ')}]`);\n}\n\n// Stats de qualidade dos dados\nconst stats = {\n  com_descricao: cardsLimpos.filter(c => c.descricao_limpa && c.descricao_limpa.length > 0).length,\n  com_tempo: cardsLimpos.filter(c => c.tempo_trabalhado_horas > 0).length,\n  com_orcado: cardsLimpos.filter(c => c.orcado_horas > 0).length,\n  com_pontos: cardsLimpos.filter(c => c.pontos_totais !== null && c.pontos_totais > 0).length,\n  sem_pontos: cardsLimpos.filter(c => c.pontos_totais === null).length,\n  com_tags: cardsLimpos.filter(c => c.tags.length > 0).length,\n  com_conclusao: cardsLimpos.filter(c => c.data_conclusao).length,\n  por_fase_conclusao: cardsLimpos.filter(c => c.fase_atual_nome.conclusao === true).length,\n  por_fase_testes: cardsLimpos.filter(c => c.fase_atual_nome.testes === true).length,\n  por_fase_reprovacao: cardsLimpos.filter(c => c.fase_atual_nome.reprovacao === true).length\n};\nconsole.log(`Stats: ${stats.com_descricao} com descrição, ${stats.com_tempo} com tempo, ${stats.com_orcado} com orçado`);\nconsole.log(`Pontos: ${stats.com_pontos} estimados, ${stats.sem_pontos} não estimados`);\nconsole.log(`Tags: ${stats.com_tags} cards com tags`);\nconsole.log(`Fases: ${stats.por_fase_conclusao} concluídos, ${stats.por_fase_testes} em testes, ${stats.por_fase_reprovacao} reprovados`);\n\nreturn cardsLimpos.map(card => ({ json: card }));"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3920,
+          1360
+        ],
+        "id": "943c5cdd-371e-40cb-a6c0-e76d0d581654",
+        "name": "extrairLimparCards"
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          4304,
+          1344
+        ],
+        "id": "2c72b5a1-a690-4024-a1c1-92c0904603b7",
+        "name": "loopCards"
+      },
+      {
+        "parameters": {
+          "url": "={{$json._auth.baseUrl}}/api/logalteracoeschamado/?chamado__id={{$json.chamado}}&data__gte={{new Date(Date.now() - $json._config.PERIODO_ANALISE_DIAS * 24 * 60 * 60 * 1000).toISOString().slice(0,19)}}&data__lte={{new Date().toISOString().slice(0,19)}}",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "chamado__id",
+                "value": "={{ $json.id }}"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $json._auth.accessToken }}"
+              },
+              {
+                "name": "Accept",
+                "value": "application/json"
+              },
+              {
+                "name": "Referer",
+                "value": "/"
+              }
+            ]
+          },
+          "options": {
+            "timeout": 30000
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          4560,
+          1360
+        ],
+        "id": "18bb0611-01d5-4e4d-aea0-aadc8cac751e",
+        "name": "buscarLogsCard",
+        "retryOnFail": false,
+        "alwaysOutputData": true,
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "console.log('TODAS AS KEYS DO INPUT:', JSON.stringify(Object.keys($input.first().json)));\nconsole.log('TEM usuarios_map?', !!$input.first().json.usuarios_map);\nconsole.log('TEM horas_por_equipe?', !!$input.first().json.horas_por_equipe);\n\nconst input = $input.first().json;\nconst todosCards = input.data || [];\nconst fasesMap = input.fases_map || {};\n\n// ============================================\n// NOVO v2.0: Ler dados de usuários/times\n// ============================================\nconst usuariosMap = input.usuarios_map || {};\nconst horasPorEquipe = input.horas_por_equipe || {};\nconst totalHorasPeriodo = input.total_horas_periodo || 0;\nconst metaEquipes = input._meta_equipes || {};\nconst mapaFornecedorUser = input.mapa_fornecedor_user || {};\n\nconsole.log('=== PREPARANDO DADOS PARA WF2 (v2.1 corrigido) ===');\nconsole.log(`Total de cards: ${todosCards.length}`);\nconsole.log(`Usuários no mapa: ${Object.keys(usuariosMap).length}`);\nconsole.log(`Horas por equipe: ${JSON.stringify(horasPorEquipe)}`);\nconsole.log(`Total horas período: ${totalHorasPeriodo}h`);\n\n// Pega config do primeiro card (todos têm o mesmo)\nconst config = todosCards.length > 0 && todosCards[0]._config \n  ? todosCards[0]._config \n  : { DIAS_TRAVADO_RESUMO: 30, projeto_id: null, PERIODO_ANALISE_DIAS: 15 };\n\n// ✅ DINÂMICO: Pega info do projeto do primeiro card (todos têm a mesma)\nconst projetoInfo = todosCards.length > 0 && todosCards[0].projeto_info \n  ? todosCards[0].projeto_info \n  : {\n      id: config.projeto_id,\n      nome: \"Projeto Sem Nome\"\n    };\n\nconsole.log(`Projeto: ${projetoInfo.nome} (ID: ${projetoInfo.id})`);\n\n// ============================================\n// Helper: extrair nome da fase de forma segura\n// ============================================\n\nfunction getFaseNome(faseAtualNome) {\n  if (!faseAtualNome) return 'Sem Fase';\n  if (typeof faseAtualNome === 'string') return faseAtualNome;\n  if (typeof faseAtualNome === 'object' && faseAtualNome.nome) return faseAtualNome.nome;\n  return 'Sem Fase';\n}\n\nfunction getFaseFlag(faseAtualNome, flag) {\n  if (!faseAtualNome || typeof faseAtualNome !== 'object') return false;\n  return faseAtualNome[flag] === true;\n}\n\n// ============================================\n// NOVO v2.0: Enriquecer cards com times\n// ============================================\n\nconsole.log('');\nconsole.log('🏷️ Enriquecendo cards com informação de times...');\n\nlet cardsComTimeDesconhecido = 0;\nlet cardsComTime = 0;\n\nconst cardsEnriquecidos = todosCards.map(card => {\n  // Cruzar responsáveis com o mapa de usuários\n  const times = [];\n  const equipesSet = new Set();\n\n  if (card.responsaveis && Array.isArray(card.responsaveis)) {\n    card.responsaveis.forEach(resp => {\n      const userId = String(resp.id);\n      const infoUsuario = usuariosMap[userId];\n\n      if (infoUsuario) {\n        times.push({\n          equipe: infoUsuario.equipe,\n          nome: infoUsuario.nome,\n          user_id: resp.id,\n          nivel: infoUsuario.nivel,\n          cargo: infoUsuario.cargo,\n          ativo_no_projeto: infoUsuario.ativo_no_projeto,\n          horas_periodo: infoUsuario.horas_periodo\n        });\n        if (infoUsuario.equipe !== 'A definir' && infoUsuario.equipe !== 'Outros') {\n          equipesSet.add(infoUsuario.equipe);\n        }\n      } else {\n        // Responsável não encontrado no mapa (provavelmente cliente)\n        times.push({\n          equipe: 'Externo',\n          nome: resp.nome,\n          user_id: resp.id,\n          nivel: null,\n          cargo: null,\n          ativo_no_projeto: null,\n          horas_periodo: 0\n        });\n      }\n    });\n  }\n\n  const equipesEnvolvidas = [...equipesSet].sort();\n\n  if (equipesEnvolvidas.length > 0) {\n    cardsComTime++;\n  } else {\n    cardsComTimeDesconhecido++;\n  }\n\n  return {\n    ...card,\n    times: times,\n    equipes_envolvidas: equipesEnvolvidas\n  };\n});\n\nconsole.log(`✅ Cards com equipe identificada: ${cardsComTime}`);\nconsole.log(`⚠️ Cards sem equipe identificada: ${cardsComTimeDesconhecido}`);\n\n// ============================================\n// Calcula resumo por status\n// FIX v2.1: Categorias MUTUAMENTE EXCLUSIVAS\n//   Ordem de prioridade (primeiro match ganha):\n//   1. concluidos (conclusao=true OU nome inclui \"concluído\")\n//   2. cancelados (nome inclui \"cancelado\")\n//   3. em_andamento (nome inclui \"andamento\")\n//   4. em_testes (testes=true OU nome inclui \"teste\")\n//   5. aguardando_deploy (nome inclui \"deploy\")\n//   6. pendentes (tudo que sobrou que não é \"outros\")\n// ============================================\n\n// FIX v2.1: Classificação mutuamente exclusiva\nfunction classificarStatus(card) {\n  const info = card.fase_atual_nome;\n  const nome = getFaseNome(info).toLowerCase();\n  \n  // 1. Concluídos: flag conclusao=true OU nome \"concluído\"\n  if (getFaseFlag(info, 'conclusao')) return 'concluidos';\n  if (nome.includes('concluído') || nome.includes('concluido')) return 'concluidos';\n  \n  // 2. Cancelados\n  if (nome.includes('cancelado')) return 'cancelados';\n  \n  // 3. Em Andamento\n  if (nome.includes('andamento')) return 'em_andamento';\n  \n  // 4. Em Testes\n  if (getFaseFlag(info, 'testes')) return 'em_testes';\n  if (nome.includes('teste')) return 'em_testes';\n  \n  // 5. Aguardando Deploy\n  if (nome.includes('deploy')) return 'aguardando_deploy';\n  \n  // 6. Pendentes (backlog, fila, sprint atual, standby, pendente cliente)\n  if (nome.includes('sprint') || nome.includes('backlog') || \n      nome.includes('fila') || nome.includes('standby') || \n      nome.includes('pendente')) return 'pendentes';\n  \n  // 7. Outros\n  return 'outros';\n}\n\nconst statusCounts = {\n  concluidos: 0,\n  cancelados: 0,\n  em_andamento: 0,\n  em_testes: 0,\n  aguardando_deploy: 0,\n  pendentes: 0,\n  outros: 0\n};\n\nconst cardsPorStatus = {\n  concluidos: [],\n  cancelados: [],\n  em_andamento: [],\n  em_testes: [],\n  aguardando_deploy: [],\n  pendentes: [],\n  outros: []\n};\n\ncardsEnriquecidos.forEach(card => {\n  const status = classificarStatus(card);\n  statusCounts[status]++;\n  cardsPorStatus[status].push(card);\n});\n\n// VALIDAÇÃO: soma deve ser igual ao total\nconst somaStatus = Object.values(statusCounts).reduce((a, b) => a + b, 0);\nif (somaStatus !== cardsEnriquecidos.length) {\n  console.log(`🔴 ERRO: por_status soma ${somaStatus} ≠ ${cardsEnriquecidos.length} cards!`);\n} else {\n  console.log(`✅ por_status soma ${somaStatus} = ${cardsEnriquecidos.length} cards (mutuamente exclusivo)`);\n}\n\n// Atalhos para uso posterior\nconst concluidos = cardsPorStatus.concluidos;\nconst cancelados = cardsPorStatus.cancelados;\nconst emAndamento = cardsPorStatus.em_andamento;\nconst emTestes = cardsPorStatus.em_testes;\nconst aguardandoDeploy = cardsPorStatus.aguardando_deploy;\nconst pendentes = cardsPorStatus.pendentes;\nconst outros = cardsPorStatus.outros;\n\n// Resumo de anomalias\nconst cardsComAnomalias = cardsEnriquecidos.filter(c => c.total_anomalias > 0);\nconst cardsComAlertasCriticos = cardsEnriquecidos.filter(c => c.tem_alertas_criticos === true);\n\nconst resumo = {\n  total_cards: cardsEnriquecidos.length,\n  por_status: statusCounts,\n  por_fase: {},\n  alertas: {\n    cards_travados: cardsEnriquecidos.filter(c => \n      c.dias_na_fase_atual && c.dias_na_fase_atual >= config.DIAS_TRAVADO_RESUMO\n    ).length,\n    cards_travados_ids: cardsEnriquecidos\n      .filter(c => c.dias_na_fase_atual && c.dias_na_fase_atual >= config.DIAS_TRAVADO_RESUMO)\n      .map(c => c.id),\n    cards_com_anomalias: cardsComAnomalias.length,\n    cards_com_alertas_criticos: cardsComAlertasCriticos.length,\n    cards_com_alertas_criticos_ids: cardsComAlertasCriticos.map(c => c.id)\n  },\n  // NOVO v2.0: Resumo de horas e times\n  horas: {\n    total_horas_periodo: totalHorasPeriodo,\n    horas_por_equipe: horasPorEquipe,\n    equipes_ativas: Object.keys(horasPorEquipe),\n    total_pessoas_ativas: metaEquipes.ativos_no_projeto || 0\n  }\n};\n\n// por_fase agrupa por NOME da fase (string)\ncardsEnriquecidos.forEach(card => {\n  const faseNome = getFaseNome(card.fase_atual_nome);\n  if (!resumo.por_fase[faseNome]) {\n    resumo.por_fase[faseNome] = 0;\n  }\n  resumo.por_fase[faseNome]++;\n});\n\n// ============================================\n// NOVO v2.0: Resumo de equipes por status\n// ============================================\n\nconst equipePorStatus = {};\nconst statusGroups = {\n  concluidos,\n  em_andamento: emAndamento,\n  em_testes: emTestes,\n  aguardando_deploy: aguardandoDeploy,\n  pendentes\n};\n\nfor (const [status, cards] of Object.entries(statusGroups)) {\n  const equipesNoStatus = new Set();\n  cards.forEach(card => {\n    (card.equipes_envolvidas || []).forEach(eq => equipesNoStatus.add(eq));\n  });\n  equipePorStatus[status] = [...equipesNoStatus].sort();\n}\n\nresumo.equipes_por_status = equipePorStatus;\n\n// ============================================\n// NOVO v2.0: Horas por card concluído (para seção \"Entregas\")\n// ============================================\n\nconst entregasComHoras = concluidos.map(card => ({\n  id: card.id,\n  titulo: card.titulo,\n  tempo_trabalhado_horas: card.tempo_trabalhado_horas || 0,\n  equipes_envolvidas: card.equipes_envolvidas || [],\n  data_conclusao: card.data_conclusao\n}));\n\nresumo.entregas_com_horas = entregasComHoras;\n\nconst totalHorasEntregas = entregasComHoras.reduce((sum, e) => sum + e.tempo_trabalhado_horas, 0);\nresumo.total_horas_entregas = Math.round(totalHorasEntregas * 100) / 100;\n\n// ============================================\n// LOGS\n// ============================================\n\nconsole.log('');\nconsole.log('📊 Resumo gerado:');\nconsole.log(`   Total: ${resumo.total_cards}`);\nconsole.log(`   Concluídos: ${resumo.por_status.concluidos}`);\nconsole.log(`   Cancelados: ${resumo.por_status.cancelados}`);\nconsole.log(`   Em Andamento: ${resumo.por_status.em_andamento}`);\nconsole.log(`   Em Testes: ${resumo.por_status.em_testes}`);\nconsole.log(`   Aguardando Deploy: ${resumo.por_status.aguardando_deploy}`);\nconsole.log(`   Pendentes: ${resumo.por_status.pendentes}`);\nconsole.log(`   Outros: ${resumo.por_status.outros}`);\nconsole.log(`   SOMA: ${somaStatus} (deve ser ${resumo.total_cards})`);\nconsole.log(`   Travados: ${resumo.alertas.cards_travados}`);\nconsole.log(`   Com anomalias: ${resumo.alertas.cards_com_anomalias}`);\nconsole.log(`   Com alertas críticos: ${resumo.alertas.cards_com_alertas_criticos}`);\nconsole.log(`   Período de análise: ${config.PERIODO_ANALISE_DIAS} dias`);\n\nconsole.log('');\nconsole.log('⏱️ Horas no período:');\nconsole.log(`   Total: ${totalHorasPeriodo}h`);\nfor (const [equipe, horas] of Object.entries(horasPorEquipe)) {\n  console.log(`   ${equipe}: ${horas}h`);\n}\n\nconsole.log('');\nconsole.log('📦 Entregas (concluídos):');\nconsole.log(`   Total entregas: ${entregasComHoras.length}`);\nconsole.log(`   Horas nas entregas: ${resumo.total_horas_entregas}h`);\nentregasComHoras.forEach(e => {\n  console.log(`   - #${e.id}: ${e.titulo} (${e.tempo_trabalhado_horas}h) [${e.equipes_envolvidas.join(', ')}]`);\n});\n\nconsole.log('');\nconsole.log('   Por fase:');\nfor (const [fase, count] of Object.entries(resumo.por_fase)) {\n  console.log(`     ${fase}: ${count}`);\n}\n\n// ============================================\n// OUTPUT — Formato que o WF2 espera\n// FIX v2.1: Removidas chaves top-level redundantes\n//   - usuarios → dados já estão em cards[].times[]\n//   - horas_por_equipe → já está em resumo.horas.horas_por_equipe\n//   - total_horas_periodo → já está em resumo.horas.total_horas_periodo\n// ============================================\n\nreturn [{\n  json: {\n    projeto_info: projetoInfo,\n    cards: cardsEnriquecidos,\n    fases: fasesMap,\n    resumo: resumo,\n    metadados_coleta: {\n      periodo_analise_dias: config.PERIODO_ANALISE_DIAS,\n      data_coleta: new Date().toISOString(),\n      total_cards_coletados: cardsEnriquecidos.length\n    },\n    _config: config  // Passa config adiante (será removido pelo limparParaIA)\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          5712,
+          1888
+        ],
+        "id": "163564b4-b0a9-47da-b1f3-0fa847408432",
+        "name": "prepararOutputFinal"
+      },
+      {
+        "parameters": {
+          "mode": "combine",
+          "combineBy": "combineByPosition",
+          "numberInputs": 3,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.2,
+        "position": [
+          5472,
+          1888
+        ],
+        "id": "544e1b47-d312-4702-9428-77300d12fadf",
+        "name": "juntarComMapaFases"
+      },
+      {
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          4896,
+          1760
+        ],
+        "id": "825dcbc3-8bf7-4393-8e1b-a40fcfc56843",
+        "name": "juntarTodosCards"
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $input.first().json;\nconst todosCards = input.cards || [];\n\nconsole.log('=== IDENTIFICANDO SPRINTS v5.0 (SEMANAS ISO) ===');\nconsole.log('Total de cards para analisar: ' + todosCards.length);\n\n// ============================================\n// CONFIGURAÇÕES\n// ============================================\n\n// Fases de trabalho ativo (fallback para string matching em logs)\nconst FASES_TRABALHO_NOMES = [\n  'sprint atual',\n  'em andamento',\n  'conclusão da sprint',\n  'aguardando deploy',\n  'em testes'\n];\n\n// Fases a ignorar (fallback para string matching em logs)\nconst FASES_IGNORAR_NOMES = [\n  'backlog',\n  'na fila',\n  'standby',\n  'cancelado',\n  'pendente cliente'\n];\n\n// ============================================\n// HELPER: extrair nome da fase de forma segura\n// Suporta objeto rico E string legada\n// ============================================\n\nfunction getFaseNome(faseAtualNome) {\n  if (!faseAtualNome) return null;\n  if (typeof faseAtualNome === 'string') return faseAtualNome;\n  if (typeof faseAtualNome === 'object' && faseAtualNome.nome) return faseAtualNome.nome;\n  return null;\n}\n\n// ============================================\n// FUNÇÕES DE CLASSIFICAÇÃO DE FASE\n// ============================================\n\n// Verifica se é fase de trabalho ativo\n// Prioriza flags do objeto rico, fallback para string matching\nfunction isFaseTrabalho(faseAtualNome) {\n  if (!faseAtualNome) return false;\n\n  // Se é objeto rico, usar flags booleanos\n  if (typeof faseAtualNome === 'object') {\n    // Fases de conclusão/arquivamento NÃO são trabalho\n    if (faseAtualNome.conclusao === true) return false;\n    if (faseAtualNome.arquivamento === true) return false;\n    \n    // Testes, reprovação = são trabalho ativo\n    if (faseAtualNome.testes === true) return true;\n    if (faseAtualNome.reprovacao === true) return true;\n    \n    // Para fases sem flags específicos, verificar por nome\n    const nome = (faseAtualNome.nome || '').toLowerCase();\n    if (FASES_IGNORAR_NOMES.some(f => nome.includes(f))) return false;\n    if (FASES_TRABALHO_NOMES.some(f => nome.includes(f))) return true;\n    \n    // Se tem ordem intermediária (entre backlog e conclusão), provavelmente é trabalho\n    // Ordem típica: Backlog(5) → Na Fila(10) → Sprint(20) → Andamento(30) → Deploy(40) → Testes(50) → Conclusão(55) → Concluído(60)\n    if (faseAtualNome.ordem && faseAtualNome.ordem >= 20 && faseAtualNome.ordem <= 50) return true;\n    \n    return false;\n  }\n\n  // Fallback: string matching (compatibilidade legada)\n  const fase = faseAtualNome.toLowerCase();\n  if (FASES_IGNORAR_NOMES.some(f => fase.includes(f))) return false;\n  if (FASES_TRABALHO_NOMES.some(f => fase.includes(f))) return true;\n  return false;\n}\n\n// Verifica se um NOME de fase (string dos logs) é fase de trabalho\n// Logs sempre retornam nomes como strings, nunca objetos\nfunction isFaseTrabalhoNome(nomeFase) {\n  if (!nomeFase) return false;\n  const fase = nomeFase.toLowerCase();\n  if (FASES_IGNORAR_NOMES.some(f => fase.includes(f))) return false;\n  if (FASES_TRABALHO_NOMES.some(f => fase.includes(f))) return true;\n  return false;\n}\n\n// ============================================\n// FUNÇÕES DE DATA (sem alteração)\n// ============================================\n\nfunction getNumeroSemanaISO(data) {\n  const d = new Date(Date.UTC(data.getFullYear(), data.getMonth(), data.getDate()));\n  const dayNum = d.getUTCDay() || 7;\n  d.setUTCDate(d.getUTCDate() + 4 - dayNum);\n  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));\n  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);\n}\n\nfunction getAnoISO(data) {\n  const d = new Date(Date.UTC(data.getFullYear(), data.getMonth(), data.getDate()));\n  const dayNum = d.getUTCDay() || 7;\n  d.setUTCDate(d.getUTCDate() + 4 - dayNum);\n  return d.getUTCFullYear();\n}\n\nfunction getSegundaDaSemana(data) {\n  const d = new Date(data);\n  const day = d.getDay();\n  const diff = d.getDate() - day + (day === 0 ? -6 : 1);\n  return new Date(d.setDate(diff));\n}\n\nfunction getDomingoDaSemana(data) {\n  const segunda = getSegundaDaSemana(data);\n  const domingo = new Date(segunda);\n  domingo.setDate(segunda.getDate() + 6);\n  return domingo;\n}\n\nfunction formatarData(data) {\n  const dia = String(data.getDate()).padStart(2, '0');\n  const mes = String(data.getMonth() + 1).padStart(2, '0');\n  return dia + '/' + mes;\n}\n\n// ============================================\n// PASSO 1: Extrair data de entrada em trabalho\n// ============================================\n\nconsole.log('📊 Analisando logs de movimentação...');\n\nconst cardsComDataEntrada = todosCards.map(card => {\n  let dataEntradaTrabalho = null;\n  let faseEntrada = null;\n  \n  // Procura PRIMEIRO log onde entrou em fase de trabalho\n  // Nota: logs_fase contém {de, para, data, usuario, frase}\n  // Os campos de/para são NOMES (strings), não objetos\n  if (card.logs_fase && card.logs_fase.length > 0) {\n    for (const log of card.logs_fase) {\n      if (isFaseTrabalhoNome(log.para)) {\n        dataEntradaTrabalho = new Date(log.data);\n        faseEntrada = log.para;\n        break;\n      }\n    }\n  }\n  \n  // CORREÇÃO: fallback usa isFaseTrabalho com objeto rico\n  if (!dataEntradaTrabalho && isFaseTrabalho(card.fase_atual_nome)) {\n    if (card.data_criacao) {\n      dataEntradaTrabalho = new Date(card.data_criacao);\n      faseEntrada = getFaseNome(card.fase_atual_nome);\n    }\n  }\n  \n  return {\n    ...card,\n    _analise: {\n      data_entrada_trabalho: dataEntradaTrabalho,\n      fase_entrada: faseEntrada\n    }\n  };\n});\n\n// ============================================\n// PASSO 2: Agrupar por semana ISO\n// ============================================\n\nconst sprintsPorSemana = {};\n\ncardsComDataEntrada.forEach(card => {\n  if (!card._analise.data_entrada_trabalho) return;\n  \n  const data = card._analise.data_entrada_trabalho;\n  const anoISO = getAnoISO(data);\n  const semanaISO = getNumeroSemanaISO(data);\n  const chave = anoISO + '-W' + String(semanaISO).padStart(2, '0');\n  \n  if (!sprintsPorSemana[chave]) {\n    const segunda = getSegundaDaSemana(data);\n    const domingo = getDomingoDaSemana(data);\n    \n    sprintsPorSemana[chave] = {\n      codigo: chave,\n      inicio: segunda,\n      fim: domingo,\n      cards: []\n    };\n  }\n  \n  sprintsPorSemana[chave].cards.push(card.id);\n});\n\n// Converter para array e ordenar\nconst sprints = Object.values(sprintsPorSemana)\n  .sort((a, b) => a.inicio - b.inicio);\n\nconsole.log('');\nconsole.log('🏃 Sprints identificadas: ' + sprints.length);\n\n// ============================================\n// PASSO 3: Nomear sprints e mapear cards\n// ============================================\n\nconst mapaCardSprint = {};\n\nsprints.forEach(sprint => {\n  sprint.nome = 'Sprint ' + formatarData(sprint.inicio) + ' a ' + formatarData(sprint.fim);\n  \n  sprint.cards.forEach(cardId => {\n    mapaCardSprint[cardId] = {\n      nome: sprint.nome,\n      codigo: sprint.codigo,\n      periodo: {\n        inicio: sprint.inicio.toISOString(),\n        fim: sprint.fim.toISOString()\n      },\n      total_cards_sprint: sprint.cards.length\n    };\n  });\n  \n  console.log('   ' + sprint.nome + ' (' + sprint.codigo + '): ' + sprint.cards.length + ' cards');\n});\n\n// ============================================\n// PASSO 4: Enriquecer cards\n// ============================================\n\nconst cardsEnriquecidos = todosCards.map(card => {\n  const infoSprint = mapaCardSprint[card.id] || null;\n  \n  return {\n    ...card,\n    sprint_identificada: infoSprint ? infoSprint.nome : null,\n    sprint_codigo: infoSprint ? infoSprint.codigo : null,\n    sprint_info: infoSprint\n  };\n});\n\n// ============================================\n// OUTPUT\n// ============================================\n\nconsole.log('');\nconsole.log('✅ Identificação de sprints concluída');\nconsole.log(`   Cards com sprint: ${Object.keys(mapaCardSprint).length}`);\nconsole.log(`   Cards sem sprint: ${todosCards.length - Object.keys(mapaCardSprint).length}`);\n\nreturn [{\n  json: {\n    projeto_info: input.projeto_info,\n    cards: cardsEnriquecidos,\n    fases: input.fases,\n    resumo: input.resumo,\n    sprints_identificadas: sprints.map(s => ({\n      nome: s.nome,\n      codigo: s.codigo,\n      periodo: {\n        inicio: s.inicio.toISOString(),\n        fim: s.fim.toISOString()\n      },\n      cards: s.cards,\n      total: s.cards.length\n    })),\n    metadados_coleta: input.metadados_coleta,\n    _config: input._config\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          5920,
+          1888
+        ],
+        "id": "1d0f12d9-44f0-4dc6-a6c0-5a12fda5b8b7",
+        "name": "identificarSprints"
+      },
+      {
+        "parameters": {
+          "jsCode": "// processarLogsCard v2 - Compatível com filtro de data no buscarLogsCard\n// CORREÇÃO: filtra items vazios {} vindos do \"Always Output Data\"\n\n// Pega todos os logs retornados da API\n// CORREÇÃO v2: filtra items vazios que vêm quando o card não tem logs no período\nconst todosLogs = $input.all().map(item => item.json).filter(log => log && log.id);\nconst totalLogs = todosLogs.length;\nconsole.log('Total de logs recebidos: ' + totalLogs);\n\n// Pega o card COMPLETO do Loop Over Items\nconst cardCompleto = $('loopCards').item.json;\nconst cardId = cardCompleto.id;\n\n// Pega config que veio junto com o card\nconst config = cardCompleto._config;\n\n// CORREÇÃO: fase_atual_nome agora é objeto rico do criarMapaFases v2\n// Extrair dados da fase de forma segura\nconst faseInfo = cardCompleto.fase_atual_nome || {};\nconst faseNome = faseInfo.nome || 'Desconhecida';\nconst ehConclusao = faseInfo.conclusao === true;\nconst ehTestes = faseInfo.testes === true;\nconst ehReprovacao = faseInfo.reprovacao === true;\nconst ehArquivamento = faseInfo.arquivamento === true;\n\nconsole.log(`Processando logs do card #${cardId} (fase: ${faseNome})`);\n\n// Define período de análise\nconst periodoAnaliseDias = config.PERIODO_ANALISE_DIAS;\nconst dataLimite = new Date();\ndataLimite.setDate(dataLimite.getDate() - periodoAnaliseDias);\n\n// ============================================\n// Verificar se card teve atividade recente\n// ============================================\n\nlet teveAtividadeRecente = false;\nlet motivoAtividade = [];\n\n// 1. Verificar data de conclusão\nif (cardCompleto.data_conclusao) {\n  const dataConclusao = new Date(cardCompleto.data_conclusao);\n  if (dataConclusao >= dataLimite) {\n    teveAtividadeRecente = true;\n    motivoAtividade.push('data_conclusao');\n  }\n}\n\n// 2. REMOVIDO: data_atualizacao não existe na API de cards\n// Era sempre null, código morto removido\n\n// 3. Verificar data de criação\nif (cardCompleto.data_criacao) {\n  const dataCriacao = new Date(cardCompleto.data_criacao);\n  if (dataCriacao >= dataLimite) {\n    teveAtividadeRecente = true;\n    motivoAtividade.push('data_criacao');\n  }\n}\n\n// 4. Verificar se tem logs recentes (qualquer tipo de log)\nconst logsRecentes = todosLogs.filter(log => {\n  if (!log.data) return false;\n  const dataLog = new Date(log.data);\n  return dataLog >= dataLimite;\n});\n\nif (logsRecentes.length > 0) {\n  teveAtividadeRecente = true;\n  motivoAtividade.push(`logs_recentes (${logsRecentes.length})`);\n}\n\n// 5. NOVO: Verificar data_desejada (deadline pode indicar relevância)\nif (cardCompleto.data_desejada) {\n  const dataDesejada = new Date(cardCompleto.data_desejada);\n  const agora = new Date();\n  // Se o deadline é recente ou futuro, o card é relevante\n  if (dataDesejada >= dataLimite) {\n    teveAtividadeRecente = true;\n    motivoAtividade.push('data_desejada_recente');\n  }\n}\n\nconsole.log(`Card #${cardId}: atividade recente = ${teveAtividadeRecente} [${motivoAtividade.join(', ')}]`);\n\n// ============================================\n// Filtra apenas mudanças de fase no período (para análise de anomalias)\n// Nota: valor_anterior e valor_posterior nos logs de fase vêm como NOMES\n// (ex: \"Em Andamento\", \"Cancelado\") - confirmado pela API\n// ============================================\n\nconst logsFiltrados = todosLogs\n  .filter(log => {\n    if (log.campo_back !== 'fase') return false;\n    const dataLog = new Date(log.data);\n    if (dataLog < dataLimite) return false;\n    return true;\n  })\n  .map(log => ({\n    data: log.data,\n    de: log.valor_anterior || 'Criação',\n    para: log.valor_posterior,\n    usuario: log.usuario || 'Sistema',\n    frase: log.frase\n  }))\n  .sort((a, b) => new Date(a.data) - new Date(b.data));\n\nconst totalLogsFiltrados = logsFiltrados.length;\nconsole.log(`Card #${cardId}: ${totalLogsFiltrados} logs de fase relevantes`);\n\n// Calcula tempo em cada fase (tempo decorrido, não trabalhado)\nfunction calcularTempoPorFase(logs) {\n  const temposPorFase = {};\n  \n  for (let i = 0; i < logs.length - 1; i++) {\n    const logAtual = logs[i];\n    const logProximo = logs[i + 1];\n    \n    const inicio = new Date(logAtual.data);\n    const fim = new Date(logProximo.data);\n    const horas = (fim - inicio) / (1000 * 60 * 60);\n    \n    if (!temposPorFase[logAtual.para]) {\n      temposPorFase[logAtual.para] = 0;\n    }\n    temposPorFase[logAtual.para] += horas;\n  }\n  \n  if (logs.length > 0) {\n    const ultimoLog = logs[logs.length - 1];\n    const inicio = new Date(ultimoLog.data);\n    const agora = new Date();\n    const horas = (agora - inicio) / (1000 * 60 * 60);\n    \n    const faseAtualDoLog = ultimoLog.para;\n    if (!temposPorFase[faseAtualDoLog]) {\n      temposPorFase[faseAtualDoLog] = 0;\n    }\n    temposPorFase[faseAtualDoLog] += horas;\n  }\n  \n  return temposPorFase;\n}\n\nconst tempoPorFase = calcularTempoPorFase(logsFiltrados);\n\n// Identifica qual fase teve maior tempo\nlet maiorTempoFase = null;\nlet maiorTempo = 0;\nfor (const [fase, horas] of Object.entries(tempoPorFase)) {\n  if (horas > maiorTempo) {\n    maiorTempo = horas;\n    maiorTempoFase = fase;\n  }\n}\n\n// Calcula dias na fase atual\nlet diasNaFaseAtual = null;\nif (logsFiltrados.length > 0) {\n  const ultimoLog = logsFiltrados[logsFiltrados.length - 1];\n  const dataUltimaMovimentacao = new Date(ultimoLog.data);\n  const agora = new Date();\n  const diffMs = agora - dataUltimaMovimentacao;\n  diasNaFaseAtual = Math.floor(diffMs / (1000 * 60 * 60 * 24));\n  \n  console.log(`Card #${cardId}: última movimentação em ${ultimoLog.data}, há ${diasNaFaseAtual} dias na fase ${ultimoLog.para}`);\n}\n\n// CORREÇÃO: usa objeto rico em vez de string\nconsole.log(`Card #${cardId} está atualmente em: ${faseNome} (conclusao=${ehConclusao})`);\nconsole.log(`Card #${cardId} tempo trabalhado: ${(cardCompleto.tempo_trabalhado_horas || 0).toFixed(2)}h`);\nconsole.log(`Card #${cardId} tempo orçado: ${(cardCompleto.orcado_horas || 0).toFixed(2)}h`);\n\n// ========================================\n// DETECTAR ANOMALIAS DO CARD\n// ========================================\n\nconsole.log(`Analisando anomalias do card #${cardId}...`);\n\nconst anomalias = [];\n\n// Helper: verificar se nome de fase indica testes/validação\n// Nota: nos logs, as fases vêm como NOMES (strings), não como objetos ricos\n// Então para logs históricos ainda precisamos de string matching\n// Mas para a fase ATUAL do card, usamos os flags booleanos\nfunction ehFaseDeTestesPorNome(nomeFase) {\n  if (!nomeFase) return false;\n  const lower = nomeFase.toLowerCase();\n  return lower.includes('teste') || \n         lower.includes('validação') ||\n         lower.includes('validacao') ||\n         lower.includes('homologação') ||\n         lower.includes('homologacao');\n}\n\nfunction ehFaseConclusaoPorNome(nomeFase) {\n  if (!nomeFase) return false;\n  const lower = nomeFase.toLowerCase();\n  return lower.includes('concluído') || \n         lower.includes('concluido') ||\n         lower.includes('conclusão') ||\n         lower.includes('conclusao');\n}\n\n// NOVO v2: Helper para detectar fase de reprovação por nome (logs históricos)\nfunction ehFaseReprovacaoPorNome(nomeFase) {\n  if (!nomeFase) return false;\n  const lower = nomeFase.toLowerCase();\n  return lower.includes('reprovad');\n}\n\n// 1. REPROVAÇÕES (voltou de testes/validação para fase anterior OU entrou em fase de reprovação)\nconst reprovacoes = logsFiltrados.filter((log, index) => {\n  // Detecta entrada em fase de reprovação\n  if (ehFaseReprovacaoPorNome(log.para)) return true;\n  // Detecta saída de testes para fase não-conclusão\n  if (index === 0) return false;\n  const logAnterior = logsFiltrados[index - 1];\n  return ehFaseDeTestesPorNome(logAnterior.para) &&\n         !ehFaseConclusaoPorNome(log.para);\n}).length;\n\nif (reprovacoes >= config.REPROVACOES_CRITICO) {\n  anomalias.push({\n    tipo: \"MUITAS_REPROVACOES\",\n    severidade: \"ALTA\",\n    valor: reprovacoes,\n    mensagem: `Reprovou ${reprovacoes}x nos testes`,\n    acao: \"Revisar critérios de aceite e qualidade do código\"\n  });\n  console.log(`  [CRITICO] Card #${cardId}: ${reprovacoes} reprovações detectadas`);\n} else if (reprovacoes >= config.REPROVACOES_ATENCAO) {\n  anomalias.push({\n    tipo: \"REPROVACOES\",\n    severidade: \"MEDIA\",\n    valor: reprovacoes,\n    mensagem: `Reprovou ${reprovacoes}x nos testes`,\n    acao: \"Monitorar qualidade das entregas\"\n  });\n  console.log(`  [ATENCAO] Card #${cardId}: ${reprovacoes} reprovações detectadas`);\n}\n\n// 2. TRAVADO HÁ MUITO TEMPO\n// CORREÇÃO: usa flags booleanos do objeto rico em vez de string matching\nif (diasNaFaseAtual !== null) {\n  const ehFaseFinal = ehConclusao || ehArquivamento;\n  const ehFaseInicial = faseNome.toLowerCase().includes('backlog');\n  const ehCancelado = faseNome.toLowerCase().includes('cancelado');\n  \n  // Só detecta \"travado\" se NÃO estiver em fase final, backlog ou cancelado\n  if (!ehFaseFinal && !ehFaseInicial && !ehCancelado) {\n    if (diasNaFaseAtual >= config.DIAS_TRAVADO_CRITICO) {\n      anomalias.push({\n        tipo: \"TRAVADO_CRITICO\",\n        severidade: \"ALTA\",\n        valor: diasNaFaseAtual,\n        mensagem: `Em ${faseNome} há ${diasNaFaseAtual} dias sem progresso`,\n        acao: \"Verificar bloqueios técnicos ou falta de priorização\"\n      });\n      console.log(`  [CRITICO] Card #${cardId}: travado há ${diasNaFaseAtual} dias`);\n    } else if (diasNaFaseAtual >= config.DIAS_TRAVADO_ATENCAO) {\n      anomalias.push({\n        tipo: \"TRAVADO_ATENCAO\",\n        severidade: \"MEDIA\",\n        valor: diasNaFaseAtual,\n        mensagem: `Em ${faseNome} há ${diasNaFaseAtual} dias`,\n        acao: \"Monitorar progresso do card\"\n      });\n      console.log(`  [ATENCAO] Card #${cardId}: sem progresso há ${diasNaFaseAtual} dias`);\n    }\n  }\n}\n\n// 3. TEMPO TRABALHADO MUITO ALTO\nconst tempoTrabalhado = cardCompleto.tempo_trabalhado_horas || 0;\nif (tempoTrabalhado >= config.TEMPO_ALTO_CRITICO) {\n  anomalias.push({\n    tipo: \"TEMPO_EXCESSIVO\",\n    severidade: \"ALTA\",\n    valor: Math.round(tempoTrabalhado),\n    mensagem: `Tempo trabalhado de ${Math.round(tempoTrabalhado)}h`,\n    acao: \"Card muito complexo, considerar quebrar\"\n  });\n  console.log(`  [CRITICO] Card #${cardId}: tempo excessivo de ${Math.round(tempoTrabalhado)}h`);\n} else if (tempoTrabalhado >= config.TEMPO_ALTO_ATENCAO) {\n  anomalias.push({\n    tipo: \"TEMPO_ALTO\",\n    severidade: \"MEDIA\",\n    valor: Math.round(tempoTrabalhado),\n    mensagem: `Tempo trabalhado de ${Math.round(tempoTrabalhado)}h`,\n    acao: \"Monitorar evolução do card\"\n  });\n  console.log(`  [ATENCAO] Card #${cardId}: tempo alto de ${Math.round(tempoTrabalhado)}h`);\n}\n\n// 4. TEMPO ORÇADO MUITO ALTO\nconst tempoOrcado = cardCompleto.orcado_horas || 0;\nif (tempoOrcado >= config.ORCADO_ALTO_CRITICO) {\n  anomalias.push({\n    tipo: \"ORCADO_EXCESSIVO\",\n    severidade: \"ALTA\",\n    valor: Math.round(tempoOrcado),\n    mensagem: `Tempo orçado de ${Math.round(tempoOrcado)}h`,\n    acao: \"Card muito complexo, considerar quebrar\"\n  });\n  console.log(`  [CRITICO] Card #${cardId}: orçado excessivo de ${Math.round(tempoOrcado)}h`);\n} else if (tempoOrcado >= config.ORCADO_ALTO_ATENCAO) {\n  anomalias.push({\n    tipo: \"ORCADO_ALTO\",\n    severidade: \"MEDIA\",\n    valor: Math.round(tempoOrcado),\n    mensagem: `Tempo orçado de ${Math.round(tempoOrcado)}h`,\n    acao: \"Monitorar complexidade do card\"\n  });\n  console.log(`  [ATENCAO] Card #${cardId}: orçado alto de ${Math.round(tempoOrcado)}h`);\n}\n\n// 5. REABERTURAS (voltou de concluído)\nconst reaberturas = logsFiltrados.filter((log, index) => {\n  if (index === 0) return false;\n  const logAnterior = logsFiltrados[index - 1];\n  return ehFaseConclusaoPorNome(logAnterior.para);\n}).length;\n\nif (reaberturas >= 2) {\n  anomalias.push({\n    tipo: \"REABERTURAS\",\n    severidade: \"MEDIA\",\n    valor: reaberturas,\n    mensagem: `Reaberto ${reaberturas}x após conclusão`,\n    acao: \"Melhorar cobertura de testes ou critérios de aceite\"\n  });\n  console.log(`  [ATENCAO] Card #${cardId}: ${reaberturas} reaberturas detectadas`);\n} else if (reaberturas >= 1) {\n  anomalias.push({\n    tipo: \"REABERTURA\",\n    severidade: \"BAIXA\",\n    valor: reaberturas,\n    mensagem: 'Reaberto após conclusão',\n    acao: \"Verificar motivo da reabertura\"\n  });\n  console.log(`  [INFO] Card #${cardId}: 1 reabertura detectada`);\n}\n\n// 6. MUITAS MOVIMENTAÇÕES (card ping-pong entre fases)\nconst totalMovimentacoes = logsFiltrados.length;\nif (totalMovimentacoes >= config.MOVIMENTACOES_CRITICO) {\n  anomalias.push({\n    tipo: \"MUITAS_MOVIMENTACOES\",\n    severidade: \"ALTA\",\n    valor: totalMovimentacoes,\n    mensagem: `Card movimentado ${totalMovimentacoes}x em ${periodoAnaliseDias} dias`,\n    acao: \"Revisar clareza de requisitos e processo\"\n  });\n  console.log(`  [CRITICO] Card #${cardId}: ${totalMovimentacoes} movimentações detectadas`);\n} else if (totalMovimentacoes >= config.MOVIMENTACOES_ATENCAO) {\n  anomalias.push({\n    tipo: \"MOVIMENTACOES_ALTAS\",\n    severidade: \"MEDIA\",\n    valor: totalMovimentacoes,\n    mensagem: `Card movimentado ${totalMovimentacoes}x em ${periodoAnaliseDias} dias`,\n    acao: \"Monitorar estabilidade do card\"\n  });\n  console.log(`  [ATENCAO] Card #${cardId}: ${totalMovimentacoes} movimentações detectadas`);\n}\n\n// 7. ESTIMATIVA MUITO ALTA (pontos)\n// CORREÇÃO: pontos_totais pode ser null (não estimado) - tratar separadamente\nconst pontos = cardCompleto.pontos_totais;\nconst pontosNumerico = pontos !== null && pontos !== undefined ? pontos : 0;\n\nif (pontosNumerico >= config.PONTOS_MUITO_ALTO) {\n  anomalias.push({\n    tipo: \"ESTIMATIVA_MUITO_ALTA\",\n    severidade: \"ALTA\",\n    valor: pontosNumerico,\n    mensagem: `Estimativa muito alta (${pontosNumerico} pontos)`,\n    acao: \"Considerar quebrar em cards menores\"\n  });\n  console.log(`  [CRITICO] Card #${cardId}: estimativa muito alta de ${pontosNumerico} pontos`);\n} else if (pontosNumerico >= config.PONTOS_ALTO) {\n  anomalias.push({\n    tipo: \"ESTIMATIVA_ALTA\",\n    severidade: \"MEDIA\",\n    valor: pontosNumerico,\n    mensagem: `Estimativa alta (${pontosNumerico} pontos)`,\n    acao: \"Monitorar complexidade e tempo\"\n  });\n  console.log(`  [ATENCAO] Card #${cardId}: estimativa alta de ${pontosNumerico} pontos`);\n}\n\n// 8. ALTERAÇÕES DE ESTIMATIVA\n// CORREÇÃO: filtro mais preciso - apenas campo pontos_totais, não \"alterou para\" genérico\nconst alteracoesEstimativa = todosLogs.filter(log => {\n  return log.campo_back === 'pontos_totais';\n}).length;\n\nif (alteracoesEstimativa >= config.REESTIMATIVAS_CRITICO) {\n  anomalias.push({\n    tipo: \"MUITAS_REESTIMATIVAS\",\n    severidade: \"ALTA\",\n    valor: alteracoesEstimativa,\n    mensagem: `Estimativa alterada ${alteracoesEstimativa}x`,\n    acao: \"Revisar definição de escopo e requisitos\"\n  });\n  console.log(`  [CRITICO] Card #${cardId}: ${alteracoesEstimativa} alterações de estimativa`);\n} else if (alteracoesEstimativa >= config.REESTIMATIVAS_ATENCAO) {\n  anomalias.push({\n    tipo: \"REESTIMATIVAS\",\n    severidade: \"MEDIA\",\n    valor: alteracoesEstimativa,\n    mensagem: `Estimativa alterada ${alteracoesEstimativa}x`,\n    acao: \"Monitorar mudanças de escopo\"\n  });\n  console.log(`  [ATENCAO] Card #${cardId}: ${alteracoesEstimativa} alterações de estimativa`);\n}\n\n// 9. NOVO: DEADLINE ESTOURADO (data_desejada no passado e card não concluído)\nif (cardCompleto.data_desejada && !ehConclusao && !ehArquivamento) {\n  const dataDesejada = new Date(cardCompleto.data_desejada);\n  const agora = new Date();\n  if (dataDesejada < agora) {\n    const diasAtraso = Math.floor((agora - dataDesejada) / (1000 * 60 * 60 * 24));\n    if (diasAtraso > 0) {\n      const severidade = diasAtraso >= 14 ? \"ALTA\" : diasAtraso >= 7 ? \"MEDIA\" : \"BAIXA\";\n      anomalias.push({\n        tipo: \"DEADLINE_ESTOURADO\",\n        severidade: severidade,\n        valor: diasAtraso,\n        mensagem: `Deadline (${cardCompleto.data_desejada}) estourado há ${diasAtraso} dias`,\n        acao: \"Repriorizar ou atualizar deadline\"\n      });\n      console.log(`  [${severidade === \"ALTA\" ? \"CRITICO\" : \"ATENCAO\"}] Card #${cardId}: deadline estourado há ${diasAtraso} dias`);\n    }\n  }\n}\n\n// 10. NOVO: ESTOURO DE ORÇAMENTO (tempo trabalhado > orçado, quando ambos > 0)\nif (tempoOrcado > 0 && tempoTrabalhado > tempoOrcado) {\n  const percentEstouro = Math.round(((tempoTrabalhado - tempoOrcado) / tempoOrcado) * 100);\n  if (percentEstouro >= 100) {\n    anomalias.push({\n      tipo: \"ESTOURO_ORCAMENTO_CRITICO\",\n      severidade: \"ALTA\",\n      valor: percentEstouro,\n      mensagem: `Estourou orçamento em ${percentEstouro}% (${tempoTrabalhado.toFixed(1)}h / ${tempoOrcado}h orçadas)`,\n      acao: \"Revisar escopo e parar work-in-progress se possível\"\n    });\n    console.log(`  [CRITICO] Card #${cardId}: estouro de ${percentEstouro}% do orçamento`);\n  } else if (percentEstouro >= 30) {\n    anomalias.push({\n      tipo: \"ESTOURO_ORCAMENTO\",\n      severidade: \"MEDIA\",\n      valor: percentEstouro,\n      mensagem: `Acima do orçamento em ${percentEstouro}% (${tempoTrabalhado.toFixed(1)}h / ${tempoOrcado}h orçadas)`,\n      acao: \"Monitorar e comunicar ao time\"\n    });\n    console.log(`  [ATENCAO] Card #${cardId}: acima do orçamento em ${percentEstouro}%`);\n  }\n}\n\n// Determinar severidade máxima\nconst temAlertasCriticos = anomalias.some(a => a.severidade === \"ALTA\");\n\nif (anomalias.length === 0) {\n  console.log(`  [OK] Card #${cardId}: nenhuma anomalia detectada`);\n} else {\n  console.log(`  [RESUMO] Card #${cardId}: ${anomalias.length} anomalia(s) - Críticos: ${temAlertasCriticos ? 'SIM' : 'NÃO'}`);\n}\n\n// ========================================\n// RETORNA O CARD COMPLETO com dados de trajetória + anomalias\n// ========================================\n\nreturn [{\n  json: {\n    // Dados originais do card\n    id: cardCompleto.id,\n    chamado: cardCompleto.chamado,\n    titulo: cardCompleto.titulo,\n    descricao_limpa: cardCompleto.descricao_limpa,\n    fase_atual: cardCompleto.fase_atual,\n    fase_atual_nome: cardCompleto.fase_atual_nome,  // objeto rico\n    responsaveis: cardCompleto.responsaveis,\n    tempo_decorrido: cardCompleto.tempo_decorrido,\n    tempo_trabalhado_horas: cardCompleto.tempo_trabalhado_horas,\n    orcado: cardCompleto.orcado,\n    orcado_horas: cardCompleto.orcado_horas,\n    pontos_totais: cardCompleto.pontos_totais,  // preserva null\n    em_andamento: cardCompleto.em_andamento,\n    data_criacao: cardCompleto.data_criacao,\n    data_conclusao: cardCompleto.data_conclusao,\n    data_prevista: cardCompleto.data_prevista,\n    data_desejada: cardCompleto.data_desejada,\n    sub_projeto: cardCompleto.sub_projeto,\n    tags: cardCompleto.tags,\n    projeto_info: cardCompleto.projeto_info,\n    \n    // Config (continua passando adiante)\n    _config: cardCompleto._config,\n    \n    // Dados calculados dos logs\n    logs_fase: logsFiltrados,\n    tempo_por_fase: tempoPorFase,\n    dias_na_fase_atual: diasNaFaseAtual,\n    maior_tempo_fase: maiorTempoFase ? {\n      fase: maiorTempoFase,\n      horas: Math.round(maiorTempo)\n    } : null,\n    \n    dados_usuario: todosLogs.length > 0 ? todosLogs[0].dados_usuario : null,\n    \n    // DADOS DE ANOMALIAS (COMPLETOS)\n    anomalias: anomalias,\n    total_anomalias: anomalias.length,\n    tem_alertas_criticos: temAlertasCriticos,\n    metricas_deteccao: {\n      reprovacoes: reprovacoes,\n      reaberturas: reaberturas,\n      total_movimentacoes: totalMovimentacoes,\n      dias_sem_movimentacao: diasNaFaseAtual,\n      alteracoes_estimativa: alteracoesEstimativa,\n      tempo_orcado: tempoOrcado,\n      tempo_trabalhado: tempoTrabalhado,\n      pontos: pontos,\n      estouro_orcamento_percent: tempoOrcado > 0 \n        ? Math.round(((tempoTrabalhado - tempoOrcado) / tempoOrcado) * 100) \n        : null\n    },\n    \n    // Marcação de atividade recente\n    _teve_atividade_recente: teveAtividadeRecente,\n    _motivo_atividade: motivoAtividade,\n    _total_logs_recentes: logsRecentes.length\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4848,
+          1488
+        ],
+        "id": "7e30863a-e56a-475f-8395-cac53347b8ad",
+        "name": "processarLogsCard"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Pega o projeto_id que vem do input\nconst projetoId = $input.first().json.projeto_id;\nreturn [{\n  json: {\n    // ========================================\n    // CONFIGURAÇÕES BÁSICAS\n    // ========================================\n    projeto_id: projetoId,\n    baseUrl: \"https://hub.novadata.com.br\",\n    // ========================================\n    // FILTROS GERAIS\n    // ========================================\n    PERIODO_ANALISE_DIAS: 15,\n    LIMIT_API_CARDS: 1000000,\n    // ========================================\n    // CARD TRAVADO (dias sem movimentação)\n    // ========================================\n    DIAS_TRAVADO_ATENCAO: 7,\n    DIAS_TRAVADO_CRITICO: 14,\n    DIAS_TRAVADO_RESUMO: 30,\n    // ========================================\n    // TEMPO TRABALHADO (horas)\n    // ========================================\n    TEMPO_ALTO_ATENCAO: 40,\n    TEMPO_ALTO_CRITICO: 80,\n    // ========================================\n    // TEMPO ORÇADO (horas)\n    // ========================================\n    ORCADO_ALTO_ATENCAO: 40,\n    ORCADO_ALTO_CRITICO: 80,\n    // ========================================\n    // REPROVAÇÕES (quantidade)\n    // ========================================\n    REPROVACOES_ATENCAO: 2,\n    REPROVACOES_CRITICO: 3,\n    // ========================================\n    // MOVIMENTAÇÕES (quantidade)\n    // ========================================\n    MOVIMENTACOES_ATENCAO: 8,\n    MOVIMENTACOES_CRITICO: 10,\n    // ========================================\n    // ESTIMATIVA - PONTOS (quantidade)\n    // ========================================\n    PONTOS_ALTO: 8,\n    PONTOS_MUITO_ALTO: 13,\n    // ========================================\n    // ALTERAÇÕES DE ESTIMATIVA (quantidade)\n    // ========================================\n    REESTIMATIVAS_ATENCAO: 2,\n    REESTIMATIVAS_CRITICO: 3\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2400,
+          1936
+        ],
+        "id": "5fb38904-1532-42c6-ac01-4df8b6a09041",
+        "name": "configInicial"
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $input.first().json;\nconst todosCards = input.cards || [];\n\nconsole.log('=== LIMPANDO DADOS PARA IA (v2.0) ===');\nconsole.log('Total de cards: ' + todosCards.length);\n\n// Campos a remover de cada card\nconst CAMPOS_REMOVER = new Set([\n  'projeto_info',      // FIX #3: já existe no top-level\n  'chamado',           // FIX #4: === id em 100% dos cards\n  'tempo_decorrido',   // FIX #5: já tem tempo_trabalhado_horas (decimal)\n  'orcado',            // FIX #6: já tem orcado_horas (decimal)\n]);\n\nconst cardsLimpos = todosCards.map(card => {\n  const cardLimpo = {};\n  \n  for (const [key, value] of Object.entries(card)) {\n    // FIX #1: Remove TODOS os campos com prefixo _ (internos do pipeline)\n    if (key.startsWith('_')) continue;\n    \n    // FIX #3, #4, #5, #6: Remove campos redundantes\n    if (CAMPOS_REMOVER.has(key)) continue;\n    \n    cardLimpo[key] = value;\n  }\n  \n  // FIX #2: Remove foto de dados_usuario (URL inútil para IA)\n  if (cardLimpo.dados_usuario && cardLimpo.dados_usuario.foto) {\n    delete cardLimpo.dados_usuario.foto;\n  }\n  \n  return cardLimpo;\n});\n\n// Output mantém estrutura top-level intacta\nconst outputParaIA = {\n  projeto_info: input.projeto_info,\n  cards: cardsLimpos,\n  fases: input.fases,\n  resumo: input.resumo,\n  sprints_identificadas: input.sprints_identificadas,\n  metadados_coleta: input.metadados_coleta\n};\n\n// Log de resultado\nconst tamanhoKB = (JSON.stringify(outputParaIA).length / 1024).toFixed(1);\nconsole.log('📊 Tamanho do JSON: ' + tamanhoKB + ' KB');\nconsole.log('📅 Período de análise: ' + (input.metadados_coleta?.periodo_analise_dias || 'N/A') + ' dias');\nconsole.log('✅ Removidos de ' + cardsLimpos.length + ' cards:');\nconsole.log('   - Campos _ (internos pipeline)');\nconsole.log('   - projeto_info (duplicado do top-level)');\nconsole.log('   - chamado (=== id)');\nconsole.log('   - tempo_decorrido/orcado (strings, já tem versão decimal)');\nconsole.log('   - dados_usuario.foto (URLs)');\n\nreturn [{\n  json: outputParaIA\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          6128,
+          1888
+        ],
+        "id": "a3db4e1c-0bd2-4977-949e-0abf46d80dd0",
+        "name": "limparParaIA"
+      },
+      {
+        "parameters": {
+          "content": "## THRESHOLDS (configInicial):\n- Período: 15 dias | Travado: 7/14 dias | Tempo: 40/80h | Orçado: 40/80h\n- Reprovações: 2/3x | Movimentações: 8/10x | Reestimativas: 2/3x\n- Pontos: 8 (alto), 13 (muito alto)\n\n## LÓGICA DE DETECÇÃO (JS puro, sem IA):\n- Reprovação: saiu de \"Em Testes\" → fase ≠ \"Concluído/Concluído da Sprint\"\n- Travado: dias na fase atual ≥ limite da fase\n- Tempo excessivo: horas trabalhadas ≥ threshold\n- Orçado alto: horas orçadas ≥ threshold\n- Reabertura: saiu de \"Concluído\" → outra fase\n- Muitas movimentações: total de mudanças de fase ≥ threshold\n- Reestimativas: alterações de pontuação ≥ threshold\n- Pontos alto: pontos_totais ≥ threshold\n- Sprint: agrupa cards por semana ISO fixa (segunda a domingo)\n\n## CONVERSÕES:\n- tempo_decorrido (HH:MM:SS) → tempo_trabalhado_horas\n- orcado (HH:MM:SS) → orcado_horas\n\n## FILTRO DE ATIVIDADE:\n- Busca logs de TODOS os cards antes de filtrar\n- Card passa se teve atividade nos últimos 15 dias:\n  • data_conclusao, data_atualizacao ou data_criacao recente\n  • OU qualquer log recente (fase, descrição, anexo, tag, título, etc.)",
+          "height": 656,
+          "width": 592,
+          "color": 6
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          1888,
+          1120
+        ],
+        "typeVersion": 1,
+        "id": "61115b7c-29f2-4bb9-a7ab-c875e8a14541",
+        "name": "docLogicaColeta"
+      },
+      {
+        "parameters": {
+          "content": "## SPRINT POR SEMANA ISO FIXA:\n- Agrupa cards pela semana do calendário (segunda a domingo)\n- Usa data de entrada em fase de trabalho (Sprint Atual, Em Andamento, etc)\n- Fallback: data_criacao se não tiver log de entrada\n- Cards em Backlog/Standby não recebem sprint\n- Nome: \"Sprint 27/01 a 02/02\"\n- Código: \"2026-W05\"",
+          "height": 272,
+          "width": 384,
+          "color": 3
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          2576,
+          1424
+        ],
+        "typeVersion": 1,
+        "id": "3062e8e2-c431-4a7a-9c06-89bcdb6484c1",
+        "name": "docFluxoDados"
+      },
+      {
+        "parameters": {
+          "jsCode": "// ============================================\n// NÓ: filtrarCardsAtivos (VERSÃO 1.0)\n// Filtra apenas cards que tiveram atividade nos últimos X dias\n// Roda APÓS buscar logs de todos os cards\n// ============================================\nconst input = $input.first().json;\nconst todosCards = input.data || [];\n// Pega config do primeiro card\nconst config = todosCards.length > 0 && todosCards[0]._config \n  ? todosCards[0]._config \n  : { PERIODO_ANALISE_DIAS: 15 };\nconst periodoAnaliseDias = config.PERIODO_ANALISE_DIAS;\nconsole.log('=== FILTRO FINAL DE ATIVIDADE ===');\nconsole.log(`Total de cards recebidos: ${todosCards.length}`);\nconsole.log(`Período de análise: ${periodoAnaliseDias} dias`);\n// Filtra apenas cards com atividade recente\nconst cardsFiltrados = todosCards.filter(card => {\n  return card._teve_atividade_recente === true;\n});\n// Cards removidos (para log)\nconst cardsRemovidos = todosCards.filter(card => {\n  return card._teve_atividade_recente !== true;\n});\nconsole.log(`[OK] Cards COM atividade recente: ${cardsFiltrados.length}`);\nconsole.log(`[REMOVIDO] Cards SEM atividade recente (removidos): ${cardsRemovidos.length}`);\n// Log de alguns cards removidos para debug\nif (cardsRemovidos.length > 0 && cardsRemovidos.length <= 10) {\n  console.log('Cards removidos:');\n  cardsRemovidos.forEach(card => {\n    console.log(`  - #${card.id}: ${card.titulo}`);\n  });\n} else if (cardsRemovidos.length > 10) {\n  console.log(`Primeiros 10 cards removidos:`);\n  cardsRemovidos.slice(0, 10).forEach(card => {\n    console.log(`  - #${card.id}: ${card.titulo}`);\n  });\n}\n// Retorna no mesmo formato que juntarTodosCards\nreturn [{\n  json: {\n    data: cardsFiltrados\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          5136,
+          1872
+        ],
+        "id": "9e1c9ceb-90fb-4bd4-90e2-c0fe2350e045",
+        "name": "filtrarCardsAtivos"
+      },
+      {
+        "parameters": {
+          "url": "={{ $('configInicial').item.json.baseUrl }}/api/fornecedor/",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "limit",
+                "value": "10000"
+              },
+              {
+                "name": "agrupamento",
+                "value": "usuario"
+              },
+              {
+                "name": "projetoid",
+                "value": "={{ $('receberInput').item.json.projeto_id }}"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $('executarLogin').item.json.accessToken }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          2880,
+          2064
+        ],
+        "id": "922c68c0-e309-4389-a2a6-905865ad198d",
+        "name": "buscarFornecedores"
+      },
+      {
+        "parameters": {
+          "url": "={{ $('configInicial').item.json.baseUrl }}/api/tempotask/tempo_projeto/",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "projetoid",
+                "value": "={{ $('receberInput').item.json.projeto_id }}"
+              },
+              {
+                "name": "datainicial",
+                "value": "={{ new Date(Date.now() - $('configInicial').item.json.PERIODO_ANALISE_DIAS * 24 * 60 * 60 * 1000).toISOString().slice(0, 10) }}"
+              },
+              {
+                "name": "datafinal",
+                "value": "={{ new Date().toISOString().split('T')[0] }}"
+              },
+              {
+                "name": "agrupamento",
+                "value": "usuario"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $('executarLogin').item.json.accessToken }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          2864,
+          2224
+        ],
+        "id": "69c95815-ca5e-4b1f-9cc3-c3da271e1edc",
+        "name": "buscarTemposProjeto"
+      },
+      {
+        "parameters": {
+          "jsCode": "const todosItens = $input.all().map(item => item.json);\nconst fornecedores = todosItens.filter(item => item.id !== undefined && item.id !== null);\nconsole.log('=== CRIANDO MAPA USUARIO → TIME (v2.0 — indexado por USER) ===');\nconsole.log(`Total de fornecedores recebidos: ${fornecedores.length}`);\n// ============================================\n// PASSO 1: Ler tempos do projeto por REFERÊNCIA DE NÓ\n// ============================================\nlet temposDisponiveis = false;\n// Mapa: fornecedor_id → { totalSegundos, totalHoras }\nconst horasPorFornecedorId = {};\ntry {\n  const todosTempos = $('buscarTemposProjeto').all();\n  if (todosTempos && todosTempos.length > 0) {\n    temposDisponiveis = true;\n    console.log(`Tempos do projeto carregados: ${todosTempos.length} usuários com registros`);\n    for (const item of todosTempos) {\n      const dados = item.json;\n      const idFornecedor = dados.id_fornecedor;\n      if (idFornecedor === undefined || idFornecedor === null) {\n        console.log(`Registro de tempo sem id_fornecedor: ${dados.item || 'desconhecido'}`);\n        continue;\n      }\n      // Soma todas as durações do período (em segundos)\n      let totalSegundos = 0;\n      if (dados.datas && Array.isArray(dados.datas)) {\n        totalSegundos = dados.datas.reduce((sum, d) => sum + (d.duracao || 0), 0);\n      }\n      const totalHoras = totalSegundos / 3600;\n      // Guarda no mapa por fornecedor_id\n      horasPorFornecedorId[String(idFornecedor)] = {\n        totalSegundos,\n        totalHoras: Math.round(totalHoras * 100) / 100  // 2 casas decimais\n      };\n      if (totalSegundos > 0) {\n        console.log(`   [fornecedor_id:${idFornecedor}] ${dados.item}: ${totalHoras.toFixed(1)}h (${totalSegundos}s)`);\n      }\n    }\n    console.log(`Usuários com horas lançadas: ${Object.keys(horasPorFornecedorId).length}`);\n  } else {\n    console.log('buscarTemposProjeto retornou vazio.');\n  }\n} catch (e) {\n  console.log(`Não foi possível acessar buscarTemposProjeto: ${e.message}`);\n  console.log('   Continuando sem dados de tempo.');\n}\n// ============================================\n// REGRAS DE CLASSIFICAÇÃO DE EQUIPE\n// (sem alteração — mesmas regras da v1)\n// ============================================\nconst REGRAS_EQUIPE = [\n  { palavras: ['fullstack', 'full stack', 'full-stack'], equipe: 'Fullstack' },\n  { palavras: ['frontend', 'front end', 'front-end', 'front'], equipe: 'Frontend' },\n  { palavras: ['backend', 'back end', 'back-end', 'back'], equipe: 'Backend' },\n  { palavras: ['mobile', 'android', 'ios', 'flutter', 'react native', 'react-native', 'kotlin', 'swift'], equipe: 'Mobile' },\n  { palavras: ['infra', 'devops', 'dev ops', 'dev-ops', 'sre', 'cloud', 'plataforma', 'infraestrutura', 'redes', 'segurança da informação', 'sysadmin'], equipe: 'Infra' },\n  { palavras: ['qa', 'teste', 'testes', 'qualidade', 'quality', 'automação de testes', 'test'], equipe: 'QA' },\n  { palavras: ['design', 'designer', 'ux', 'ui', 'ui/ux', 'ux/ui', 'produto visual', 'figma'], equipe: 'Design' },\n  { palavras: ['ia', 'inteligência artificial', 'inteligencia artificial', 'analista de ia'], equipe: 'IA' },\n  { palavras: ['dados', 'data', 'bi', 'analytics', 'engenheiro de dados', 'cientista de dados', 'machine learning', 'ml', 'etl'], equipe: 'Dados' },\n  { palavras: ['gerente', 'coordenador', 'scrum', 'scrum master', 'po', 'product owner', 'product manager', 'gestão', 'gestor', 'líder técnico', 'tech lead', 'lider', 'coordenação', 'direção', 'direcao', 'diretor'], equipe: 'Gestão' },\n  { palavras: ['suporte', 'atendimento', 'helpdesk', 'help desk', 'service desk'], equipe: 'Suporte' },\n  { palavras: ['desenvolvedor', 'developer', 'programador', 'dev', 'engenheiro de software', 'software engineer', 'desenvolvimento'], equipe: 'Desenvolvimento' },\n];\nconst CARGOS_VAZIOS = ['-', '', 'n/a', 'na', 'não informado', 'nao informado', 'sem cargo', 'null', 'undefined', '.', '...'];\nfunction classificarEquipe(cargoNome) {\n  if (!cargoNome || typeof cargoNome !== 'string') return 'A definir';\n  const cargoLower = cargoNome.toLowerCase().trim();\n  if (CARGOS_VAZIOS.includes(cargoLower)) return 'A definir';\n  for (const regra of REGRAS_EQUIPE) {\n    for (const palavra of regra.palavras) {\n      if (cargoLower.includes(palavra)) {\n        return regra.equipe;\n      }\n    }\n  }\n  return 'Outros';\n}\nfunction extrairNivel(cargoNome) {\n  if (!cargoNome || typeof cargoNome !== 'string') return null;\n  const cargoLower = cargoNome.toLowerCase();\n  if (CARGOS_VAZIOS.includes(cargoLower.trim())) return null;\n  if (cargoLower.includes('estagiário') || cargoLower.includes('estagiario') || cargoLower.includes('estágio') || cargoLower.includes('estagio') || cargoLower.includes('intern')) return 'Estagiário';\n  if (cargoLower.includes('júnior') || cargoLower.includes('junior') || cargoLower.includes(' jr') || cargoLower.endsWith(' jr')) return 'Júnior';\n  if (cargoLower.includes('pleno') || cargoLower.includes('mid') || cargoLower.includes('middle') || cargoLower.includes('nível ii') || cargoLower.includes('nivel ii')) return 'Pleno';\n  if (cargoLower.includes('sênior') || cargoLower.includes('senior') || cargoLower.includes(' sr') || cargoLower.endsWith(' sr')) return 'Sênior';\n  if (cargoLower.includes('especialista') || cargoLower.includes('staff') || cargoLower.includes('principal')) return 'Especialista';\n  if (cargoLower.includes('líder') || cargoLower.includes('lider') || cargoLower.includes('lead') || cargoLower.includes('tech lead')) return 'Líder';\n  if (cargoLower.includes('gerente') || cargoLower.includes('gestor') || cargoLower.includes('manager')) return 'Gerente';\n  if (cargoLower.includes('diretor') || cargoLower.includes('director') || cargoLower.includes('cto') || cargoLower.includes('ceo')) return 'Diretor';\n  return null;\n}\n// Override manual\nconst OVERRIDES_EQUIPE = {\n  // Chave agora é USER_ID (não fornecedor_id)\n  // '333': 'Dados'  // Miguel — ajustar se necessário\n};\n// ============================================\n// PROCESSAMENTO PRINCIPAL\n// ============================================\nconst mapaUsuarios = {};           // Indexado por USER_ID (novo!)\nconst mapaFornecedorParaUser = {}; // fornecedor_id → user_id (auxiliar)\nconst stats = {\n  total: 0,\n  com_cargo: 0,\n  sem_cargo: 0,\n  sem_user: 0,           // NOVO: fornecedores sem user (empresas, etc.)\n  ativos_no_projeto: 0,\n  por_equipe: {},\n  cargos_outros: [],\n  cargos_a_definir: [],\n};\nfornecedores.forEach(fornecedor => {\n  const fornecedorId = fornecedor.id;\n  const userId = fornecedor.user;  // ← CHAVE DA MUDANÇA\n  // Pular se não tem fornecedor_id\n  if (fornecedorId === undefined || fornecedorId === null) {\n    console.log(`Fornecedor sem ID ignorado: ${JSON.stringify(fornecedor).substring(0, 100)}`);\n    return;\n  }\n  // NOVO: Pular se não tem user (empresas, fornecedores PJ, etc.)\n  if (userId === undefined || userId === null) {\n    stats.sem_user++;\n    return;\n  }\n  // NOVO: Criar mapa auxiliar fornecedor_id → user_id\n  mapaFornecedorParaUser[String(fornecedorId)] = userId;\n  // Extrair dados\n  const nome = fornecedor.nome || fornecedor.name || fornecedor.nome_completo || fornecedor.razao_social || `Fornecedor ${fornecedorId}`;\n  const cargoRaw = fornecedor.cargo_nome_readonly || fornecedor.cargo || '';\n  const cargo = (typeof cargoRaw === 'string') ? cargoRaw.trim() : String(cargoRaw);\n  // Classificar\n  let equipe = classificarEquipe(cargo);\n  if (OVERRIDES_EQUIPE[String(userId)]) {\n    equipe = OVERRIDES_EQUIPE[String(userId)];\n  }\n  const nivel = extrairNivel(cargo);\n  // NOVO: Buscar horas do período usando o mapa de fornecedor_id\n  const horasInfo = horasPorFornecedorId[String(fornecedorId)];\n  const horasPeriodo = horasInfo ? horasInfo.totalHoras : 0;\n  const ativoNoProjeto = temposDisponiveis ? (horasPeriodo > 0) : null;\n  // NOVO: Indexar por USER_ID (não fornecedor_id)\n  mapaUsuarios[userId] = {\n    nome: nome,\n    cargo: cargo,\n    equipe: equipe,\n    nivel: nivel,\n    fornecedor_id: fornecedorId,  // NOVO: guarda para referência cruzada\n    ativo_no_projeto: ativoNoProjeto,\n    horas_periodo: horasPeriodo    // NOVO: horas trabalhadas no período\n  };\n  // Stats\n  stats.total++;\n  if (ativoNoProjeto) {\n    stats.ativos_no_projeto++;\n  }\n  if (equipe === 'A definir') {\n    stats.sem_cargo++;\n    stats.cargos_a_definir.push({ fornecedor_id: fornecedorId, user_id: userId, nome, cargo });\n  } else if (equipe === 'Outros') {\n    stats.com_cargo++;\n    stats.cargos_outros.push({ fornecedor_id: fornecedorId, user_id: userId, nome, cargo });\n  } else {\n    stats.com_cargo++;\n  }\n  if (!stats.por_equipe[equipe]) {\n    stats.por_equipe[equipe] = [];\n  }\n  stats.por_equipe[equipe].push({\n    fornecedor_id: fornecedorId,\n    user_id: userId,\n    nome,\n    cargo,\n    nivel,\n    ativoNoProjeto,\n    horasPeriodo\n  });\n});\n// ============================================\n// NOVO: AGREGAR HORAS POR EQUIPE\n// ============================================\nconst horasPorEquipe = {};\nlet totalHorasPeriodo = 0;\nfor (const [equipe, membros] of Object.entries(stats.por_equipe)) {\n  const horasEquipe = membros.reduce((sum, m) => sum + (m.horasPeriodo || 0), 0);\n  if (horasEquipe > 0) {\n    horasPorEquipe[equipe] = Math.round(horasEquipe * 100) / 100;\n    totalHorasPeriodo += horasEquipe;\n  }\n}\ntotalHorasPeriodo = Math.round(totalHorasPeriodo * 100) / 100;\n// ============================================\n// LOGS DE CALIBRAÇÃO\n// ============================================\nconsole.log('');\nconsole.log('RESULTADO DO MAPEAMENTO (v2.0):');\nconsole.log('============================');\nconsole.log(`   Total mapeados (com user): ${stats.total}`);\nconsole.log(`   Sem user (empresas/PJ): ${stats.sem_user}`);\nconsole.log(`   Com cargo identificado: ${stats.com_cargo}`);\nconsole.log(`   Sem cargo (A definir): ${stats.sem_cargo}`);\nconsole.log(`   Ativos no projeto (com horas): ${stats.ativos_no_projeto}`);\nconsole.log(`   Total horas no período: ${totalHorasPeriodo}h`);\nconsole.log('');\n// Equipes classificadas\nconst equipesReais = Object.entries(stats.por_equipe)\n  .filter(([equipe]) => equipe !== 'A definir' && equipe !== 'Outros')\n  .sort((a, b) => b[1].length - a[1].length);\nif (equipesReais.length > 0) {\n  console.log('EQUIPES CLASSIFICADAS:');\n  for (const [equipe, membros] of equipesReais) {\n    const ativos = membros.filter(m => m.ativoNoProjeto);\n    const horasEquipe = horasPorEquipe[equipe] || 0;\n    console.log(`   ${equipe}: ${membros.length} pessoa(s), ${ativos.length} ativo(s), ${horasEquipe}h no período`);\n    if (ativos.length > 0) {\n      ativos.forEach(m => {\n        console.log(`     [user:${m.user_id}|forn:${m.fornecedor_id}] ${m.nome} | \"${m.cargo}\" | ${m.horasPeriodo}h`);\n      });\n    }\n    const inativos = membros.filter(m => !m.ativoNoProjeto);\n    if (inativos.length > 0 && inativos.length <= 5) {\n      inativos.forEach(m => {\n        console.log(`     [user:${m.user_id}|forn:${m.fornecedor_id}] ${m.nome} (sem horas)`);\n      });\n    } else if (inativos.length > 5) {\n      console.log(`     ... e mais ${inativos.length} sem horas no projeto`);\n    }\n  }\n}\n// Cargos não classificados\nif (stats.cargos_outros.length > 0) {\n  console.log('');\n  console.log(`CARGOS NÃO CLASSIFICADOS (${stats.cargos_outros.length}):`);\n  stats.cargos_outros.forEach(c => {\n    console.log(`   - [user:${c.user_id}|forn:${c.fornecedor_id}] ${c.nome}: \"${c.cargo}\"`);\n  });\n}\n// Sem cargo mas com horas\nif (temposDisponiveis) {\n  const semCargoMasAtivos = stats.cargos_a_definir.filter(c => {\n    const horasInfo = horasPorFornecedorId[String(c.fornecedor_id)];\n    return horasInfo && horasInfo.totalHoras > 0;\n  });\n  if (semCargoMasAtivos.length > 0) {\n    console.log('');\n    console.log(`ATENÇÃO: ${semCargoMasAtivos.length} fornecedor(es) SEM CARGO mas COM HORAS:`);\n    semCargoMasAtivos.forEach(c => {\n      console.log(`   - [user:${c.user_id}|forn:${c.fornecedor_id}] ${c.nome}`);\n    });\n  }\n}\n// NOVO: Log de horas por equipe\nif (Object.keys(horasPorEquipe).length > 0) {\n  console.log('');\n  console.log('HORAS POR EQUIPE NO PERÍODO:');\n  const equipesOrdenadas = Object.entries(horasPorEquipe).sort((a, b) => b[1] - a[1]);\n  for (const [equipe, horas] of equipesOrdenadas) {\n    const percentual = totalHorasPeriodo > 0 ? Math.round((horas / totalHorasPeriodo) * 100) : 0;\n    console.log(`   ${equipe}: ${horas}h (${percentual}%)`);\n  }\n  console.log(`   TOTAL: ${totalHorasPeriodo}h`);\n}\n// Resumos\nconst resumoEquipes = {};\nfor (const [equipe, membros] of Object.entries(stats.por_equipe)) {\n  resumoEquipes[equipe] = membros.length;\n}\nconst resumoAtivos = {};\nfor (const [equipe, membros] of Object.entries(stats.por_equipe)) {\n  const ativos = membros.filter(m => m.ativoNoProjeto).length;\n  if (ativos > 0) {\n    resumoAtivos[equipe] = ativos;\n  }\n}\nconsole.log('');\nconsole.log('Resumo TOTAL por equipe:', JSON.stringify(resumoEquipes));\nconsole.log('Resumo ATIVOS no projeto:', JSON.stringify(resumoAtivos));\nconsole.log('Horas por equipe:', JSON.stringify(horasPorEquipe));\n// ============================================\n// OUTPUT — ÚNICO ITEM\n// ============================================\nreturn [{\n  json: {\n    usuarios_map: mapaUsuarios,            // Indexado por USER_ID\n    mapa_fornecedor_user: mapaFornecedorParaUser,  // NOVO: auxiliar\n    // NOVO: Horas agregadas\n    horas_por_equipe: horasPorEquipe,\n    total_horas_periodo: totalHorasPeriodo,\n    // Metadados\n    _meta_equipes: {\n      total_fornecedores: stats.total,\n      fornecedores_sem_user: stats.sem_user,\n      com_cargo_classificado: stats.com_cargo,\n      sem_cargo: stats.sem_cargo,\n      ativos_no_projeto: stats.ativos_no_projeto,\n      equipes_encontradas: equipesReais.map(([equipe]) => equipe),\n      contagem_por_equipe: resumoEquipes,\n      contagem_ativos: resumoAtivos,\n      horas_por_equipe: horasPorEquipe,\n      total_horas_periodo: totalHorasPeriodo,\n      cargos_nao_classificados: stats.cargos_outros.length,\n      fornecedores_sem_cargo: stats.cargos_a_definir.length,\n      ids_por_equipe: Object.fromEntries(\n        equipesReais.map(([equipe, membros]) => [\n          equipe,\n          membros.map(m => m.user_id)\n        ])\n      ),\n      ids_ativos_por_equipe: Object.fromEntries(\n        equipesReais.map(([equipe, membros]) => [\n          equipe,\n          membros.filter(m => m.ativoNoProjeto).map(m => m.user_id)\n        ]).filter(([_, ids]) => ids.length > 0)\n      ),\n      ids_outros: stats.cargos_outros.map(c => c.user_id),\n      ids_sem_cargo: stats.cargos_a_definir.map(c => c.user_id),\n      ids_sem_cargo_ativos: temposDisponiveis\n        ? stats.cargos_a_definir.filter(c => {\n            const horasInfo = horasPorFornecedorId[String(c.fornecedor_id)];\n            return horasInfo && horasInfo.totalHoras > 0;\n          }).map(c => c.user_id)\n        : []\n    }\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3328,
+          2144
+        ],
+        "id": "4f911f1e-f3d0-476f-8c7c-adb677fd1f41",
+        "name": "criarMapaUsuarioTime"
+      },
+      {
+        "parameters": {},
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.2,
+        "position": [
+          3136,
+          2144
+        ],
+        "id": "06a536e7-6465-4b1f-a544-50a907df8f0b",
+        "name": "juntarFornecedoresETempo"
+      },
+      {
+        "parameters": {
+          "content": "# ColetarDadosProjeto\n\nProjeto: NEAT\nGatilho: WF — chamado por [NEAT]Services.OrquestrarRelatorios\nSegurança: Nenhuma (execução interna)\nDocs: —\nDescrição: Recebe projeto_id, autentica na API Neat via sub-workflow, coleta fases, cards, logs, fornecedores e tempos do projeto. Retorna JSON estruturado com todos os dados para geração do relatório.",
+          "height": 360,
+          "width": 520,
+          "color": 5
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          2192,
+          640
+        ],
+        "id": "2e6ea83e-aed8-4ebf-be49-1ffb403354e2",
+        "name": "docWorkflow"
+      }
+    ],
+    "connections": {
+      "buscarFases": {
+        "main": [
+          [
+            {
+              "node": "criarMapaFases",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "criarMapaFases": {
+        "main": [
+          [
+            {
+              "node": "juntarTokenEFases",
+              "type": "main",
+              "index": 1
+            },
+            {
+              "node": "juntarComMapaFases",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "juntarTokenEFases": {
+        "main": [
+          [
+            {
+              "node": "buscarCards",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "buscarCards": {
+        "main": [
+          [
+            {
+              "node": "extrairLimparCards",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "extrairLimparCards": {
+        "main": [
+          [
+            {
+              "node": "loopCards",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "loopCards": {
+        "main": [
+          [
+            {
+              "node": "juntarTodosCards",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "buscarLogsCard",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "buscarLogsCard": {
+        "main": [
+          [
+            {
+              "node": "processarLogsCard",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "juntarComMapaFases": {
+        "main": [
+          [
+            {
+              "node": "prepararOutputFinal",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "juntarTodosCards": {
+        "main": [
+          [
+            {
+              "node": "filtrarCardsAtivos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepararOutputFinal": {
+        "main": [
+          [
+            {
+              "node": "identificarSprints",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "processarLogsCard": {
+        "main": [
+          [
+            {
+              "node": "loopCards",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "configInicial": {
+        "main": [
+          [
+            {
+              "node": "executarLogin",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "identificarSprints": {
+        "main": [
+          [
+            {
+              "node": "limparParaIA",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "filtrarCardsAtivos": {
+        "main": [
+          [
+            {
+              "node": "juntarComMapaFases",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "buscarFornecedores": {
+        "main": [
+          [
+            {
+              "node": "juntarFornecedoresETempo",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "buscarTemposProjeto": {
+        "main": [
+          [
+            {
+              "node": "juntarFornecedoresETempo",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "juntarFornecedoresETempo": {
+        "main": [
+          [
+            {
+              "node": "criarMapaUsuarioTime",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "criarMapaUsuarioTime": {
+        "main": [
+          [
+            {
+              "node": "juntarComMapaFases",
+              "type": "main",
+              "index": 2
+            }
+          ]
+        ]
+      },
+      "receberInput": {
+        "main": [
+          [
+            {
+              "node": "configInicial",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "executarLogin": {
+        "main": [
+          [
+            {
+              "node": "buscarFases",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "juntarTokenEFases",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "buscarFornecedores",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "buscarTemposProjeto",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Miguel Kubrusly",
+    "name": "Version c0b42157",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-10T04:26:43.266Z",
+        "id": 112,
+        "workflowId": "U-3xjDqErv6qXvNqNiN78",
+        "versionId": "c0b42157-633e-4bcb-a71d-8b6b655ec4a8",
+        "event": "activated",
+        "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e"
+      }
+    ]
+  }
+}
