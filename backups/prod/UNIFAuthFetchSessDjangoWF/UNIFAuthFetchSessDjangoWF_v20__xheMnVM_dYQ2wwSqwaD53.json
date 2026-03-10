@@ -1,0 +1,699 @@
+{
+  "updatedAt": "2026-03-09T18:28:31.218Z",
+  "createdAt": "2026-03-06T20:55:47.189Z",
+  "id": "xheMnVM_dYQ2wwSqwaD53",
+  "name": "[UNIF]Auth.FetchSessDjango.WF_v2.0",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "baseUrl"
+            },
+            {
+              "name": "loginPath"
+            },
+            {
+              "name": "csrfFieldName"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -288,
+        96
+      ],
+      "id": "3fa5662e-fa20-4463-a5e2-9edc0c1d2804",
+      "name": "receiveLoginURL"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.baseUrl + $json.loginPath }}",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          },
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -64,
+        96
+      ],
+      "id": "114a614d-ac2d-4388-9c3e-c0535faab233",
+      "name": "getLoginCookies"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "90334a0b-381f-4601-a964-c968af41ef41",
+              "name": "referer",
+              "value": "={{ $('receiveLoginURL').item.json.baseUrl + $('receiveLoginURL').item.json.loginPath }}",
+              "type": "string"
+            },
+            {
+              "id": "77abafa2-2628-4e2d-ac7f-0c62b9bf3477",
+              "name": "csrfCookie",
+              "value": "={{\n  (() => {\n    const raw = $json.headers?.['set-cookie'];\n    const line = (Array.isArray(raw) ? raw : [raw]).find(c => String(c).includes('csrftoken=')) || '';\n    const token = String(line).match(/csrftoken=([^;]+)/)?.[1] || '';\n    return token.trim();\n  })()\n}}",
+              "type": "string"
+            },
+            {
+              "id": "e559b1e2-aab2-4c11-bd9a-02534485eced",
+              "name": "cookieJar",
+              "value": "={{ $json.headers[\"set-cookie\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        160,
+        96
+      ],
+      "id": "8418fc52-8413-4ab6-8803-1678b6263b13",
+      "name": "extractLoginCookies"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('receiveLoginURL').item.json.baseUrl + $('receiveLoginURL').item.json.loginPath}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Referer",
+              "value": "={{ $('receiveLoginURL').item.json.baseUrl + $('receiveLoginURL').item.json.loginPath}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "={{ $json.csrfCookie }}"
+            },
+            {
+              "name": "Cookie",
+              "value": "={{ (() => {\n  const raw = $json.cookieJar; // pode ser array, string ou \"string de array\"\n  const list = Array.isArray(raw)\n    ? raw\n    : (typeof raw === 'string' && raw.trim().startsWith('[') ? JSON.parse(raw) : [String(raw)]);\n  const joined = list.join('; ');                 // junta múltiplos Set-Cookie, se houver\n  const m = joined.match(/(?:^|;\\s*)csrftoken=([^;]+)/i);\n  return m ? `csrftoken=${m[1]}` : '';\n})() }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "={{ $('receiveLoginURL').item.json.csrfFieldName || 'csrfmiddlewaretoken' }}",
+              "value": "={{ $json.csrfCookie }}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        384,
+        96
+      ],
+      "id": "852e0d06-3710-4420-aa44-102a7547750a",
+      "name": "postAuthData",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "***",
+          "name": "***"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3a485387-9217-499b-b59a-ff4df4053587",
+              "name": "sessionId",
+              "value": "={{ (() => {\n  const h = $json.headers || {};\n  const sc = h['set-cookie'] ?? h['Set-Cookie'];\n  const list = Array.isArray(sc) ? sc : (sc ? [sc] : []);\n  const raw = list.join('\\n');                         // vários Set-Cookie\n  const m = raw.match(/(?:^|\\n|,)\\s*sessionid=([^;,\\s]+)/i);\n  return m ? m[1] : '';                                // só o valor\n})() }}",
+              "type": "string"
+            },
+            {
+              "id": "1c2d03bf-3347-44eb-8628-76caded67195",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        608,
+        96
+      ],
+      "id": "596c7531-78dd-4b6c-affe-797e528daaf5",
+      "name": "extractSessionID"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7da404e6-6a92-4de7-bbfd-a2092b61c7d2",
+              "name": "baseUrl",
+              "value": "={{ $('receiveLoginURL').item.json.baseUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "7acd18d1-71fd-40b2-bade-6734b658b7b6",
+              "name": "loginPath",
+              "value": "={{ $('receiveLoginURL').item.json.loginPath }}",
+              "type": "string"
+            },
+            {
+              "id": "08f05bcd-64e7-447e-97e9-c9a633858c04",
+              "name": "csrfFieldName",
+              "value": "={{ $('receiveLoginURL').item.json.csrfFieldName }}",
+              "type": "string"
+            },
+            {
+              "id": "2288f452-aac7-4af5-ad04-3b2e8149e885",
+              "name": "csrfCookie",
+              "value": "={{ $('extractLoginCookies').item.json.csrfCookie }}",
+              "type": "string"
+            },
+            {
+              "id": "e3a86304-8837-48c3-96ee-9f01e5c2a0ec",
+              "name": "sessionId",
+              "value": "={{ $json.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "8526fe5d-318e-4acb-ad50-d8cbe6483c15",
+              "name": "cookieJar",
+              "value": "={{ $('postAuthData').item.json.headers['set-cookie'] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        832,
+        96
+      ],
+      "id": "774d961e-3aa4-42fe-8762-86a819daa803",
+      "name": "returnAuthSession"
+    }
+  ],
+  "connections": {
+    "receiveLoginURL": {
+      "main": [
+        [
+          {
+            "node": "getLoginCookies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getLoginCookies": {
+      "main": [
+        [
+          {
+            "node": "extractLoginCookies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extractLoginCookies": {
+      "main": [
+        [
+          {
+            "node": "postAuthData",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "postAuthData": {
+      "main": [
+        [
+          {
+            "node": "extractSessionID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extractSessionID": {
+      "main": [
+        [
+          {
+            "node": "returnAuthSession",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "receiveLoginURL": [
+      {
+        "json": {
+          "baseUrl": "https://hub.unifinance.com.br/",
+          "loginPath": "login/",
+          "csrfFieldName": "csrftokenj"
+        }
+      }
+    ]
+  },
+  "versionId": "97de3197-885c-42a0-b58b-f912bff78e6f",
+  "activeVersionId": "97de3197-885c-42a0-b58b-f912bff78e6f",
+  "versionCounter": 28,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-06T20:55:47.189Z",
+      "createdAt": "2026-03-06T20:55:47.189Z",
+      "role": "workflow:owner",
+      "workflowId": "xheMnVM_dYQ2wwSqwaD53",
+      "projectId": "aLeETedgrx3HypUV",
+      "project": {
+        "updatedAt": "2026-02-05T18:12:51.008Z",
+        "createdAt": "2026-02-05T17:11:33.764Z",
+        "id": "aLeETedgrx3HypUV",
+        "name": "Miguel Kubrusly <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-02-05T17:11:33.764Z",
+            "createdAt": "2026-02-05T17:11:33.764Z",
+            "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+            "projectId": "aLeETedgrx3HypUV",
+            "user": {
+              "updatedAt": "2026-03-10T03:07:07.287Z",
+              "createdAt": "2026-02-05T17:11:32.394Z",
+              "id": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+              "email": "infra@novadata.com.br",
+              "firstName": "Miguel",
+              "lastName": "Kubrusly",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-02-06T13:42:55.997Z",
+                "personalization_survey_n8n_version": "2.6.0",
+                "automationGoalDevops": [
+                  "data-syncing"
+                ],
+                "companyIndustryExtended": [
+                  "it-industry"
+                ],
+                "companySize": "<20",
+                "companyType": "other",
+                "role": "it",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "4oFgpwW3T5VYLBkmatmZt",
+                "userActivatedAt": 1772566324555,
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-03-10",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-06T15:02:49.033Z",
+      "createdAt": "2026-03-06T15:02:49.033Z",
+      "id": "WefOyCNePUH6cMEC",
+      "name": "prod"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-03-09T18:28:41.291Z",
+    "createdAt": "2026-03-09T18:28:14.958Z",
+    "versionId": "97de3197-885c-42a0-b58b-f912bff78e6f",
+    "workflowId": "xheMnVM_dYQ2wwSqwaD53",
+    "nodes": [
+      {
+        "parameters": {
+          "workflowInputs": {
+            "values": [
+              {
+                "name": "baseUrl"
+              },
+              {
+                "name": "loginPath"
+              },
+              {
+                "name": "csrfFieldName"
+              }
+            ]
+          }
+        },
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          -288,
+          96
+        ],
+        "id": "3fa5662e-fa20-4463-a5e2-9edc0c1d2804",
+        "name": "receiveLoginURL"
+      },
+      {
+        "parameters": {
+          "url": "={{ $json.baseUrl + $json.loginPath }}",
+          "options": {
+            "redirect": {
+              "redirect": {}
+            },
+            "response": {
+              "response": {
+                "fullResponse": true
+              }
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          -64,
+          96
+        ],
+        "id": "114a614d-ac2d-4388-9c3e-c0535faab233",
+        "name": "getLoginCookies"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "90334a0b-381f-4601-a964-c968af41ef41",
+                "name": "referer",
+                "value": "={{ $('receiveLoginURL').item.json.baseUrl + $('receiveLoginURL').item.json.loginPath }}",
+                "type": "string"
+              },
+              {
+                "id": "77abafa2-2628-4e2d-ac7f-0c62b9bf3477",
+                "name": "csrfCookie",
+                "value": "={{\n  (() => {\n    const raw = $json.headers?.['set-cookie'];\n    const line = (Array.isArray(raw) ? raw : [raw]).find(c => String(c).includes('csrftoken=')) || '';\n    const token = String(line).match(/csrftoken=([^;]+)/)?.[1] || '';\n    return token.trim();\n  })()\n}}",
+                "type": "string"
+              },
+              {
+                "id": "e559b1e2-aab2-4c11-bd9a-02534485eced",
+                "name": "cookieJar",
+                "value": "={{ $json.headers[\"set-cookie\"] }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          160,
+          96
+        ],
+        "id": "8418fc52-8413-4ab6-8803-1678b6263b13",
+        "name": "extractLoginCookies"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $('receiveLoginURL').item.json.baseUrl + $('receiveLoginURL').item.json.loginPath}}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Referer",
+                "value": "={{ $('receiveLoginURL').item.json.baseUrl + $('receiveLoginURL').item.json.loginPath}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "name": "X-CSRFToken",
+                "value": "={{ $json.csrfCookie }}"
+              },
+              {
+                "name": "Cookie",
+                "value": "={{ (() => {\n  const raw = $json.cookieJar; // pode ser array, string ou \"string de array\"\n  const list = Array.isArray(raw)\n    ? raw\n    : (typeof raw === 'string' && raw.trim().startsWith('[') ? JSON.parse(raw) : [String(raw)]);\n  const joined = list.join('; ');                 // junta múltiplos Set-Cookie, se houver\n  const m = joined.match(/(?:^|;\\s*)csrftoken=([^;]+)/i);\n  return m ? `csrftoken=${m[1]}` : '';\n})() }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "form-urlencoded",
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "={{ $('receiveLoginURL').item.json.csrfFieldName || 'csrfmiddlewaretoken' }}",
+                "value": "={{ $json.csrfCookie }}"
+              }
+            ]
+          },
+          "options": {
+            "redirect": {
+              "redirect": {
+                "followRedirects": false
+              }
+            },
+            "response": {
+              "response": {
+                "fullResponse": true,
+                "neverError": true
+              }
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          384,
+          96
+        ],
+        "id": "852e0d06-3710-4420-aa44-102a7547750a",
+        "name": "postAuthData",
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "1Fxd6UvUSnYdBXIF",
+            "name": "[UNIF]Login_N8n_Notif"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "3a485387-9217-499b-b59a-ff4df4053587",
+                "name": "sessionId",
+                "value": "={{ (() => {\n  const h = $json.headers || {};\n  const sc = h['set-cookie'] ?? h['Set-Cookie'];\n  const list = Array.isArray(sc) ? sc : (sc ? [sc] : []);\n  const raw = list.join('\\n');                         // vários Set-Cookie\n  const m = raw.match(/(?:^|\\n|,)\\s*sessionid=([^;,\\s]+)/i);\n  return m ? m[1] : '';                                // só o valor\n})() }}",
+                "type": "string"
+              },
+              {
+                "id": "1c2d03bf-3347-44eb-8628-76caded67195",
+                "name": "",
+                "value": "",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          608,
+          96
+        ],
+        "id": "596c7531-78dd-4b6c-affe-797e528daaf5",
+        "name": "extractSessionID"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "7da404e6-6a92-4de7-bbfd-a2092b61c7d2",
+                "name": "baseUrl",
+                "value": "={{ $('receiveLoginURL').item.json.baseUrl }}",
+                "type": "string"
+              },
+              {
+                "id": "7acd18d1-71fd-40b2-bade-6734b658b7b6",
+                "name": "loginPath",
+                "value": "={{ $('receiveLoginURL').item.json.loginPath }}",
+                "type": "string"
+              },
+              {
+                "id": "08f05bcd-64e7-447e-97e9-c9a633858c04",
+                "name": "csrfFieldName",
+                "value": "={{ $('receiveLoginURL').item.json.csrfFieldName }}",
+                "type": "string"
+              },
+              {
+                "id": "2288f452-aac7-4af5-ad04-3b2e8149e885",
+                "name": "csrfCookie",
+                "value": "={{ $('extractLoginCookies').item.json.csrfCookie }}",
+                "type": "string"
+              },
+              {
+                "id": "e3a86304-8837-48c3-96ee-9f01e5c2a0ec",
+                "name": "sessionId",
+                "value": "={{ $json.sessionId }}",
+                "type": "string"
+              },
+              {
+                "id": "8526fe5d-318e-4acb-ad50-d8cbe6483c15",
+                "name": "cookieJar",
+                "value": "={{ $('postAuthData').item.json.headers['set-cookie'] }}",
+                "type": "array"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          832,
+          96
+        ],
+        "id": "774d961e-3aa4-42fe-8762-86a819daa803",
+        "name": "returnAuthSession"
+      }
+    ],
+    "connections": {
+      "receiveLoginURL": {
+        "main": [
+          [
+            {
+              "node": "getLoginCookies",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "getLoginCookies": {
+        "main": [
+          [
+            {
+              "node": "extractLoginCookies",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "extractLoginCookies": {
+        "main": [
+          [
+            {
+              "node": "postAuthData",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "postAuthData": {
+        "main": [
+          [
+            {
+              "node": "extractSessionID",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "extractSessionID": {
+        "main": [
+          [
+            {
+              "node": "returnAuthSession",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Miguel Kubrusly",
+    "name": "Version 97de3197",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-09T18:28:41.289Z",
+        "id": 92,
+        "workflowId": "xheMnVM_dYQ2wwSqwaD53",
+        "versionId": "97de3197-885c-42a0-b58b-f912bff78e6f",
+        "event": "activated",
+        "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e"
+      }
+    ]
+  }
+}
