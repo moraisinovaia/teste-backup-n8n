@@ -1,0 +1,1356 @@
+{
+  "updatedAt": "2026-03-06T15:03:02.915Z",
+  "createdAt": "2026-02-11T17:49:13.280Z",
+  "id": "4oFgpwW3T5VYLBkmatmZt",
+  "name": "[LOGL]Neat.ColetaCardsPorFase.WF_v1",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "projeto",
+              "type": "number"
+            },
+            {
+              "name": "fase",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1568,
+        96
+      ],
+      "id": "96347b30-23fd-406b-a250-179e24e4e527",
+      "name": "recebeChamada"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "G_uJlTCGmQcpeCPZu2zej",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/G_uJlTCGmQcpeCPZu2zej",
+          "cachedResultName": "Logbit.Utils.IniciaSessaoDjango.Wf.v2"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "baseUrl": "https://hub.novadata.com.br",
+            "loginPath": "/login/",
+            "csrfFieldName": "csrftoken"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "baseUrl",
+              "displayName": "baseUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "loginPath",
+              "displayName": "loginPath",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "csrfFieldName",
+              "displayName": "csrfFieldName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -896,
+        96
+      ],
+      "id": "abdcd364-7a11-4a66-8323-2648940e4e88",
+      "name": "pegaSessaoNeat"
+    },
+    {
+      "parameters": {
+        "action": "generate",
+        "dataPropertyName": "uuid"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [
+        -1344,
+        96
+      ],
+      "id": "d8fd06d0-ce59-4d5d-9269-0bed5afba21b",
+      "name": "criaUiid"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"versao_schema\": \"2.0\",\n  \"gerado_em\": {{ $now.toUTC().format(\"yyyy-MM-dd'T'HH:mm:ss'Z'\") }}\n  \"fonte\": \" N8N\",\n  \"uuid\": {{$('criaUiid').item.json.uuid}}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1120,
+        96
+      ],
+      "id": "03bf5296-3ce2-4610-b96f-a3f71c8f2681",
+      "name": "geraMetadados"
+    },
+    {
+      "parameters": {
+        "url": "=https://hub.novadata.com.br/api/fase/{{ $('recebeChamada').item.json.fase }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Referer",
+              "value": "=/"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Cookie",
+              "value": "={{ $('pegaSessaoNeat').item.json.csrfFieldName }}={{ $('pegaSessaoNeat').item.json.csrfCookie }}; sessionid={{ $('pegaSessaoNeat').item.json.sessionId }}"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "responseContainsNextURL",
+              "nextURL": "={{ $response.body.next }}",
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ $response.body.next == null }}"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -672,
+        96
+      ],
+      "id": "5a2c0df1-59b5-4cd5-bcce-b0d0ca3c1aa8",
+      "name": "pegaInfoFase"
+    },
+    {
+      "parameters": {
+        "url": "https://hub.novadata.com.br/api/chamado/",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "projeto__id",
+              "value": "={{ $('recebeChamada').item.json.projeto }}"
+            },
+            {
+              "name": "fase__id",
+              "value": "={{ $('recebeChamada').item.json.fase }}"
+            },
+            {
+              "name": "com_arquivados",
+              "value": "={{ $('recebeChamada').item.json.fase==6?\"True\":\"False\" }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Referer",
+              "value": "=/"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Cookie",
+              "value": "={{ $('pegaSessaoNeat').item.json.csrfFieldName }}={{ $('pegaSessaoNeat').item.json.csrfCookie }}; sessionid={{ $('pegaSessaoNeat').item.json.sessionId }}"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "responseContainsNextURL",
+              "nextURL": "={{ $response.body.next }}",
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ $response.body.next == null }}"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -448,
+        96
+      ],
+      "id": "362b6f7c-c834-4111-bcae-58313a10b55b",
+      "name": "pegaCardsFase"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "24685201-d369-483b-828e-b96ed1f1dc9f",
+              "leftValue": "={{ $json.count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -224,
+        96
+      ],
+      "id": "29d634dc-f128-4c40-9b98-56fbcc265174",
+      "name": "temCard?"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "results",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "95ac29e8-e634-431d-9701-ac890ea50b53",
+      "name": "separaCards"
+    },
+    {
+      "parameters": {
+        "jsCode": "const regex = /(base64,)[A-Za-z0-9+/=\\r\\n]+(?=(?:[\"\\s]|$))/gi;\n\nfor (const item of items) {\n  const data = item.json;\n\n  for (const key of Object.keys(data)) {\n    const value = data[key];\n\n    if (typeof value === 'string') {\n      data[key] = value.replace(regex, '$1');\n    }\n  }\n}\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        0
+      ],
+      "id": "fa011f3c-5745-4399-8291-6ac2c399da7f",
+      "name": "removeBase64"
+    },
+    {
+      "parameters": {
+        "errorMessage": "Não há cards para esta coluna neste projeto."
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        0,
+        192
+      ],
+      "id": "848cd273-5b83-474a-b0be-89e12ddedb0c",
+      "name": "levantaErro"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0dda4654-513b-4afc-9fb7-71561e669ece",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "ae3c4047-d4e3-4b15-b8f5-49502baffffc",
+              "name": "tag",
+              "value": "={{ $json.tag }}",
+              "type": "array"
+            },
+            {
+              "id": "2b8801e7-c617-478d-9ef0-7469a11f356c",
+              "name": "titulo",
+              "value": "={{ $json.titulo }}",
+              "type": "string"
+            },
+            {
+              "id": "7ebf330f-1751-4dad-b9bd-4c38c4cff8d4",
+              "name": "descricao",
+              "value": "={{ $json.descricao }}",
+              "type": "string"
+            },
+            {
+              "id": "e9149316-dd94-48d0-8ff9-8356003d906f",
+              "name": "responsaveis",
+              "value": "={{($json.responsaveis.map(resp => ({ id: resp.id, nome: resp.nome })))}}",
+              "type": "array"
+            },
+            {
+              "id": "a5243d29-472a-4651-b13f-dbfaff082f3e",
+              "name": "orcado",
+              "value": "={{ $json.orcado }}",
+              "type": "string"
+            },
+            {
+              "id": "a4a05a33-5bb8-4fa6-8d0b-46d3f73e997d",
+              "name": "tempo_decorrido",
+              "value": "={{ $json.tempo_decorrido }}",
+              "type": "string"
+            },
+            {
+              "id": "b3508bca-08e2-4cb2-b998-12b584dfbf9a",
+              "name": "em_andamento",
+              "value": "={{ $json.em_andamento }}",
+              "type": "boolean"
+            },
+            {
+              "id": "d31d70bc-5d13-4f3f-8587-9759fb26b3f6",
+              "name": "data_criacao",
+              "value": "={{ $json.data_criacao }}",
+              "type": "string"
+            },
+            {
+              "id": "606c21a3-c794-447c-b0cb-bf691e586b2f",
+              "name": "data_prevista",
+              "value": "={{ $json.data_prevista }}",
+              "type": "string"
+            },
+            {
+              "id": "f6fc4951-a5db-4990-85d9-c791447bdcad",
+              "name": "data_desejada",
+              "value": "={{ $json.data_desejada }}",
+              "type": "string"
+            },
+            {
+              "id": "9027bf55-5740-4071-84f9-9e8f82d689de",
+              "name": "pontos_totais",
+              "value": "={{ $json.pontos_totais }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        656,
+        0
+      ],
+      "id": "a4ea09dc-7ed8-4ee2-8292-611210fcc65c",
+      "name": "montaObjCard"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "cards",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        880,
+        0
+      ],
+      "id": "04277d54-8a6e-4050-bf70-e358a4dcf8e5",
+      "name": "juntaCards"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3a29fa6f-8ac6-4456-81c9-854950327bb4",
+              "name": "meta",
+              "value": "={{ $('geraMetadados').item.json }}",
+              "type": "object"
+            },
+            {
+              "id": "792d1751-1ac5-4aec-8996-5d95972ec904",
+              "name": "info.projeto_info",
+              "value": "={{ $('pegaCardsFase').first().json.results.first().projeto_info}}",
+              "type": "object"
+            },
+            {
+              "id": "6105284b-4e81-4c46-8440-46f41c071120",
+              "name": "info.fase_info",
+              "value": "={\"fase_id\":{{ $('pegaInfoFase').item.json.id }},\"fase_nome\":\"{{ $('pegaInfoFase').item.json.nome }}\"}",
+              "type": "object"
+            },
+            {
+              "id": "d30a749e-a8a9-4ce4-8555-c3e0aa75096a",
+              "name": "card_count",
+              "value": "={{ $('pegaCardsFase').first().json.count}}",
+              "type": "number"
+            },
+            {
+              "id": "610e4d3b-1dcb-4896-bf4c-4038bebd3afa",
+              "name": "cards",
+              "value": "={{ $json.cards }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1104,
+        0
+      ],
+      "id": "1a7bb667-d4d7-4231-a6cd-c8d196bc6f5b",
+      "name": "preparaObjResposta"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5f5443d4-d3cc-41bf-a9e6-8287df9b427a",
+              "leftValue": "={{ $itemIndex }}",
+              "rightValue": 5,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "a6e642b6-2b3c-41d3-ad68-e2d1c9b78df5",
+      "name": "filtraParaTeste",
+      "disabled": true
+    }
+  ],
+  "connections": {
+    "recebeChamada": {
+      "main": [
+        [
+          {
+            "node": "criaUiid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "pegaSessaoNeat": {
+      "main": [
+        [
+          {
+            "node": "pegaInfoFase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "criaUiid": {
+      "main": [
+        [
+          {
+            "node": "geraMetadados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "geraMetadados": {
+      "main": [
+        [
+          {
+            "node": "pegaSessaoNeat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "pegaInfoFase": {
+      "main": [
+        [
+          {
+            "node": "pegaCardsFase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "pegaCardsFase": {
+      "main": [
+        [
+          {
+            "node": "temCard?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "temCard?": {
+      "main": [
+        [
+          {
+            "node": "separaCards",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "levantaErro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "separaCards": {
+      "main": [
+        [
+          {
+            "node": "filtraParaTeste",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "removeBase64": {
+      "main": [
+        [
+          {
+            "node": "montaObjCard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "montaObjCard": {
+      "main": [
+        [
+          {
+            "node": "juntaCards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "juntaCards": {
+      "main": [
+        [
+          {
+            "node": "preparaObjResposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filtraParaTeste": {
+      "main": [
+        [
+          {
+            "node": "removeBase64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "recebeChamada": [
+      {
+        "json": {
+          "projeto": 487,
+          "fase": 1
+        }
+      }
+    ]
+  },
+  "versionId": "e856c865-ab76-45c2-80d0-c7634caf43e7",
+  "activeVersionId": "e856c865-ab76-45c2-80d0-c7634caf43e7",
+  "versionCounter": 43,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-02-11T17:49:13.280Z",
+      "createdAt": "2026-02-11T17:49:13.280Z",
+      "role": "workflow:owner",
+      "workflowId": "4oFgpwW3T5VYLBkmatmZt",
+      "projectId": "aLeETedgrx3HypUV",
+      "project": {
+        "updatedAt": "2026-02-05T18:12:51.008Z",
+        "createdAt": "2026-02-05T17:11:33.764Z",
+        "id": "aLeETedgrx3HypUV",
+        "name": "Miguel Kubrusly <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-02-05T17:11:33.764Z",
+            "createdAt": "2026-02-05T17:11:33.764Z",
+            "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+            "projectId": "aLeETedgrx3HypUV",
+            "user": {
+              "updatedAt": "2026-03-10T03:07:07.287Z",
+              "createdAt": "2026-02-05T17:11:32.394Z",
+              "id": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+              "email": "infra@novadata.com.br",
+              "firstName": "Miguel",
+              "lastName": "Kubrusly",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-02-06T13:42:55.997Z",
+                "personalization_survey_n8n_version": "2.6.0",
+                "automationGoalDevops": [
+                  "data-syncing"
+                ],
+                "companyIndustryExtended": [
+                  "it-industry"
+                ],
+                "companySize": "<20",
+                "companyType": "other",
+                "role": "it",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "4oFgpwW3T5VYLBkmatmZt",
+                "userActivatedAt": 1772566324555,
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-03-10",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-06T15:03:00.305Z",
+      "createdAt": "2026-03-06T15:03:00.305Z",
+      "id": "5rVLAyDfr2bdPlfp",
+      "name": "@neat"
+    },
+    {
+      "updatedAt": "2026-03-06T15:02:49.033Z",
+      "createdAt": "2026-03-06T15:02:49.033Z",
+      "id": "WefOyCNePUH6cMEC",
+      "name": "prod"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-11T17:51:06.614Z",
+    "createdAt": "2026-02-11T17:50:37.472Z",
+    "versionId": "e856c865-ab76-45c2-80d0-c7634caf43e7",
+    "workflowId": "4oFgpwW3T5VYLBkmatmZt",
+    "nodes": [
+      {
+        "parameters": {
+          "workflowInputs": {
+            "values": [
+              {
+                "name": "projeto",
+                "type": "number"
+              },
+              {
+                "name": "fase",
+                "type": "number"
+              }
+            ]
+          }
+        },
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          -1568,
+          96
+        ],
+        "id": "96347b30-23fd-406b-a250-179e24e4e527",
+        "name": "recebeChamada"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "G_uJlTCGmQcpeCPZu2zej",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/G_uJlTCGmQcpeCPZu2zej",
+            "cachedResultName": "Logbit.Utils.IniciaSessaoDjango.Wf.v2"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "baseUrl": "https://hub.novadata.com.br",
+              "loginPath": "/login/",
+              "csrfFieldName": "csrftoken"
+            },
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "baseUrl",
+                "displayName": "baseUrl",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              },
+              {
+                "id": "loginPath",
+                "displayName": "loginPath",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              },
+              {
+                "id": "csrfFieldName",
+                "displayName": "csrfFieldName",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          -896,
+          96
+        ],
+        "id": "abdcd364-7a11-4a66-8323-2648940e4e88",
+        "name": "pegaSessaoNeat"
+      },
+      {
+        "parameters": {
+          "action": "generate",
+          "dataPropertyName": "uuid"
+        },
+        "type": "n8n-nodes-base.crypto",
+        "typeVersion": 1,
+        "position": [
+          -1344,
+          96
+        ],
+        "id": "d8fd06d0-ce59-4d5d-9269-0bed5afba21b",
+        "name": "criaUiid"
+      },
+      {
+        "parameters": {
+          "mode": "raw",
+          "jsonOutput": "={\n  \"versao_schema\": \"2.0\",\n  \"gerado_em\": {{ $now.toUTC().format(\"yyyy-MM-dd'T'HH:mm:ss'Z'\") }}\n  \"fonte\": \" N8N\",\n  \"uuid\": {{$('criaUiid').item.json.uuid}}\n}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          -1120,
+          96
+        ],
+        "id": "03bf5296-3ce2-4610-b96f-a3f71c8f2681",
+        "name": "geraMetadados"
+      },
+      {
+        "parameters": {
+          "url": "=https://hub.novadata.com.br/api/fase/{{ $('recebeChamada').item.json.fase }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Referer",
+                "value": "=/"
+              },
+              {
+                "name": "Accept",
+                "value": "application/json"
+              },
+              {
+                "name": "Cookie",
+                "value": "={{ $('pegaSessaoNeat').item.json.csrfFieldName }}={{ $('pegaSessaoNeat').item.json.csrfCookie }}; sessionid={{ $('pegaSessaoNeat').item.json.sessionId }}"
+              }
+            ]
+          },
+          "options": {
+            "pagination": {
+              "pagination": {
+                "paginationMode": "responseContainsNextURL",
+                "nextURL": "={{ $response.body.next }}",
+                "paginationCompleteWhen": "other",
+                "completeExpression": "={{ $response.body.next == null }}"
+              }
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          -672,
+          96
+        ],
+        "id": "5a2c0df1-59b5-4cd5-bcce-b0d0ca3c1aa8",
+        "name": "pegaInfoFase"
+      },
+      {
+        "parameters": {
+          "url": "https://hub.novadata.com.br/api/chamado/",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "projeto__id",
+                "value": "={{ $('recebeChamada').item.json.projeto }}"
+              },
+              {
+                "name": "fase__id",
+                "value": "={{ $('recebeChamada').item.json.fase }}"
+              },
+              {
+                "name": "com_arquivados",
+                "value": "={{ $('recebeChamada').item.json.fase==6?\"True\":\"False\" }}"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Referer",
+                "value": "=/"
+              },
+              {
+                "name": "Accept",
+                "value": "application/json"
+              },
+              {
+                "name": "Cookie",
+                "value": "={{ $('pegaSessaoNeat').item.json.csrfFieldName }}={{ $('pegaSessaoNeat').item.json.csrfCookie }}; sessionid={{ $('pegaSessaoNeat').item.json.sessionId }}"
+              }
+            ]
+          },
+          "options": {
+            "pagination": {
+              "pagination": {
+                "paginationMode": "responseContainsNextURL",
+                "nextURL": "={{ $response.body.next }}",
+                "paginationCompleteWhen": "other",
+                "completeExpression": "={{ $response.body.next == null }}"
+              }
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          -448,
+          96
+        ],
+        "id": "362b6f7c-c834-4111-bcae-58313a10b55b",
+        "name": "pegaCardsFase"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "24685201-d369-483b-828e-b96ed1f1dc9f",
+                "leftValue": "={{ $json.count }}",
+                "rightValue": 0,
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          -224,
+          96
+        ],
+        "id": "29d634dc-f128-4c40-9b98-56fbcc265174",
+        "name": "temCard?"
+      },
+      {
+        "parameters": {
+          "fieldToSplitOut": "results",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.splitOut",
+        "typeVersion": 1,
+        "position": [
+          0,
+          0
+        ],
+        "id": "95ac29e8-e634-431d-9701-ac890ea50b53",
+        "name": "separaCards"
+      },
+      {
+        "parameters": {
+          "jsCode": "const regex = /(base64,)[A-Za-z0-9+/=\\r\\n]+(?=(?:[\"\\s]|$))/gi;\n\nfor (const item of items) {\n  const data = item.json;\n\n  for (const key of Object.keys(data)) {\n    const value = data[key];\n\n    if (typeof value === 'string') {\n      data[key] = value.replace(regex, '$1');\n    }\n  }\n}\n\nreturn items;"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          432,
+          0
+        ],
+        "id": "fa011f3c-5745-4399-8291-6ac2c399da7f",
+        "name": "removeBase64"
+      },
+      {
+        "parameters": {
+          "errorMessage": "Não há cards para esta coluna neste projeto."
+        },
+        "type": "n8n-nodes-base.stopAndError",
+        "typeVersion": 1,
+        "position": [
+          0,
+          192
+        ],
+        "id": "848cd273-5b83-474a-b0be-89e12ddedb0c",
+        "name": "levantaErro"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "0dda4654-513b-4afc-9fb7-71561e669ece",
+                "name": "id",
+                "value": "={{ $json.id }}",
+                "type": "number"
+              },
+              {
+                "id": "ae3c4047-d4e3-4b15-b8f5-49502baffffc",
+                "name": "tag",
+                "value": "={{ $json.tag }}",
+                "type": "array"
+              },
+              {
+                "id": "2b8801e7-c617-478d-9ef0-7469a11f356c",
+                "name": "titulo",
+                "value": "={{ $json.titulo }}",
+                "type": "string"
+              },
+              {
+                "id": "7ebf330f-1751-4dad-b9bd-4c38c4cff8d4",
+                "name": "descricao",
+                "value": "={{ $json.descricao }}",
+                "type": "string"
+              },
+              {
+                "id": "e9149316-dd94-48d0-8ff9-8356003d906f",
+                "name": "responsaveis",
+                "value": "={{($json.responsaveis.map(resp => ({ id: resp.id, nome: resp.nome })))}}",
+                "type": "array"
+              },
+              {
+                "id": "a5243d29-472a-4651-b13f-dbfaff082f3e",
+                "name": "orcado",
+                "value": "={{ $json.orcado }}",
+                "type": "string"
+              },
+              {
+                "id": "a4a05a33-5bb8-4fa6-8d0b-46d3f73e997d",
+                "name": "tempo_decorrido",
+                "value": "={{ $json.tempo_decorrido }}",
+                "type": "string"
+              },
+              {
+                "id": "b3508bca-08e2-4cb2-b998-12b584dfbf9a",
+                "name": "em_andamento",
+                "value": "={{ $json.em_andamento }}",
+                "type": "boolean"
+              },
+              {
+                "id": "d31d70bc-5d13-4f3f-8587-9759fb26b3f6",
+                "name": "data_criacao",
+                "value": "={{ $json.data_criacao }}",
+                "type": "string"
+              },
+              {
+                "id": "606c21a3-c794-447c-b0cb-bf691e586b2f",
+                "name": "data_prevista",
+                "value": "={{ $json.data_prevista }}",
+                "type": "string"
+              },
+              {
+                "id": "f6fc4951-a5db-4990-85d9-c791447bdcad",
+                "name": "data_desejada",
+                "value": "={{ $json.data_desejada }}",
+                "type": "string"
+              },
+              {
+                "id": "9027bf55-5740-4071-84f9-9e8f82d689de",
+                "name": "pontos_totais",
+                "value": "={{ $json.pontos_totais }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          656,
+          0
+        ],
+        "id": "a4ea09dc-7ed8-4ee2-8292-611210fcc65c",
+        "name": "montaObjCard"
+      },
+      {
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "destinationFieldName": "cards",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          880,
+          0
+        ],
+        "id": "04277d54-8a6e-4050-bf70-e358a4dcf8e5",
+        "name": "juntaCards"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "3a29fa6f-8ac6-4456-81c9-854950327bb4",
+                "name": "meta",
+                "value": "={{ $('geraMetadados').item.json }}",
+                "type": "object"
+              },
+              {
+                "id": "792d1751-1ac5-4aec-8996-5d95972ec904",
+                "name": "info.projeto_info",
+                "value": "={{ $('pegaCardsFase').first().json.results.first().projeto_info}}",
+                "type": "object"
+              },
+              {
+                "id": "6105284b-4e81-4c46-8440-46f41c071120",
+                "name": "info.fase_info",
+                "value": "={\"fase_id\":{{ $('pegaInfoFase').item.json.id }},\"fase_nome\":\"{{ $('pegaInfoFase').item.json.nome }}\"}",
+                "type": "object"
+              },
+              {
+                "id": "d30a749e-a8a9-4ce4-8555-c3e0aa75096a",
+                "name": "card_count",
+                "value": "={{ $('pegaCardsFase').first().json.count}}",
+                "type": "number"
+              },
+              {
+                "id": "610e4d3b-1dcb-4896-bf4c-4038bebd3afa",
+                "name": "cards",
+                "value": "={{ $json.cards }}",
+                "type": "array"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1104,
+          0
+        ],
+        "id": "1a7bb667-d4d7-4231-a6cd-c8d196bc6f5b",
+        "name": "preparaObjResposta"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 3
+            },
+            "conditions": [
+              {
+                "id": "5f5443d4-d3cc-41bf-a9e6-8287df9b427a",
+                "leftValue": "={{ $itemIndex }}",
+                "rightValue": 5,
+                "operator": {
+                  "type": "number",
+                  "operation": "lt"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.filter",
+        "typeVersion": 2.3,
+        "position": [
+          208,
+          0
+        ],
+        "id": "a6e642b6-2b3c-41d3-ad68-e2d1c9b78df5",
+        "name": "filtraParaTeste",
+        "disabled": true
+      }
+    ],
+    "connections": {
+      "recebeChamada": {
+        "main": [
+          [
+            {
+              "node": "criaUiid",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "pegaSessaoNeat": {
+        "main": [
+          [
+            {
+              "node": "pegaInfoFase",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "criaUiid": {
+        "main": [
+          [
+            {
+              "node": "geraMetadados",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "geraMetadados": {
+        "main": [
+          [
+            {
+              "node": "pegaSessaoNeat",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "pegaInfoFase": {
+        "main": [
+          [
+            {
+              "node": "pegaCardsFase",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "pegaCardsFase": {
+        "main": [
+          [
+            {
+              "node": "temCard?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "temCard?": {
+        "main": [
+          [
+            {
+              "node": "separaCards",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "levantaErro",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "separaCards": {
+        "main": [
+          [
+            {
+              "node": "filtraParaTeste",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "removeBase64": {
+        "main": [
+          [
+            {
+              "node": "montaObjCard",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "montaObjCard": {
+        "main": [
+          [
+            {
+              "node": "juntaCards",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "juntaCards": {
+        "main": [
+          [
+            {
+              "node": "preparaObjResposta",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "filtraParaTeste": {
+        "main": [
+          [
+            {
+              "node": "removeBase64",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Miguel Kubrusly",
+    "name": "Version e856c865",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-02-11T17:51:06.611Z",
+        "id": 3,
+        "workflowId": "4oFgpwW3T5VYLBkmatmZt",
+        "versionId": "e856c865-ab76-45c2-80d0-c7634caf43e7",
+        "event": "activated",
+        "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e"
+      },
+      {
+        "createdAt": "2026-02-11T17:51:11.891Z",
+        "id": 4,
+        "workflowId": "4oFgpwW3T5VYLBkmatmZt",
+        "versionId": "e856c865-ab76-45c2-80d0-c7634caf43e7",
+        "event": "activated",
+        "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e"
+      }
+    ]
+  }
+}
