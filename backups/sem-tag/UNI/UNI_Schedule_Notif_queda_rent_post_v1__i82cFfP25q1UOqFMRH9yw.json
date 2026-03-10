@@ -1,0 +1,365 @@
+{
+  "updatedAt": "2026-03-09T18:54:52.410Z",
+  "createdAt": "2026-03-06T12:02:14.218Z",
+  "id": "i82cFfP25q1UOqFMRH9yw",
+  "name": "UNI_Schedule_Notif_queda_rent_post_v1",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "PlS62KJilKsPGxO2",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/PlS62KJilKsPGxO2",
+          "cachedResultName": "UNI_Workflow_Util_fetch_sess_v2"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "baseUrl": "https://hub-unifinance.novadata.dev/",
+            "loginPath": "login/",
+            "csrfFieldName": "csrftoken"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "baseUrl",
+              "displayName": "baseUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "loginPath",
+              "displayName": "loginPath",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "csrfFieldName",
+              "displayName": "csrfFieldName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "4b4f49b0-5f74-4530-b44b-6b1a302c4ffa",
+      "name": "get sess"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/data/files/uni/notifs/output/queda_rent_pf.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        432,
+        0
+      ],
+      "id": "0ca7ebd8-c566-4584-8f8e-c6d9bf1ef2f7",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "destinationKey": "queda_rent_pf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        640,
+        0
+      ],
+      "id": "4fc2b95e-50e2-4e2d-8832-7a8db86cb05b",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c607c30b-b697-4c83-a569-46e1694128e2",
+              "name": "queda_rent_pf",
+              "value": "={{ $json.queda_rent_pf.itens.notificacoes }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        848,
+        0
+      ],
+      "id": "7cb5c93c-31f4-40fa-8a81-0a357073e4dc",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "queda_rent_pf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1072,
+        0
+      ],
+      "id": "aad371ff-0b2f-4fd4-a032-01bdb1e9fcf1",
+      "name": "split"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "# Code in Python (Beta) — para Queda de Rentabilidade (queda_rent_pf)\n\nfrom html import escape\n\n# Funções auxiliares (deixadas intactas)\ndef to_brl(n: float) -> str:\n    \"\"\"Formata número como 1.234.567,89.\"\"\"\n    return f\"{n:,.2f}\".replace(\",\", \"X\").replace(\".\", \",\").replace(\"X\", \".\")\n\ndef to_pct(n: float) -> str:\n    \"\"\"Formata número como porcentagem (ex: -5,25%).\"\"\"\n    return f\"{n:,.2f}%\".replace(\",\", \"X\").replace(\".\", \",\").replace(\"X\", \".\")\n\ndef ensure_list(name, value):\n    if isinstance(value, list):\n        return value\n    try:\n        return value.to_py()\n    except Exception as e:\n        raise TypeError(f\"{name} não é lista nem JsProxy convertível: {type(value)}\") from e\n\ndef ensure_dict(name, value):\n    if isinstance(value, dict):\n        return value\n    try:\n        return value.to_py()\n    except Exception as e:\n        raise TypeError(f\"{name} não é dict nem JsProxy convertível: {type(value)}\") from e\n\nnew_items = []\n\nfor idx, item in enumerate(_input.all()):\n    j = item.json.to_py()\n\n    # ESTES CAMPOS ESTÃO CORRETOS AGORA, POIS SÃO CHAVES PRINCIPAIS:\n    nome = j[\"nome_alvo\"]\n    id = j[\"id_alvo\"]\n    responsaveis_raw = j[\"responsaveis\"]\n    \n    # NOVOS CAMPOS EXCLUSIVOS DE QUEDA_RENT\n    patrimonio = float(j[\"patrimonio_total\"])\n    rentabilidade_atual = float(j[\"rentabilidade_12_meses\"])\n    queda_percentual = float(j[\"queda_rent_12_meses\"])\n    detalhes_texto = escape(str(j[\"detalhes\"]))\n\n    responsaveis = ensure_list(\"responsaveis\", responsaveis_raw)\n\n    # 1. Monta o corpo da notificação em HTML\n    descricao_html = (\n        f\"<p>O cliente <strong>{escape(str(nome))}</strong> teve uma queda \"\n        f\"significativa na rentabilidade de sua carteira.</p>\"\n        f\"<ul>\"\n        f\"<li><strong>Detalhes:</strong> {detalhes_texto}</li>\"\n        f\"<li><strong>Queda Absoluta (12M):</strong> {to_pct(queda_percentual)}</li>\"\n        f\"<li><strong>Rentabilidade Atual (12M):</strong> {to_pct(rentabilidade_atual)}</li>\"\n        f\"<li><strong>Patrimônio Total:</strong> {to_brl(patrimonio)}</li>\"\n        f\"</ul>\"\n        f\"<p><em>Atenção: A rentabilidade atual exige uma avaliação imediata da posição e das alocações.</em></p>\"\n    )\n\n    # 2. Gera uma notificação por responsável\n    for resp in responsaveis:\n        if not isinstance(resp, (int, str)):\n            try:\n                resp = resp.to_py()\n            except Exception as e:\n                raise TypeError(f\"Responsável não é int/str nem JsProxy: {type(resp)}\") from e\n\n        novo = {\n            \"titulo\": \"Alerta Crítico: Queda de Rentabilidade na Carteira do Cliente\",\n            \"descricao\": descricao_html,\n            \"destinatario\": 1,\n            \"cliente_pf_id\": id,\n            \"nome_cliente_pf\": nome,\n        }\n        new_items.append({\n            \"json\": novo,\n            \"pairedItem\": {\"item\": idx},\n        })\n\nreturn new_items"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        0
+      ],
+      "id": "d784256d-5859-484d-a257-3391dc667063",
+      "name": "Code in Python (Beta)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$('get sess').item.json.baseUrl}}api/notificacao/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Referer",
+              "value": "={{ $('get sess').item.json.baseUrl }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Cookie",
+              "value": "=csrftoken={{ $('get sess').item.json.csrfCookie }}; sessionid={{ $('get sess').item.json.sessionId }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "={{ $('get sess').item.json.csrfCookie }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "off"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1488,
+        0
+      ],
+      "id": "c722195e-1e79-458f-b016-c06534896cc2",
+      "name": "POST",
+      "executeOnce": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7dadeeef-6912-4ff4-827e-14be6e207134",
+      "name": "When clicking ‘Execute workflow’"
+    }
+  ],
+  "connections": {
+    "get sess": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "split",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "split": {
+      "main": [
+        [
+          {
+            "node": "Code in Python (Beta)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in Python (Beta)": {
+      "main": [
+        [
+          {
+            "node": "POST",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "get sess",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "2c89dd74-dc40-49d1-80c6-9a62143b1383",
+  "activeVersionId": null,
+  "versionCounter": 4,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-06T12:02:14.218Z",
+      "createdAt": "2026-03-06T12:02:14.218Z",
+      "role": "workflow:owner",
+      "workflowId": "i82cFfP25q1UOqFMRH9yw",
+      "projectId": "aLeETedgrx3HypUV",
+      "project": {
+        "updatedAt": "2026-02-05T18:12:51.008Z",
+        "createdAt": "2026-02-05T17:11:33.764Z",
+        "id": "aLeETedgrx3HypUV",
+        "name": "Miguel Kubrusly <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-02-05T17:11:33.764Z",
+            "createdAt": "2026-02-05T17:11:33.764Z",
+            "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+            "projectId": "aLeETedgrx3HypUV",
+            "user": {
+              "updatedAt": "2026-03-10T03:07:07.287Z",
+              "createdAt": "2026-02-05T17:11:32.394Z",
+              "id": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+              "email": "infra@novadata.com.br",
+              "firstName": "Miguel",
+              "lastName": "Kubrusly",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-02-06T13:42:55.997Z",
+                "personalization_survey_n8n_version": "2.6.0",
+                "automationGoalDevops": [
+                  "data-syncing"
+                ],
+                "companyIndustryExtended": [
+                  "it-industry"
+                ],
+                "companySize": "<20",
+                "companyType": "other",
+                "role": "it",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "4oFgpwW3T5VYLBkmatmZt",
+                "userActivatedAt": 1772566324555,
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-03-10",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
