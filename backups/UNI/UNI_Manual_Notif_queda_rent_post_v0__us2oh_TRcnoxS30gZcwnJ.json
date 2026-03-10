@@ -1,0 +1,516 @@
+{
+  "updatedAt": "2026-03-09T18:54:52.410Z",
+  "createdAt": "2026-03-06T12:01:40.746Z",
+  "id": "us2oh_TRcnoxS30gZcwnJ",
+  "name": "UNI_Manual_Notif_queda_rent_post_v0",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "destinationKey": "emissores_fora_fgc",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        672,
+        672
+      ],
+      "id": "d2ad7dee-93a5-4fbf-8570-edc3aad6df7d",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0f89c47f-b2fb-46f5-ab57-0123216e7c2d",
+              "name": "emissores_fora_fgc",
+              "value": "={{ $json.emissores_fora_fgc.items }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        672
+      ],
+      "id": "7a75024d-23bf-4738-9a3c-836c06d920de",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        672
+      ],
+      "id": "00396f44-7996-4c22-a5e2-d0acd2c7b67f",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "emissores_fora_fgc",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        672
+      ],
+      "id": "3fcadbc0-76d0-4e84-bc54-88312c5efb6a",
+      "name": "Split Out1",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "PlS62KJilKsPGxO2",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/PlS62KJilKsPGxO2",
+          "cachedResultName": "UNI_Workflow_Util_fetch_sess_v2"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "baseUrl": "https://hub-unifinance.novadata.dev/",
+            "loginPath": "login/",
+            "csrfFieldName": "csrftoken"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "baseUrl",
+              "displayName": "baseUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "loginPath",
+              "displayName": "loginPath",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "csrfFieldName",
+              "displayName": "csrfFieldName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        672
+      ],
+      "id": "e31f2477-6099-4cf7-9fd9-4623f56a5df4",
+      "name": "get sess"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/data/files/uni/notifs/output/notificacoes_queda_rent_pf.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        448,
+        672
+      ],
+      "id": "04f93796-2142-4c69-b620-d8f096068b9a",
+      "name": "Read/Write Files from Disk PF"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hub.unifinance.com.br/api/notificacao/safemode/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Referer",
+              "value": "={{ $('get sess').item.json.baseUrl }}/"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Cookie",
+              "value": "=csrftoken={{ $('get sess').item.json.csrfCookie }}; sessionid={{ $('get sess').item.json.sessionId }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n\"titutlo\": \"Fundação sem registro de atendimento recente\",\n\"descricao\": \"A Fundação {{ $json.nome_alvo }}, com a política {{ $json.politica.replaceAll(\"_\",\" \").toTitleCase() }}, está há {{ $json.dias_sem_atendimento }} dias sem atendimento. É recomendável entrar em contato e agendar uma nova reunião conforme a política de relacionamento.\",\n\"destinatario\": {{ $json.officer_id }},\n\"tipo_notificacao\": \"Fundação sem atendimento recente\"\n}",
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "off"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        448
+      ],
+      "id": "754d2f75-a3ad-4ece-a18f-cad9c0e88a65",
+      "name": "post notif fund",
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hub.unifinance.com.br/api/notificacao/safemode/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Referer",
+              "value": "={{ $('get sess').item.json.baseUrl }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Cookie",
+              "value": "=csrftoken={{ $('get sess').item.json.csrfCookie }}; sessionid={{ $('get sess').item.json.sessionId }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n\"titutlo\": \"Cliente sem registro de atendimento recente\",\n\"descricao\": \"A Fundação {{ $json.nome_alvo }}, com a política {{ $json.politica.replaceAll(\"_\",\" \").toTitleCase() }}, está há {{ $json.dias_sem_atendimento }} dias sem atendimento. É recomendável entrar em contato e agendar uma nova reunião conforme a política de relacionamento.\",\n\"destinatario\": {{ $json.officer_id }},\n\"tipo_notificacao\": \"Fundação sem atendimento recente\"\n}",
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "off"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        224
+      ],
+      "id": "f1640b65-75b1-4f3c-b2ee-07afacaebd72",
+      "name": "post notif pf",
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$('get sess').item.json.baseUrl}}api/notificacao/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Referer",
+              "value": "={{ $('get sess').item.json.baseUrl }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Cookie",
+              "value": "=csrftoken={{ $('get sess').item.json.csrfCookie }}; sessionid={{ $('get sess').item.json.sessionId }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "={{ $('get sess').item.json.csrfCookie }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "off"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1568,
+        672
+      ],
+      "id": "14690296-9cfa-474c-acc6-d031ac699fef",
+      "name": "test1",
+      "executeOnce": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "from html import escape\n\n# --- Configuração ---\nDESC_LIMIT = 500  # Limite de caracteres para a descrição HTML\n\n# --- Funções de Ajuda ---\n\ndef ensure_list(name, value):\n    \"\"\"Garante que o valor é uma lista ou um JsProxy convertível para lista.\"\"\"\n    if isinstance(value, list):\n        return value\n    try:\n        # Tenta converter o JsProxy (n8n/js) para uma lista Python\n        return value.to_py()\n    except Exception as e:\n        raise TypeError(f\"'{name}' não é lista nem JsProxy convertível: {type(value)}\") from e\n\ndef to_num(v):\n    \"\"\"Converte um valor (int, float, str, None) para float, tratando formatos de string.\"\"\"\n    if v is None:\n        return None\n    if isinstance(v, (int, float)):\n        return float(v)\n    if isinstance(v, str):\n        s = v.strip()\n        try:\n            # Tenta converter string com formato BR (ponto separador de milhar, vírgula decimal)\n            s_norm = s.replace('.', '').replace(',', '.')\n            return float(s_norm)\n        except Exception:\n            try:\n                # Tenta conversão padrão (se for formato US, por exemplo)\n                return float(s)\n            except Exception:\n                return None\n    try:\n        # Última tentativa de conversão genérica (pode ser JsProxy de número)\n        return float(v)\n    except Exception:\n        return None\n\ndef warn(message: str, ctx: dict, idx: int):\n    \"\"\"Cria um objeto de saída formatado como 'warning' (n8n).\"\"\"\n    # A saída de 'warn' também é um dicionário com chave \"json\" (estrutura exigida pelo n8n)\n    return {\"json\": {\n        \"severity\": \"warning\",\n        \"message\": message,\n        \"context\": ctx,\n        \"item_index\": idx,\n    }}\n\n# --- Processamento Principal ---\n\n# Cabeçalho para o n8n:\n# Code in Python (Run Once for All Items)\n# SAÍDA FINAL (1 lista) — Formatação Compacta (Opção 3), SEM recalcular regras.\n# Retorna: [ {\"json\": ...}, {\"json\": ...}, ... ] (Formato exigido pelo n8n)\n\nout_items = []  # Lista de dicionários de saída, sempre com chave \"json\"\n\nfor idx, item in enumerate(_input.all()):\n    try:\n        j = item.json.to_py()\n        # Prioriza 'nome_alvo', senão 'nome', senão um padrão\n        nome = str(j.get(\"nome_alvo\") or j.get(\"nome\") or \"Cliente\")\n        \n        # Mapeamento de campos e conversão para número\n        queda_pp = to_num(j.get(\"queda_rent_12_meses\"))\n        r12 = to_num(j.get(\"rentabilidade_12_meses\"))\n\n        if queda_pp is None:\n            out_items.append(warn(\n                \"'queda_rent_12_meses' ausente ou inválido.\",\n                {\"nome\": nome}, \n                idx\n            ))\n            continue\n\n        # Lógica da Opção 3 compacta (sem recalcular a regra)\n        if r12 is not None:\n            # r_prev é calculado APENAS para exibição na descrição, a regra de negócio não é reavaliada\n            r_prev = r12 + queda_pp\n            descricao_html = (\n                f\"<p>O cliente <strong>{escape(nome)}</strong> teve uma \"\n                f\"<strong>queda de {queda_pp:.2f} p.p.</strong> na rentabilidade de 12 meses \"\n                f\"(<strong>{r_prev:.2f}% &rarr; {r12:.2f}%</strong>).</p>\"\n                \"<i>Recomendamos avaliar a carteira e a estratégia de investimento.</i>\"\n            )\n        else:\n            # Caso 'rentabilidade_12_meses' esteja ausente/inválido\n            descricao_html = (\n                f\"<p>O cliente <strong>{escape(nome)}</strong> teve uma \"\n                f\"<strong>queda de {queda_pp:.2f} p.p.</strong> na rentabilidade de 12 meses.</p>\"\n                \"<i>Recomendamos avaliar a carteira e a estratégia de investimento.</i>\"\n            )\n\n        # Checagem de limite da descrição\n        if len(descricao_html) > DESC_LIMIT:\n            out_items.append(warn(\n                f\"Descrição excede o limite de {DESC_LIMIT} caracteres.\",\n                {\"nome\": nome, \"limite\": DESC_LIMIT, \"len\": len(descricao_html)},\n                idx\n            ))\n            continue\n\n        # Extração e validação dos responsáveis (officers/usuarios_responsaveis)\n        responsaveis_raw = j.get(\"officers\") or j.get(\"usuarios_responsaveis\") or []\n        responsaveis = ensure_list(\"officers/usuarios_responsaveis\", responsaveis_raw)\n        \n        if not responsaveis:\n            out_items.append(warn(\n                \"Nenhum 'officer'/'usuarios_responsaveis' encontrado para notificação.\", \n                {\"nome\": nome}, \n                idx\n            ))\n            continue\n\n        # Criação dos itens de notificação (um por responsável)\n        for resp in responsaveis:\n            if not isinstance(resp, (int, str)):\n                try:\n                    resp = resp.to_py()  # Tenta converter JsProxy para int/str\n                except Exception:\n                    out_items.append(warn(\n                        \"Responsável inválido (não é int/str ou JsProxy).\", \n                        {\"nome\": nome}, \n                        idx\n                    ))\n                    continue # Pula este responsável, mas tenta o próximo\n\n            novo = {\n                \"titulo\": \"Alerta de Queda de Rentabilidade (≥ 15%)\", # Título padronizado e mais formal\n                \"descricao\": descricao_html,                         # Conteúdo HTML (≤ 500)\n                \"destinatario\": 1,                                # ID do Responsável\n                \"tipo_notificacao\": \"Queda de rentabilidade\",\n            }\n            out_items.append({\n                \"json\": novo,\n                \"pairedItem\": {\"item\": idx}, # Associa ao item original\n            })\n\n    except Exception as e:\n        out_items.append(warn(\n            \"Erro inesperado durante o processamento do item.\", \n            {\"error\": str(e)}, \n            idx\n        ))\n        continue # Processa o próximo item se houver um erro\n\nreturn out_items"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        672
+      ],
+      "id": "d632ad67-94d6-4d14-a3d1-53579627766c",
+      "name": "Code in Python (Beta)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "75791555-02c9-40d1-848b-fb2f8ddc6dff",
+              "leftValue": "={{ $itemIndex }}",
+              "rightValue": 10,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "44ba59dc-5b4f-4262-9999-ac98315041a7",
+      "name": "Filter",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "625e15d0-4863-4821-851e-bdedf14040bf",
+      "name": "Edit Fields1",
+      "disabled": true
+    }
+  ],
+  "connections": {
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "get sess",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get sess": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk PF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk PF": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Code in Python (Beta)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in Python (Beta)": {
+      "main": [
+        [
+          {
+            "node": "test1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "04a6fc53-09b1-4d9e-ad3e-37fe1ae02d6e",
+  "activeVersionId": null,
+  "versionCounter": 4,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-06T12:01:40.746Z",
+      "createdAt": "2026-03-06T12:01:40.746Z",
+      "role": "workflow:owner",
+      "workflowId": "us2oh_TRcnoxS30gZcwnJ",
+      "projectId": "aLeETedgrx3HypUV",
+      "project": {
+        "updatedAt": "2026-02-05T18:12:51.008Z",
+        "createdAt": "2026-02-05T17:11:33.764Z",
+        "id": "aLeETedgrx3HypUV",
+        "name": "Miguel Kubrusly <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-02-05T17:11:33.764Z",
+            "createdAt": "2026-02-05T17:11:33.764Z",
+            "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+            "projectId": "aLeETedgrx3HypUV",
+            "user": {
+              "updatedAt": "2026-03-10T03:07:07.287Z",
+              "createdAt": "2026-02-05T17:11:32.394Z",
+              "id": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+              "email": "infra@novadata.com.br",
+              "firstName": "Miguel",
+              "lastName": "Kubrusly",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-02-06T13:42:55.997Z",
+                "personalization_survey_n8n_version": "2.6.0",
+                "automationGoalDevops": [
+                  "data-syncing"
+                ],
+                "companyIndustryExtended": [
+                  "it-industry"
+                ],
+                "companySize": "<20",
+                "companyType": "other",
+                "role": "it",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "4oFgpwW3T5VYLBkmatmZt",
+                "userActivatedAt": 1772566324555,
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-03-10",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
