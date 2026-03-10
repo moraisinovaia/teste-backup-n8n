@@ -1,0 +1,877 @@
+{
+  "updatedAt": "2026-03-09T17:30:18.900Z",
+  "createdAt": "2026-02-26T11:22:14.468Z",
+  "id": "yFk48A5wLZSLjLYK5jfFC",
+  "name": "[LOGL]Services.Chatbot.CHAT_v6.1",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "description": "Nome da Ferramenta: lsSeguro\n \nDescrição:\nUse esta ferramenta para fazer uma listagem recursiva (ls -R) de diretórios para descobrir a estrutura de pastas e encontrar arquivos no projeto.\n\nRegras e Restrições Obrigatórias:\n1. Você não pode listar a raiz `/` inteira. Você deve especificar a pasta exata que deseja explorar.\n2. Os caminhos devem começar com `/` e referenciar apenas as pastas permitidas: `/apps/`, `/docs/` ou `/config/`. Exemplo válido: `/apps/components/`.\n3. É estritamente proibido usar navegação relativa com `..`.\n4. Pastas de dependências, cache e versionamento (como `node_modules`, `__pycache__`, `venv` e `.git`) estão ocultas e protegidas por padrão para evitar sobrecarga na sua janela de contexto. Não tente listá-las.\n\nFormato de Entrada:\nO parâmetro `dirs` deve ser sempre uma lista (array) de strings com os diretórios que você deseja listar.\nExemplo: {\"dirs\": [\"/apps/\", \"/config/\"]}",
+        "workflowId": {
+          "__rl": true,
+          "value": "G2aVtCDEFOeDvx-aWpvX3",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/G2aVtCDEFOeDvx-aWpvX3",
+          "cachedResultName": "[LOGL]ToolsChatbot.LsSeguro.Wf.v1"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "input": "={{ { \"dirs\": $fromAI(\"dirs\", \"Lista de diretórios para listar, ex: [\\\"/apps/\\\", \\\"/config/\\\"]\", \"json\") } }}"
+          },
+          "matchingColumns": [
+            "input"
+          ],
+          "schema": [
+            {
+              "id": "input",
+              "displayName": "input",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "object",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        1072,
+        208
+      ],
+      "id": "f67cde1a-ca19-4ec8-9470-cef18278ff80",
+      "name": "lsSeguro"
+    },
+    {
+      "parameters": {
+        "public": true,
+        "mode": "webhook",
+        "options": {
+          "allowedOrigins": "https://ag-analise-neat.novadata.dev/",
+          "responseMode": "lastNode"
+        }
+      },
+      "id": "d8845943-c1e8-4015-b422-849d173e2f37",
+      "name": "recebeMensagem",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "position": [
+        -208,
+        -16
+      ],
+      "webhookId": "0e2a5635-fbc8-47b2-9f9f-2dbce85fc8ff",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "binaryPropertyName": "contexto",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        -16
+      ],
+      "id": "86fdfbe0-1947-4994-b307-7b7a2db98490",
+      "name": "converteBinarioJSON"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ce2bf24e-8ee0-4f9a-8e91-89b7e7f445ae",
+              "name": "contexto",
+              "value": "={{ $json.data[0].contexto }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        464,
+        -16
+      ],
+      "id": "d9994451-3aab-452a-9ad4-0ac9c2b1087c",
+      "name": "preparaVarContexto"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-5-mini"
+        },
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "3d813579-5a54-4cbb-9f99-4af7ae84c5f5",
+      "name": "openAI",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        688,
+        208
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+          "id": "***",
+          "name": "***"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 15
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        816,
+        208
+      ],
+      "id": "c494f4cc-8a66-4aa7-b7d4-ead3cad22312",
+      "name": "memoriaSimples"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Query', 'SELECT query SQL completa para executar no banco de dados', 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        1200,
+        208
+      ],
+      "id": "eaab83e7-4cc4-46c6-9b18-f9ac46a2878f",
+      "name": "executaQueryBanco",
+      "credentials": {
+        "postgres": {
+          "id": "***",
+          "name": "***"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('recebeMensagem').item.json.chatInput }}",
+        "options": {
+          "systemMessage": "=# 🤖 Assistente de Gestão de Projetos\n\n**Seu Papel:** Apoio gerencial, priorização e inteligência de projeto. Você **NÃO** é desenvolvedor. O acesso ao código-fonte serve *exclusivamente* para entender como cálculos, métricas ou regras de negócio funcionam. Email e GitHub estão indisponíveis (informe isso se solicitado e ofereça buscar dados via SQL ou arquivos locais).\n\n### 🛠️ FERRAMENTAS\n\n* **`executaQueryBanco`**: Executa SQL no banco do Neat.\n* **`lsSeguro` / `catSeguro**`: Lista pastas e lê arquivos locais para entender o processamento dos dados.\n\n---\n\n### 📂 CONTEXTO\n\n*(Consulte estas variáveis antes de qualquer ação)*\n\n* **Dados dos Projetos:** `{{ $json.contexto[1].projetos.toJsonString() }}`\n* **Dados das Fases:** `{{ $json.contexto[2].fases.toJsonString() }}`\n* **Schema do Banco (Tabelas/Colunas Permitidas):** `{{ $json.contexto[3].schema.map(item => item.toJsonString()) }}`\n* **Diretórios dentro de \"apps/\"**: `{{ $json.contexto[0].dirsEmApps }}`"
+        }
+      },
+      "id": "514dec37-addc-475c-8ed5-0f17b4c6a69a",
+      "name": "chamadaAPIAgente",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        880,
+        -16
+      ],
+      "typeVersion": 1.8
+    },
+    {
+      "parameters": {
+        "resource": "execution",
+        "operation": "get",
+        "executionId": "=",
+        "options": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        320
+      ],
+      "id": "e4ff2286-d94d-4329-8b59-fd6502795a5b",
+      "name": "Get an execution",
+      "credentials": {
+        "n8nApi": {
+          "id": "***",
+          "name": "***"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "bucketName": "n8n-novadata-dev",
+        "fileKey": "[LOGL]contextoSystemPrompt.json",
+        "binaryPropertyName": "contexto"
+      },
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        16,
+        -16
+      ],
+      "id": "5f400de8-3597-42f1-bf89-e95065511a38",
+      "name": "getContextJSON",
+      "credentials": {
+        "s3": {
+          "id": "***",
+          "name": "***"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## DEFASAGENS\n",
+        "height": 176,
+        "width": 304
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        -384
+      ],
+      "id": "018cae41-ee9a-4077-a8b7-a108a8fca836",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "description": "Nome da Ferramenta: catSeguro\n\nDescrição:\nUse esta ferramenta para ler o conteúdo textual de um ou mais arquivos dentro do projeto. O sistema de arquivos usa uma raiz virtual `/`. \n\nRegras e Restrições Obrigatórias:\n1. Os caminhos devem começar com `/` e referenciar arquivos dentro das pastas permitidas: `/apps/`, `/docs/` ou `/config/`. Exemplo válido: `/apps/main.py`.\n2. Também é permitido ler os arquivos exatos: `/README.md` e `/AGENTS.md`.\n3. É estritamente proibido usar navegação relativa com `..`.\n4. O acesso a arquivos de ambiente (como `.env`), cache ou dependências é bloqueado.\n\nFormato de Entrada: \nO parâmetro `paths` deve ser sempre uma lista (array) de strings com os caminhos completos dos arquivos que você deseja ler.\nExemplo: {\"paths\": [\"/apps/main.py\", \"/docs/api.md\"]}",
+        "workflowId": {
+          "__rl": true,
+          "value": "skJ1OcXfcPH8R_7MOHNg7",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/skJ1OcXfcPH8R_7MOHNg7",
+          "cachedResultName": "[LOGL]ToolsChatbot.CatSeguro.Wf.v1"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "input": "={{ { \"paths\": $fromAI(\"paths\", \"Lista de caminhos dos arquivos para ler, ex: [\\\"/apps/main.py\\\", \\\"/docs/api.md\\\"]\", \"json\") } }}"
+          },
+          "matchingColumns": [
+            "input"
+          ],
+          "schema": [
+            {
+              "id": "input",
+              "displayName": "input",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "object"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        944,
+        208
+      ],
+      "id": "eb43e73e-41f8-4f27-a958-b40c9afbf6ce",
+      "name": "catSeguro"
+    }
+  ],
+  "connections": {
+    "lsSeguro": {
+      "ai_tool": [
+        [
+          {
+            "node": "chamadaAPIAgente",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "recebeMensagem": {
+      "main": [
+        [
+          {
+            "node": "getContextJSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "converteBinarioJSON": {
+      "main": [
+        [
+          {
+            "node": "preparaVarContexto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "preparaVarContexto": {
+      "main": [
+        [
+          {
+            "node": "chamadaAPIAgente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "openAI": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "chamadaAPIAgente",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "memoriaSimples": {
+      "ai_memory": [
+        [
+          {
+            "node": "chamadaAPIAgente",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "executaQueryBanco": {
+      "ai_tool": [
+        [
+          {
+            "node": "chamadaAPIAgente",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getContextJSON": {
+      "main": [
+        [
+          {
+            "node": "converteBinarioJSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "catSeguro": {
+      "ai_tool": [
+        [
+          {
+            "node": "chamadaAPIAgente",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "c9c81cc6-835e-4bb6-ae57-07274dcff8ca",
+  "activeVersionId": "f68d3ac8-9c57-4cad-af21-24eeede9e3e2",
+  "versionCounter": 180,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-26T11:22:14.468Z",
+      "createdAt": "2026-02-26T11:22:14.468Z",
+      "role": "workflow:owner",
+      "workflowId": "yFk48A5wLZSLjLYK5jfFC",
+      "projectId": "aLeETedgrx3HypUV",
+      "project": {
+        "updatedAt": "2026-02-05T18:12:51.008Z",
+        "createdAt": "2026-02-05T17:11:33.764Z",
+        "id": "aLeETedgrx3HypUV",
+        "name": "Miguel Kubrusly <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-02-05T17:11:33.764Z",
+            "createdAt": "2026-02-05T17:11:33.764Z",
+            "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+            "projectId": "aLeETedgrx3HypUV",
+            "user": {
+              "updatedAt": "2026-03-10T03:07:07.287Z",
+              "createdAt": "2026-02-05T17:11:32.394Z",
+              "id": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+              "email": "infra@novadata.com.br",
+              "firstName": "Miguel",
+              "lastName": "Kubrusly",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-02-06T13:42:55.997Z",
+                "personalization_survey_n8n_version": "2.6.0",
+                "automationGoalDevops": [
+                  "data-syncing"
+                ],
+                "companyIndustryExtended": [
+                  "it-industry"
+                ],
+                "companySize": "<20",
+                "companyType": "other",
+                "role": "it",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "4oFgpwW3T5VYLBkmatmZt",
+                "userActivatedAt": 1772566324555,
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-03-10",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-06T15:02:49.033Z",
+      "createdAt": "2026-03-06T15:02:49.033Z",
+      "id": "WefOyCNePUH6cMEC",
+      "name": "prod"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-03-06T16:39:27.262Z",
+    "createdAt": "2026-03-06T16:39:25.430Z",
+    "versionId": "f68d3ac8-9c57-4cad-af21-24eeede9e3e2",
+    "workflowId": "yFk48A5wLZSLjLYK5jfFC",
+    "nodes": [
+      {
+        "parameters": {
+          "description": "Nome da Ferramenta: lsSeguro\n \nDescrição:\nUse esta ferramenta para fazer uma listagem recursiva (ls -R) de diretórios para descobrir a estrutura de pastas e encontrar arquivos no projeto.\n\nRegras e Restrições Obrigatórias:\n1. Você não pode listar a raiz `/` inteira. Você deve especificar a pasta exata que deseja explorar.\n2. Os caminhos devem começar com `/` e referenciar apenas as pastas permitidas: `/apps/`, `/docs/` ou `/config/`. Exemplo válido: `/apps/components/`.\n3. É estritamente proibido usar navegação relativa com `..`.\n4. Pastas de dependências, cache e versionamento (como `node_modules`, `__pycache__`, `venv` e `.git`) estão ocultas e protegidas por padrão para evitar sobrecarga na sua janela de contexto. Não tente listá-las.\n\nFormato de Entrada:\nO parâmetro `dirs` deve ser sempre uma lista (array) de strings com os diretórios que você deseja listar.\nExemplo: {\"dirs\": [\"/apps/\", \"/config/\"]}",
+          "workflowId": {
+            "__rl": true,
+            "value": "G2aVtCDEFOeDvx-aWpvX3",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/G2aVtCDEFOeDvx-aWpvX3",
+            "cachedResultName": "[LOGL]ToolsChatbot.LsSeguro.Wf.v1"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "input": "={{ { \"dirs\": $fromAI(\"dirs\", \"Lista de diretórios para listar, ex: [\\\"/apps/\\\", \\\"/config/\\\"]\", \"json\") } }}"
+            },
+            "matchingColumns": [
+              "input"
+            ],
+            "schema": [
+              {
+                "id": "input",
+                "displayName": "input",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "object",
+                "removed": false
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+        "typeVersion": 2.2,
+        "position": [
+          1072,
+          208
+        ],
+        "id": "f67cde1a-ca19-4ec8-9470-cef18278ff80",
+        "name": "lsSeguro"
+      },
+      {
+        "parameters": {
+          "public": true,
+          "mode": "webhook",
+          "options": {
+            "allowedOrigins": "https://ag-analise-neat.novadata.dev/",
+            "responseMode": "lastNode"
+          }
+        },
+        "id": "d8845943-c1e8-4015-b422-849d173e2f37",
+        "name": "recebeMensagem",
+        "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+        "position": [
+          -208,
+          -16
+        ],
+        "webhookId": "0e2a5635-fbc8-47b2-9f9f-2dbce85fc8ff",
+        "typeVersion": 1.1
+      },
+      {
+        "parameters": {
+          "operation": "fromJson",
+          "binaryPropertyName": "contexto",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.extractFromFile",
+        "typeVersion": 1.1,
+        "position": [
+          240,
+          -16
+        ],
+        "id": "86fdfbe0-1947-4994-b307-7b7a2db98490",
+        "name": "converteBinarioJSON"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "ce2bf24e-8ee0-4f9a-8e91-89b7e7f445ae",
+                "name": "contexto",
+                "value": "={{ $json.data[0].contexto }}",
+                "type": "array"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          464,
+          -16
+        ],
+        "id": "d9994451-3aab-452a-9ad4-0ac9c2b1087c",
+        "name": "preparaVarContexto"
+      },
+      {
+        "parameters": {
+          "model": {
+            "__rl": true,
+            "value": "gpt-5-mini",
+            "mode": "list",
+            "cachedResultName": "gpt-5-mini"
+          },
+          "options": {
+            "timeout": 180000
+          }
+        },
+        "id": "3d813579-5a54-4cbb-9f99-4af7ae84c5f5",
+        "name": "openAI",
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "position": [
+          688,
+          208
+        ],
+        "typeVersion": 1.2,
+        "credentials": {
+          "openAiApi": {
+            "id": "cc2fV25M1QumK5VN",
+            "name": "OpenAi account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "contextWindowLength": 15
+        },
+        "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+        "typeVersion": 1.3,
+        "position": [
+          816,
+          208
+        ],
+        "id": "c494f4cc-8a66-4aa7-b7d4-ead3cad22312",
+        "name": "memoriaSimples"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "{{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Query', 'SELECT query SQL completa para executar no banco de dados', 'string') }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgresTool",
+        "typeVersion": 2.6,
+        "position": [
+          1200,
+          208
+        ],
+        "id": "eaab83e7-4cc4-46c6-9b18-f9ac46a2878f",
+        "name": "executaQueryBanco",
+        "credentials": {
+          "postgres": {
+            "id": "PqtZKOiwkOMl6CM8",
+            "name": "usuario n8n - labs dev"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $('recebeMensagem').item.json.chatInput }}",
+          "options": {
+            "systemMessage": "=# 🤖 Assistente de Gestão de Projetos\n\n**Seu Papel:** Apoio gerencial, priorização e inteligência de projeto. Você **NÃO** é desenvolvedor. O acesso ao código-fonte serve *exclusivamente* para entender como cálculos, métricas ou regras de negócio funcionam. Email e GitHub estão indisponíveis (informe isso se solicitado e ofereça buscar dados via SQL ou arquivos locais).\n\n### 🛠️ FERRAMENTAS\n\n* **`executaQueryBanco`**: Executa SQL no banco do Neat.\n* **`lsSeguro` / `catSeguro**`: Lista pastas e lê arquivos locais para entender o processamento dos dados.\n\n---\n\n### 📂 CONTEXTO\n\n*(Consulte estas variáveis antes de qualquer ação)*\n\n* **Dados dos Projetos:** `{{ $json.contexto[1].projetos.toJsonString() }}`\n* **Dados das Fases:** `{{ $json.contexto[2].fases.toJsonString() }}`\n* **Schema do Banco (Tabelas/Colunas Permitidas):** `{{ $json.contexto[3].schema.map(item => item.toJsonString()) }}`\n* **Diretórios dentro de \"apps/\"**: `{{ $json.contexto[0].dirsEmApps }}`"
+          }
+        },
+        "id": "514dec37-addc-475c-8ed5-0f17b4c6a69a",
+        "name": "chamadaAPIAgente",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "position": [
+          880,
+          -16
+        ],
+        "typeVersion": 1.8
+      },
+      {
+        "parameters": {
+          "resource": "execution",
+          "operation": "get",
+          "executionId": "=",
+          "options": {},
+          "requestOptions": {}
+        },
+        "type": "n8n-nodes-base.n8n",
+        "typeVersion": 1,
+        "position": [
+          -208,
+          320
+        ],
+        "id": "e4ff2286-d94d-4329-8b59-fd6502795a5b",
+        "name": "Get an execution",
+        "credentials": {
+          "n8nApi": {
+            "id": "h44ZMtftwb6y87Zr",
+            "name": "n8n account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "bucketName": "n8n-novadata-dev",
+          "fileKey": "[LOGL]contextoSystemPrompt.json",
+          "binaryPropertyName": "contexto"
+        },
+        "type": "n8n-nodes-base.s3",
+        "typeVersion": 1,
+        "position": [
+          16,
+          -16
+        ],
+        "id": "5f400de8-3597-42f1-bf89-e95065511a38",
+        "name": "getContextJSON",
+        "credentials": {
+          "s3": {
+            "id": "XIGCaJSfw5Vs1WRq",
+            "name": "S3 account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "content": "## DEFASAGENS\n",
+          "height": 176,
+          "width": 304
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -256,
+          -384
+        ],
+        "id": "018cae41-ee9a-4077-a8b7-a108a8fca836",
+        "name": "Sticky Note"
+      },
+      {
+        "parameters": {
+          "description": "Nome da Ferramenta: catSeguro\n\nDescrição:\nUse esta ferramenta para ler o conteúdo textual de um ou mais arquivos dentro do projeto. O sistema de arquivos usa uma raiz virtual `/`. \n\nRegras e Restrições Obrigatórias:\n1. Os caminhos devem começar com `/` e referenciar arquivos dentro das pastas permitidas: `/apps/`, `/docs/` ou `/config/`. Exemplo válido: `/apps/main.py`.\n2. Também é permitido ler os arquivos exatos: `/README.md` e `/AGENTS.md`.\n3. É estritamente proibido usar navegação relativa com `..`.\n4. O acesso a arquivos de ambiente (como `.env`), cache ou dependências é bloqueado.\n\nFormato de Entrada: \nO parâmetro `paths` deve ser sempre uma lista (array) de strings com os caminhos completos dos arquivos que você deseja ler.\nExemplo: {\"paths\": [\"/apps/main.py\", \"/docs/api.md\"]}",
+          "workflowId": {
+            "__rl": true,
+            "value": "skJ1OcXfcPH8R_7MOHNg7",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/skJ1OcXfcPH8R_7MOHNg7",
+            "cachedResultName": "[LOGL]ToolsChatbot.CatSeguro.Wf.v1"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "input": "={{ { \"paths\": $fromAI(\"paths\", \"Lista de caminhos dos arquivos para ler, ex: [\\\"/apps/main.py\\\", \\\"/docs/api.md\\\"]\", \"json\") } }}"
+            },
+            "matchingColumns": [
+              "input"
+            ],
+            "schema": [
+              {
+                "id": "input",
+                "displayName": "input",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "object"
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+        "typeVersion": 2.2,
+        "position": [
+          944,
+          208
+        ],
+        "id": "eb43e73e-41f8-4f27-a958-b40c9afbf6ce",
+        "name": "catSeguro"
+      }
+    ],
+    "connections": {
+      "lsSeguro": {
+        "ai_tool": [
+          [
+            {
+              "node": "chamadaAPIAgente",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "recebeMensagem": {
+        "main": [
+          [
+            {
+              "node": "getContextJSON",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "converteBinarioJSON": {
+        "main": [
+          [
+            {
+              "node": "preparaVarContexto",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "preparaVarContexto": {
+        "main": [
+          [
+            {
+              "node": "chamadaAPIAgente",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "openAI": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "chamadaAPIAgente",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "memoriaSimples": {
+        "ai_memory": [
+          [
+            {
+              "node": "chamadaAPIAgente",
+              "type": "ai_memory",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "executaQueryBanco": {
+        "ai_tool": [
+          [
+            {
+              "node": "chamadaAPIAgente",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "getContextJSON": {
+        "main": [
+          [
+            {
+              "node": "converteBinarioJSON",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "catSeguro": {
+        "ai_tool": [
+          [
+            {
+              "node": "chamadaAPIAgente",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Miguel Kubrusly",
+    "name": "Version f68d3ac8",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-06T16:39:27.259Z",
+        "id": 67,
+        "workflowId": "yFk48A5wLZSLjLYK5jfFC",
+        "versionId": "f68d3ac8-9c57-4cad-af21-24eeede9e3e2",
+        "event": "activated",
+        "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e"
+      }
+    ]
+  }
+}
