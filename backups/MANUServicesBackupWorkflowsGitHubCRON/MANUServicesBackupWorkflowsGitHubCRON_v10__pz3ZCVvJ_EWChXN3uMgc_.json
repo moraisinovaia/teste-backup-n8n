@@ -1,0 +1,946 @@
+{
+  "updatedAt": "2026-03-10T03:24:30.045Z",
+  "createdAt": "2026-03-10T03:13:38.040Z",
+  "id": "pz3ZCVvJ_EWChXN3uMgc_",
+  "name": "[MANU]Services.BackupWorkflowsGitHub.CRON_v1.0",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "ef65e9fc-0f2b-4409-ac1d-4d2257ace23e",
+      "name": "agendarExecucao",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        816
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst dateStr = now.toISOString().replace('T', ' ').substring(0, 19);\nreturn [{ json: { commitDate: dateStr } }];"
+      },
+      "id": "b8833992-14a7-4ba1-b47d-a2da8bb249a6",
+      "name": "gerarTimestampCommit",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        816
+      ]
+    },
+    {
+      "parameters": {
+        "filters": {},
+        "requestOptions": {}
+      },
+      "id": "a19710d6-6c78-4a21-a093-c453187acda2",
+      "name": "listarWorkflows",
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        816
+      ],
+      "credentials": {
+        "n8nApi": {
+          "id": "***",
+          "name": "***"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "30d28305-7f88-4a7c-bb3d-519a85b47b1e",
+      "name": "iterarWorkflows",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1328,
+        816
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "workflowId": "={{ $json.id }}",
+        "requestOptions": {}
+      },
+      "id": "57acfd66-280d-419c-a0a4-e3795fbb9e6e",
+      "name": "buscarWorkflowCompleto",
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        976
+      ],
+      "credentials": {
+        "n8nApi": {
+          "id": "***",
+          "name": "***"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const workflow = $input.first().json;\nconst name = workflow.name || 'sem-nome';\n\nconst slugify = (text) => {\n  return text.toString()\n    .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n    .replace(/[^a-zA-Z0-9\\s-_]/g, '')\n    .replace(/\\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');\n};\n\n// Pega o primeiro segmento antes de _ - ou espaço\nconst firstSegment = name.split(/[_\\-\\s]/)[0];\nconst folder = slugify(firstSegment) || 'GERAL';\nconst cleanName = slugify(name);\n\n// Sanitizar credentials — remove IDs e nomes de credenciais\nconst sanitized = JSON.parse(JSON.stringify(workflow));\nif (sanitized.nodes) {\n  sanitized.nodes.forEach(node => {\n    if (node.credentials) {\n      for (const key of Object.keys(node.credentials)) {\n        node.credentials[key] = { id: '***', name: '***' };\n      }\n    }\n  });\n}\n\nconst filePath = `backups/${folder}/${cleanName}__${workflow.id}.json`;\nconst content = JSON.stringify(sanitized, null, 2);\n\nreturn [{\n  json: {\n    filePath,\n    content,\n    workflowName: workflow.name,\n    workflowId: workflow.id\n  }\n}];"
+      },
+      "id": "6782044a-0f01-4502-b89d-76ee4a03a477",
+      "name": "prepararArquivoBackup",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1776,
+        976
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": "moraisinovaia",
+        "repository": "teste-backup-n8n",
+        "filePath": "={{ $json.filePath }}",
+        "asBinaryProperty": false,
+        "additionalParameters": {}
+      },
+      "id": "2215721d-dba9-4e3f-8d04-c3506d19c90f",
+      "name": "verificarArquivoGitHub",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        976
+      ],
+      "webhookId": "2b8e0e1b-d263-45ee-9839-288c254cc8dc",
+      "credentials": {
+        "githubApi": {
+          "id": "***",
+          "name": "***"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "file-exists-check",
+              "leftValue": "={{ $json.sha }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "edcf9574-3f95-4a60-9a98-ca8ea52f3576",
+      "name": "checarArquivoExiste",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2208,
+        976
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "edit",
+        "owner": "moraisinovaia",
+        "repository": "teste-backup-n8n",
+        "filePath": "={{ $('prepararArquivoBackup').item.json.filePath }}",
+        "fileContent": "={{ $('prepararArquivoBackup').item.json.content }}",
+        "commitMessage": "=✏️ Atualizado: {{ $('prepararArquivoBackup').item.json.workflowName }} ({{ $('gerarTimestampCommit').first().json.commitDate }})"
+      },
+      "id": "d8776e67-642c-4e11-9c64-42fd4c249e22",
+      "name": "atualizarArquivoGitHub",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [
+        2432,
+        864
+      ],
+      "webhookId": "435c9289-92e6-4693-849e-a727bfd5b2c4",
+      "credentials": {
+        "githubApi": {
+          "id": "***",
+          "name": "***"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": "moraisinovaia",
+        "repository": "teste-backup-n8n",
+        "filePath": "={{ $('prepararArquivoBackup').item.json.filePath }}",
+        "fileContent": "={{ $('prepararArquivoBackup').item.json.content }}",
+        "commitMessage": "=🆕 Criado: {{ $('prepararArquivoBackup').item.json.workflowName }} ({{ $('gerarTimestampCommit').first().json.commitDate }})"
+      },
+      "id": "5c04b1e0-e173-4ba2-b92e-6efb0fecbc35",
+      "name": "criarArquivoGitHub",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [
+        2432,
+        1088
+      ],
+      "webhookId": "68ce5abd-c727-49f5-81f7-15283f72eff9",
+      "credentials": {
+        "githubApi": {
+          "id": "***",
+          "name": "***"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-status",
+              "name": "status",
+              "value": "={{ $json.content ? '✅ Backup OK' : '⚠️ Verificar' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "62829a9e-5267-490d-a6b7-61f274e1dd3d",
+      "name": "registrarStatusBackup",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2656,
+        976
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "b9190fad-8fac-4c75-84ae-81de69b20004",
+      "name": "aguardarRateLimit",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2880,
+        976
+      ],
+      "webhookId": "5746ad20-43f5-4dfa-adb9-6ddf5e59363e"
+    },
+    {
+      "parameters": {
+        "content": "# BackupWorkflowsGitHub\n\nProjeto: Manutenção\nGatilho: CRON (a cada hora)\nSegurança: n8n API Key + GitHub OAuth Token\nDocs: —\nDescrição: Backup automático de todos os workflows da instância para repositório GitHub. Lista workflows via API do n8n, itera um a um, sanitiza credenciais e faz commit (criação ou atualização) no repositório configurado.",
+        "height": 300,
+        "width": 672,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -128,
+        16
+      ],
+      "typeVersion": 1,
+      "id": "f0b87ab7-8f5b-47b1-8c0d-f39488d02746",
+      "name": "docWorkflow"
+    },
+    {
+      "parameters": {
+        "content": "## Lógica do Código — prepararArquivoBackup\n\n1. slugify()\n   Normaliza o nome do workflow para uso como caminho de arquivo:\n   - Remove acentos (normalize NFD)\n   - Remove caracteres especiais (mantém letras, números, hífen e underscore)\n   - Substitui espaços por hífen\n\n2. Pasta (folder)\n   Pega apenas o PRIMEIRO segmento do nome, quebrando no primeiro\n   _ - ou espaço encontrado.\n   Ex: \"LOG_cron_banco\" → pasta \"LOG\"\n   Ex: \"UNI_schedule_notif\" → pasta \"UNI\"\n   Se nenhum segmento for encontrado, cai em \"GERAL\".\n\n3. Sanitização de Credentials\n   Clona o workflow e substitui id/name de cada credential\n   por '***', evitando que identificadores internos sejam\n   enviados ao GitHub.\n\n4. filePath\n   Monta o caminho final do arquivo:\n   backups/{PASTA}/{nome-completo}__{id}.json",
+        "height": 496,
+        "width": 672,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -128,
+        368
+      ],
+      "typeVersion": 1,
+      "id": "c73d11e6-cf16-4d35-b8c9-3225a89ff6b3",
+      "name": "docCodigoPrepararBackup"
+    }
+  ],
+  "connections": {
+    "agendarExecucao": {
+      "main": [
+        [
+          {
+            "node": "gerarTimestampCommit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gerarTimestampCommit": {
+      "main": [
+        [
+          {
+            "node": "listarWorkflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "listarWorkflows": {
+      "main": [
+        [
+          {
+            "node": "iterarWorkflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "iterarWorkflows": {
+      "main": [
+        [],
+        [
+          {
+            "node": "buscarWorkflowCompleto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscarWorkflowCompleto": {
+      "main": [
+        [
+          {
+            "node": "prepararArquivoBackup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prepararArquivoBackup": {
+      "main": [
+        [
+          {
+            "node": "verificarArquivoGitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "verificarArquivoGitHub": {
+      "main": [
+        [
+          {
+            "node": "checarArquivoExiste",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "checarArquivoExiste": {
+      "main": [
+        [
+          {
+            "node": "atualizarArquivoGitHub",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "criarArquivoGitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "atualizarArquivoGitHub": {
+      "main": [
+        [
+          {
+            "node": "registrarStatusBackup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "criarArquivoGitHub": {
+      "main": [
+        [
+          {
+            "node": "registrarStatusBackup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "registrarStatusBackup": {
+      "main": [
+        [
+          {
+            "node": "aguardarRateLimit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "aguardarRateLimit": {
+      "main": [
+        [
+          {
+            "node": "iterarWorkflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "e29e7b8c-204f-4b09-a21e-6f997b8ebc72",
+  "activeVersionId": "e29e7b8c-204f-4b09-a21e-6f997b8ebc72",
+  "versionCounter": 11,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-03-10T03:13:38.040Z",
+      "createdAt": "2026-03-10T03:13:38.040Z",
+      "role": "workflow:owner",
+      "workflowId": "pz3ZCVvJ_EWChXN3uMgc_",
+      "projectId": "aLeETedgrx3HypUV",
+      "project": {
+        "updatedAt": "2026-02-05T18:12:51.008Z",
+        "createdAt": "2026-02-05T17:11:33.764Z",
+        "id": "aLeETedgrx3HypUV",
+        "name": "Miguel Kubrusly <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-02-05T17:11:33.764Z",
+            "createdAt": "2026-02-05T17:11:33.764Z",
+            "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+            "projectId": "aLeETedgrx3HypUV",
+            "user": {
+              "updatedAt": "2026-03-10T03:07:07.287Z",
+              "createdAt": "2026-02-05T17:11:32.394Z",
+              "id": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+              "email": "infra@novadata.com.br",
+              "firstName": "Miguel",
+              "lastName": "Kubrusly",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-02-06T13:42:55.997Z",
+                "personalization_survey_n8n_version": "2.6.0",
+                "automationGoalDevops": [
+                  "data-syncing"
+                ],
+                "companyIndustryExtended": [
+                  "it-industry"
+                ],
+                "companySize": "<20",
+                "companyType": "other",
+                "role": "it",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "4oFgpwW3T5VYLBkmatmZt",
+                "userActivatedAt": 1772566324555,
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-03-10",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-03-10T03:24:35.845Z",
+    "createdAt": "2026-03-10T03:24:30.035Z",
+    "versionId": "e29e7b8c-204f-4b09-a21e-6f997b8ebc72",
+    "workflowId": "pz3ZCVvJ_EWChXN3uMgc_",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "hours"
+              }
+            ]
+          }
+        },
+        "id": "ef65e9fc-0f2b-4409-ac1d-4d2257ace23e",
+        "name": "agendarExecucao",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          672,
+          816
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const now = new Date();\nconst dateStr = now.toISOString().replace('T', ' ').substring(0, 19);\nreturn [{ json: { commitDate: dateStr } }];"
+        },
+        "id": "b8833992-14a7-4ba1-b47d-a2da8bb249a6",
+        "name": "gerarTimestampCommit",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          896,
+          816
+        ]
+      },
+      {
+        "parameters": {
+          "filters": {},
+          "requestOptions": {}
+        },
+        "id": "a19710d6-6c78-4a21-a093-c453187acda2",
+        "name": "listarWorkflows",
+        "type": "n8n-nodes-base.n8n",
+        "typeVersion": 1,
+        "position": [
+          1120,
+          816
+        ],
+        "credentials": {
+          "n8nApi": {
+            "id": "ldzXyjdhCozeUCAX",
+            "name": "[MANU]N8n_API_Key"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "id": "30d28305-7f88-4a7c-bb3d-519a85b47b1e",
+        "name": "iterarWorkflows",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          1328,
+          816
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "get",
+          "workflowId": "={{ $json.id }}",
+          "requestOptions": {}
+        },
+        "id": "57acfd66-280d-419c-a0a4-e3795fbb9e6e",
+        "name": "buscarWorkflowCompleto",
+        "type": "n8n-nodes-base.n8n",
+        "typeVersion": 1,
+        "position": [
+          1600,
+          976
+        ],
+        "credentials": {
+          "n8nApi": {
+            "id": "ldzXyjdhCozeUCAX",
+            "name": "[MANU]N8n_API_Key"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const workflow = $input.first().json;\nconst name = workflow.name || 'sem-nome';\n\nconst slugify = (text) => {\n  return text.toString()\n    .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n    .replace(/[^a-zA-Z0-9\\s-_]/g, '')\n    .replace(/\\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');\n};\n\n// Pega o primeiro segmento antes de _ - ou espaço\nconst firstSegment = name.split(/[_\\-\\s]/)[0];\nconst folder = slugify(firstSegment) || 'GERAL';\nconst cleanName = slugify(name);\n\n// Sanitizar credentials — remove IDs e nomes de credenciais\nconst sanitized = JSON.parse(JSON.stringify(workflow));\nif (sanitized.nodes) {\n  sanitized.nodes.forEach(node => {\n    if (node.credentials) {\n      for (const key of Object.keys(node.credentials)) {\n        node.credentials[key] = { id: '***', name: '***' };\n      }\n    }\n  });\n}\n\nconst filePath = `backups/${folder}/${cleanName}__${workflow.id}.json`;\nconst content = JSON.stringify(sanitized, null, 2);\n\nreturn [{\n  json: {\n    filePath,\n    content,\n    workflowName: workflow.name,\n    workflowId: workflow.id\n  }\n}];"
+        },
+        "id": "6782044a-0f01-4502-b89d-76ee4a03a477",
+        "name": "prepararArquivoBackup",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1776,
+          976
+        ]
+      },
+      {
+        "parameters": {
+          "resource": "file",
+          "operation": "get",
+          "owner": "moraisinovaia",
+          "repository": "teste-backup-n8n",
+          "filePath": "={{ $json.filePath }}",
+          "asBinaryProperty": false,
+          "additionalParameters": {}
+        },
+        "id": "2215721d-dba9-4e3f-8d04-c3506d19c90f",
+        "name": "verificarArquivoGitHub",
+        "type": "n8n-nodes-base.github",
+        "typeVersion": 1,
+        "position": [
+          2000,
+          976
+        ],
+        "webhookId": "2b8e0e1b-d263-45ee-9839-288c254cc8dc",
+        "credentials": {
+          "githubApi": {
+            "id": "3ZhJXNGHjd8lxtb9",
+            "name": "[MANU]GitHub_OAuth"
+          }
+        },
+        "continueOnFail": true
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "id": "file-exists-check",
+                "leftValue": "={{ $json.sha }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "exists"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "edcf9574-3f95-4a60-9a98-ca8ea52f3576",
+        "name": "checarArquivoExiste",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          2208,
+          976
+        ]
+      },
+      {
+        "parameters": {
+          "resource": "file",
+          "operation": "edit",
+          "owner": "moraisinovaia",
+          "repository": "teste-backup-n8n",
+          "filePath": "={{ $('prepararArquivoBackup').item.json.filePath }}",
+          "fileContent": "={{ $('prepararArquivoBackup').item.json.content }}",
+          "commitMessage": "=✏️ Atualizado: {{ $('prepararArquivoBackup').item.json.workflowName }} ({{ $('gerarTimestampCommit').first().json.commitDate }})"
+        },
+        "id": "d8776e67-642c-4e11-9c64-42fd4c249e22",
+        "name": "atualizarArquivoGitHub",
+        "type": "n8n-nodes-base.github",
+        "typeVersion": 1,
+        "position": [
+          2432,
+          864
+        ],
+        "webhookId": "435c9289-92e6-4693-849e-a727bfd5b2c4",
+        "credentials": {
+          "githubApi": {
+            "id": "3ZhJXNGHjd8lxtb9",
+            "name": "[MANU]GitHub_OAuth"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "resource": "file",
+          "owner": "moraisinovaia",
+          "repository": "teste-backup-n8n",
+          "filePath": "={{ $('prepararArquivoBackup').item.json.filePath }}",
+          "fileContent": "={{ $('prepararArquivoBackup').item.json.content }}",
+          "commitMessage": "=🆕 Criado: {{ $('prepararArquivoBackup').item.json.workflowName }} ({{ $('gerarTimestampCommit').first().json.commitDate }})"
+        },
+        "id": "5c04b1e0-e173-4ba2-b92e-6efb0fecbc35",
+        "name": "criarArquivoGitHub",
+        "type": "n8n-nodes-base.github",
+        "typeVersion": 1,
+        "position": [
+          2432,
+          1088
+        ],
+        "webhookId": "68ce5abd-c727-49f5-81f7-15283f72eff9",
+        "credentials": {
+          "githubApi": {
+            "id": "3ZhJXNGHjd8lxtb9",
+            "name": "[MANU]GitHub_OAuth"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "set-status",
+                "name": "status",
+                "value": "={{ $json.content ? '✅ Backup OK' : '⚠️ Verificar' }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "62829a9e-5267-490d-a6b7-61f274e1dd3d",
+        "name": "registrarStatusBackup",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          2656,
+          976
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "b9190fad-8fac-4c75-84ae-81de69b20004",
+        "name": "aguardarRateLimit",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          2880,
+          976
+        ],
+        "webhookId": "5746ad20-43f5-4dfa-adb9-6ddf5e59363e"
+      },
+      {
+        "parameters": {
+          "content": "# BackupWorkflowsGitHub\n\nProjeto: Manutenção\nGatilho: CRON (a cada hora)\nSegurança: n8n API Key + GitHub OAuth Token\nDocs: —\nDescrição: Backup automático de todos os workflows da instância para repositório GitHub. Lista workflows via API do n8n, itera um a um, sanitiza credenciais e faz commit (criação ou atualização) no repositório configurado.",
+          "height": 300,
+          "width": 672,
+          "color": 4
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -128,
+          16
+        ],
+        "typeVersion": 1,
+        "id": "f0b87ab7-8f5b-47b1-8c0d-f39488d02746",
+        "name": "docWorkflow"
+      },
+      {
+        "parameters": {
+          "content": "## Lógica do Código — prepararArquivoBackup\n\n1. slugify()\n   Normaliza o nome do workflow para uso como caminho de arquivo:\n   - Remove acentos (normalize NFD)\n   - Remove caracteres especiais (mantém letras, números, hífen e underscore)\n   - Substitui espaços por hífen\n\n2. Pasta (folder)\n   Pega apenas o PRIMEIRO segmento do nome, quebrando no primeiro\n   _ - ou espaço encontrado.\n   Ex: \"LOG_cron_banco\" → pasta \"LOG\"\n   Ex: \"UNI_schedule_notif\" → pasta \"UNI\"\n   Se nenhum segmento for encontrado, cai em \"GERAL\".\n\n3. Sanitização de Credentials\n   Clona o workflow e substitui id/name de cada credential\n   por '***', evitando que identificadores internos sejam\n   enviados ao GitHub.\n\n4. filePath\n   Monta o caminho final do arquivo:\n   backups/{PASTA}/{nome-completo}__{id}.json",
+          "height": 496,
+          "width": 672,
+          "color": 6
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -128,
+          368
+        ],
+        "typeVersion": 1,
+        "id": "c73d11e6-cf16-4d35-b8c9-3225a89ff6b3",
+        "name": "docCodigoPrepararBackup"
+      }
+    ],
+    "connections": {
+      "agendarExecucao": {
+        "main": [
+          [
+            {
+              "node": "gerarTimestampCommit",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "gerarTimestampCommit": {
+        "main": [
+          [
+            {
+              "node": "listarWorkflows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "listarWorkflows": {
+        "main": [
+          [
+            {
+              "node": "iterarWorkflows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "iterarWorkflows": {
+        "main": [
+          [],
+          [
+            {
+              "node": "buscarWorkflowCompleto",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "buscarWorkflowCompleto": {
+        "main": [
+          [
+            {
+              "node": "prepararArquivoBackup",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepararArquivoBackup": {
+        "main": [
+          [
+            {
+              "node": "verificarArquivoGitHub",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "verificarArquivoGitHub": {
+        "main": [
+          [
+            {
+              "node": "checarArquivoExiste",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "checarArquivoExiste": {
+        "main": [
+          [
+            {
+              "node": "atualizarArquivoGitHub",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "criarArquivoGitHub",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "atualizarArquivoGitHub": {
+        "main": [
+          [
+            {
+              "node": "registrarStatusBackup",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "criarArquivoGitHub": {
+        "main": [
+          [
+            {
+              "node": "registrarStatusBackup",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "registrarStatusBackup": {
+        "main": [
+          [
+            {
+              "node": "aguardarRateLimit",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "aguardarRateLimit": {
+        "main": [
+          [
+            {
+              "node": "iterarWorkflows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Miguel Kubrusly",
+    "name": "Version e29e7b8c",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-10T03:24:35.840Z",
+        "id": 104,
+        "workflowId": "pz3ZCVvJ_EWChXN3uMgc_",
+        "versionId": "e29e7b8c-204f-4b09-a21e-6f997b8ebc72",
+        "event": "activated",
+        "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e"
+      }
+    ]
+  }
+}
