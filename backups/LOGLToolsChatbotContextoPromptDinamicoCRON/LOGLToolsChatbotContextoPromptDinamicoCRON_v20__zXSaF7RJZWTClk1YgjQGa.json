@@ -1,0 +1,895 @@
+{
+  "updatedAt": "2026-03-06T19:26:00.454Z",
+  "createdAt": "2026-02-26T11:03:34.748Z",
+  "id": "zXSaF7RJZWTClk1YgjQGa",
+  "name": "[LOGL]ToolsChatbot.ContextoPromptDinamico.CRON_v2.0",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "command": "cd \"/data/repos/agente-analise-neat/apps/\" && find . -type d"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        96
+      ],
+      "id": "33fce77e-f533-4bb7-9cbd-14b2ddea2ea9",
+      "name": "listarDirsEmApps",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n    id, \n    ref_id, \n    nome \nFROM \n    dominio_projeto;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -560,
+        288
+      ],
+      "id": "1ed74989-ac16-45c0-810c-60608c30b0ba",
+      "name": "listarProjetos",
+      "credentials": {
+        "postgres": {
+          "id": "***",
+          "name": "***"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n    t.table_name, \n    array_agg(c.column_name || ' (' || c.data_type || ')' ORDER BY c.ordinal_position) as columns\nFROM information_schema.tables t\nJOIN information_schema.columns c ON t.table_name = c.table_name\nWHERE t.table_schema = 'public'\n  AND t.table_name NOT LIKE 'django_%'\n  AND t.table_name NOT LIKE 'auth_%'\nGROUP BY t.table_name\nORDER BY t.table_name;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -560,
+        672
+      ],
+      "id": "db9a7572-6c03-4f23-a68b-adacdd9491c7",
+      "name": "listarTabelasEColunas",
+      "credentials": {
+        "postgres": {
+          "id": "***",
+          "name": "***"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n    id, \n    nome, \n    analise_disparada \nFROM \n    dominio_fase;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -560,
+        480
+      ],
+      "id": "24e5f74e-5f8e-4539-a184-97444c54024b",
+      "name": "listarFases",
+      "credentials": {
+        "postgres": {
+          "id": "***",
+          "name": "***"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "projetos",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        288
+      ],
+      "id": "d036da2f-2c49-413d-9906-46e4a5e5c0e8",
+      "name": "uneProjetos"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "fases",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        480
+      ],
+      "id": "4fd67eed-a729-44a4-995d-65edc0650f3e",
+      "name": "uneFases"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "schema",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        672
+      ],
+      "id": "15592e50-b58a-4028-8527-283a1f0b5b35",
+      "name": "uneTabelas"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e9fe423b-db97-4429-a6a9-a02fa146188f",
+              "name": "dirsEmApps",
+              "value": "={{ $json.stdout }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -336,
+        96
+      ],
+      "id": "35ad6190-83a9-4a6f-9ca7-a9acdd459807",
+      "name": "preparaDirsEmApps"
+    },
+    {
+      "parameters": {
+        "numberInputs": 4
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -112,
+        352
+      ],
+      "id": "aca2bf1a-390b-4343-87ef-5181990dd545",
+      "name": "uneTudo"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "contexto",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        112,
+        384
+      ],
+      "id": "592d5a6c-e6de-4de1-8010-d99c4d84d404",
+      "name": "transformaItemUnico"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "binaryPropertyName": "=contexto",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        336,
+        384
+      ],
+      "id": "2c4a9267-e9db-4ac9-a901-17c2f5994d0c",
+      "name": "converteContextoJSON"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -784,
+        384
+      ],
+      "id": "af04fd7c-ec8e-43a5-8450-e09e86e74768",
+      "name": "horaEmHora"
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "n8n-novadata-dev",
+        "fileName": "[LOGL]contextoSystemPrompt.json",
+        "binaryPropertyName": "contexto",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        560,
+        384
+      ],
+      "id": "ccdeefd4-3aba-467b-a69b-d926271fb948",
+      "name": "salvaJson",
+      "credentials": {
+        "s3": {
+          "id": "***",
+          "name": "***"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "listarProjetos": {
+      "main": [
+        [
+          {
+            "node": "uneProjetos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "listarTabelasEColunas": {
+      "main": [
+        [
+          {
+            "node": "uneTabelas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "listarFases": {
+      "main": [
+        [
+          {
+            "node": "uneFases",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "uneProjetos": {
+      "main": [
+        [
+          {
+            "node": "uneTudo",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "uneFases": {
+      "main": [
+        [
+          {
+            "node": "uneTudo",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "uneTabelas": {
+      "main": [
+        [
+          {
+            "node": "uneTudo",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "preparaDirsEmApps": {
+      "main": [
+        [
+          {
+            "node": "uneTudo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "uneTudo": {
+      "main": [
+        [
+          {
+            "node": "transformaItemUnico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "transformaItemUnico": {
+      "main": [
+        [
+          {
+            "node": "converteContextoJSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "converteContextoJSON": {
+      "main": [
+        [
+          {
+            "node": "salvaJson",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "horaEmHora": {
+      "main": [
+        [
+          {
+            "node": "listarProjetos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "listarFases",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "listarTabelasEColunas",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "listarDirsEmApps",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "listarDirsEmApps": {
+      "main": [
+        [
+          {
+            "node": "preparaDirsEmApps",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "0847aeaa-6e2d-4f46-96c8-343afd6d13a0",
+  "activeVersionId": "0847aeaa-6e2d-4f46-96c8-343afd6d13a0",
+  "versionCounter": 110,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-26T11:03:34.748Z",
+      "createdAt": "2026-02-26T11:03:34.748Z",
+      "role": "workflow:owner",
+      "workflowId": "zXSaF7RJZWTClk1YgjQGa",
+      "projectId": "aLeETedgrx3HypUV",
+      "project": {
+        "updatedAt": "2026-02-05T18:12:51.008Z",
+        "createdAt": "2026-02-05T17:11:33.764Z",
+        "id": "aLeETedgrx3HypUV",
+        "name": "Miguel Kubrusly <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-02-05T17:11:33.764Z",
+            "createdAt": "2026-02-05T17:11:33.764Z",
+            "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+            "projectId": "aLeETedgrx3HypUV",
+            "user": {
+              "updatedAt": "2026-03-10T03:07:07.287Z",
+              "createdAt": "2026-02-05T17:11:32.394Z",
+              "id": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+              "email": "infra@novadata.com.br",
+              "firstName": "Miguel",
+              "lastName": "Kubrusly",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-02-06T13:42:55.997Z",
+                "personalization_survey_n8n_version": "2.6.0",
+                "automationGoalDevops": [
+                  "data-syncing"
+                ],
+                "companyIndustryExtended": [
+                  "it-industry"
+                ],
+                "companySize": "<20",
+                "companyType": "other",
+                "role": "it",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "4oFgpwW3T5VYLBkmatmZt",
+                "userActivatedAt": 1772566324555,
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-03-10",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-06T21:08:55.898Z",
+      "createdAt": "2026-03-06T19:24:43.432Z",
+      "id": "HKyDOTu3WX8GuKn1",
+      "name": ">hora-a-hora"
+    },
+    {
+      "updatedAt": "2026-03-06T19:25:57.947Z",
+      "createdAt": "2026-03-06T19:25:57.947Z",
+      "id": "Uln8e2hbU4oUJDtm",
+      "name": "@s3"
+    },
+    {
+      "updatedAt": "2026-03-06T15:02:49.033Z",
+      "createdAt": "2026-03-06T15:02:49.033Z",
+      "id": "WefOyCNePUH6cMEC",
+      "name": "prod"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-03-05T18:58:32.509Z",
+    "createdAt": "2026-03-05T18:58:28.583Z",
+    "versionId": "0847aeaa-6e2d-4f46-96c8-343afd6d13a0",
+    "workflowId": "zXSaF7RJZWTClk1YgjQGa",
+    "nodes": [
+      {
+        "parameters": {
+          "command": "cd \"/data/repos/agente-analise-neat/apps/\" && find . -type d"
+        },
+        "type": "n8n-nodes-base.executeCommand",
+        "typeVersion": 1,
+        "position": [
+          -560,
+          96
+        ],
+        "id": "33fce77e-f533-4bb7-9cbd-14b2ddea2ea9",
+        "name": "listarDirsEmApps",
+        "executeOnce": false
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT \n    id, \n    ref_id, \n    nome \nFROM \n    dominio_projeto;",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          -560,
+          288
+        ],
+        "id": "1ed74989-ac16-45c0-810c-60608c30b0ba",
+        "name": "listarProjetos",
+        "credentials": {
+          "postgres": {
+            "id": "PqtZKOiwkOMl6CM8",
+            "name": "usuario n8n - labs dev"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT \n    t.table_name, \n    array_agg(c.column_name || ' (' || c.data_type || ')' ORDER BY c.ordinal_position) as columns\nFROM information_schema.tables t\nJOIN information_schema.columns c ON t.table_name = c.table_name\nWHERE t.table_schema = 'public'\n  AND t.table_name NOT LIKE 'django_%'\n  AND t.table_name NOT LIKE 'auth_%'\nGROUP BY t.table_name\nORDER BY t.table_name;",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          -560,
+          672
+        ],
+        "id": "db9a7572-6c03-4f23-a68b-adacdd9491c7",
+        "name": "listarTabelasEColunas",
+        "credentials": {
+          "postgres": {
+            "id": "PqtZKOiwkOMl6CM8",
+            "name": "usuario n8n - labs dev"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT \n    id, \n    nome, \n    analise_disparada \nFROM \n    dominio_fase;",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          -560,
+          480
+        ],
+        "id": "24e5f74e-5f8e-4539-a184-97444c54024b",
+        "name": "listarFases",
+        "credentials": {
+          "postgres": {
+            "id": "PqtZKOiwkOMl6CM8",
+            "name": "usuario n8n - labs dev"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "destinationFieldName": "projetos",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          -336,
+          288
+        ],
+        "id": "d036da2f-2c49-413d-9906-46e4a5e5c0e8",
+        "name": "uneProjetos"
+      },
+      {
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "destinationFieldName": "fases",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          -336,
+          480
+        ],
+        "id": "4fd67eed-a729-44a4-995d-65edc0650f3e",
+        "name": "uneFases"
+      },
+      {
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "destinationFieldName": "schema",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          -336,
+          672
+        ],
+        "id": "15592e50-b58a-4028-8527-283a1f0b5b35",
+        "name": "uneTabelas"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "e9fe423b-db97-4429-a6a9-a02fa146188f",
+                "name": "dirsEmApps",
+                "value": "={{ $json.stdout }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          -336,
+          96
+        ],
+        "id": "35ad6190-83a9-4a6f-9ca7-a9acdd459807",
+        "name": "preparaDirsEmApps"
+      },
+      {
+        "parameters": {
+          "numberInputs": 4
+        },
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.2,
+        "position": [
+          -112,
+          352
+        ],
+        "id": "aca2bf1a-390b-4343-87ef-5181990dd545",
+        "name": "uneTudo"
+      },
+      {
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "destinationFieldName": "contexto",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          112,
+          384
+        ],
+        "id": "592d5a6c-e6de-4de1-8010-d99c4d84d404",
+        "name": "transformaItemUnico"
+      },
+      {
+        "parameters": {
+          "operation": "toJson",
+          "binaryPropertyName": "=contexto",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.convertToFile",
+        "typeVersion": 1.1,
+        "position": [
+          336,
+          384
+        ],
+        "id": "2c4a9267-e9db-4ac9-a901-17c2f5994d0c",
+        "name": "converteContextoJSON"
+      },
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "hours"
+              }
+            ]
+          }
+        },
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.3,
+        "position": [
+          -784,
+          384
+        ],
+        "id": "af04fd7c-ec8e-43a5-8450-e09e86e74768",
+        "name": "horaEmHora"
+      },
+      {
+        "parameters": {
+          "operation": "upload",
+          "bucketName": "n8n-novadata-dev",
+          "fileName": "[LOGL]contextoSystemPrompt.json",
+          "binaryPropertyName": "contexto",
+          "additionalFields": {}
+        },
+        "type": "n8n-nodes-base.s3",
+        "typeVersion": 1,
+        "position": [
+          560,
+          384
+        ],
+        "id": "ccdeefd4-3aba-467b-a69b-d926271fb948",
+        "name": "salvaJson",
+        "credentials": {
+          "s3": {
+            "id": "XIGCaJSfw5Vs1WRq",
+            "name": "S3 account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "listarProjetos": {
+        "main": [
+          [
+            {
+              "node": "uneProjetos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "listarTabelasEColunas": {
+        "main": [
+          [
+            {
+              "node": "uneTabelas",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "listarFases": {
+        "main": [
+          [
+            {
+              "node": "uneFases",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "uneProjetos": {
+        "main": [
+          [
+            {
+              "node": "uneTudo",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "uneFases": {
+        "main": [
+          [
+            {
+              "node": "uneTudo",
+              "type": "main",
+              "index": 2
+            }
+          ]
+        ]
+      },
+      "uneTabelas": {
+        "main": [
+          [
+            {
+              "node": "uneTudo",
+              "type": "main",
+              "index": 3
+            }
+          ]
+        ]
+      },
+      "preparaDirsEmApps": {
+        "main": [
+          [
+            {
+              "node": "uneTudo",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "uneTudo": {
+        "main": [
+          [
+            {
+              "node": "transformaItemUnico",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "transformaItemUnico": {
+        "main": [
+          [
+            {
+              "node": "converteContextoJSON",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "converteContextoJSON": {
+        "main": [
+          [
+            {
+              "node": "salvaJson",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "horaEmHora": {
+        "main": [
+          [
+            {
+              "node": "listarProjetos",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "listarFases",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "listarTabelasEColunas",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "listarDirsEmApps",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "listarDirsEmApps": {
+        "main": [
+          [
+            {
+              "node": "preparaDirsEmApps",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Miguel Kubrusly",
+    "name": "Version 0847aeaa",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-05T18:58:32.505Z",
+        "id": 48,
+        "workflowId": "zXSaF7RJZWTClk1YgjQGa",
+        "versionId": "0847aeaa-6e2d-4f46-96c8-343afd6d13a0",
+        "event": "activated",
+        "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e"
+      },
+      {
+        "createdAt": "2026-03-05T18:58:44.830Z",
+        "id": 49,
+        "workflowId": "zXSaF7RJZWTClk1YgjQGa",
+        "versionId": "0847aeaa-6e2d-4f46-96c8-343afd6d13a0",
+        "event": "activated",
+        "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e"
+      }
+    ]
+  }
+}
