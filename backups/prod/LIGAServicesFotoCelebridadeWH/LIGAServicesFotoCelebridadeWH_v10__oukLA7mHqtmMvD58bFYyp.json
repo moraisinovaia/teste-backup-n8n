@@ -1,0 +1,514 @@
+{
+  "updatedAt": "2026-03-10T03:35:07.140Z",
+  "createdAt": "2026-03-10T03:35:00.361Z",
+  "id": "oukLA7mHqtmMvD58bFYyp",
+  "name": "[LIGA]Services.FotoCelebridade.WH_v1.0",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "18837293-03cb-4436-a49e-d67bbb745b28",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        496,
+        320
+      ],
+      "id": "076b2c08-2d3b-4d2d-8bd2-8ede041cab39",
+      "name": "receberFotoUsuario",
+      "webhookId": "18837293-03cb-4436-a49e-d67bbb745b28",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "***",
+          "name": "***"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "urlImagemUsuario",
+              "value": "={{ $json.body.url_imagem_usuario }}",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "urlImagemBrinco",
+              "value": "={{ $json.body.url_imagem_celebridade_1 }}",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "tentativas",
+              "value": "=2",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "estruturarDadosEntrada",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        736,
+        320
+      ],
+      "id": "5e6ac147-6dea-4d3b-a38a-0e0194c5e402"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://fal.run/fal-ai/nano-banana/edit",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\": \"CRITICAL: Image 1 UNTOUCHED. Add tiny delicate earring from Image 2. CONTEXT: Image 2 is BABY EARRING - extremely small and delicate. Priority is NATURAL INTEGRATION over visibility. ANALYSIS: Image 1 ear angle, lobe, lighting, sharpness, grain. Image 2 EXACT design but scaled to baby earring size. POSITIONING: Lower third of lobe (70-80% down). Center horizontally. Both ears if both visible and clear. BABY EARRING SIZE (CRITICAL): Scale to 3-5mm MAXIMUM (very small, delicate). This should look like a REAL baby earring on adult - subtle, barely-there, refined. Design simplified to what would be visible at this tiny scale naturally. DO NOT over-render. DO NOT make artificially sharp. Match photo's natural softness/grain. NATURAL INTEGRATION (TOP PRIORITY): Earring must look PHOTOGRAPHED, not added. Match Image 1 exact sharpness level (if soft, earring soft). Apply same grain/noise pattern as skin. Subtle imperfect edges (real photography has micro-blur). Contact shadow 0.3mm barely visible. Minimal ambient occlusion 1mm at 10-15% opacity (almost invisible). Natural skin texture continuous to earring. NO perfect circles. NO CGI appearance. NO over-sharpening. 3D ORIENTATION: Match lobe plane naturally. LIGHTING: Match Image 1 exactly. Soft natural highlights. Subtle reflections. MATERIAL: Simplified at small scale - main color/material visible, fine details naturally lost due to tiny size (realistic). FORBIDDEN: Large earring. Over-rendered CGI look. Artificial sharpness. Perfect geometric shapes. Heavy shadows. Floating appearance. VERIFICATION: [ ] Tiny size (3-5mm max)? [ ] Looks PHOTOGRAPHED not added? [ ] Natural soft integration? [ ] Matches Image 1 grain/softness? [ ] Lower third lobe? [ ] Delicate baby earring appearance? PRIORITY: Natural photographic integration > Perfect design visibility. Better subtle and real than detailed and fake.\",\n  \"image_urls\": [\n    \"{{ $json.urlImagemUsuario }}\",\n    \"{{ $json.urlImagemBrinco }}\"\n  ],\n  \"num_images\": 1,\n  \"output_format\": \"jpeg\",\n  \"sync_mode\": true,\n  \"enable_safety_checker\": false\n}",
+        "options": {}
+      },
+      "name": "chamarApiFalAi",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        320
+      ],
+      "id": "a59aa075-0a61-4641-bf58-66100cd8beea",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "***",
+          "name": "***"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $json.images[0].url }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "checarSucessoGeracao",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1184,
+        240
+      ],
+      "id": "9d825c7f-68ae-4407-991b-63dae5dc1ff9"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "urlImagemProcessada",
+              "value": "={{ $json.images[0].url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "extrairUrlProcessada",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1440,
+        80
+      ],
+      "id": "9c6fc212-3592-4b17-a437-743f4eb4e9ec"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $item(0).json.tentativas }}",
+              "rightValue": "3",
+              "operator": {
+                "type": "number",
+                "operation": "smaller"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "checarLimiteTentativas",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1424,
+        352
+      ],
+      "id": "1cd260a5-558b-4378-9441-1449b683c1be"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "tentativas",
+              "value": "={{ $item(0).json.tentativas + 1 }}",
+              "type": "number"
+            },
+            {
+              "id": "2",
+              "name": "urlImagemUsuario",
+              "value": "={{ $item(0).json.urlImagemUsuario }}",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "urlImagemBrinco",
+              "value": "={{ $item(0).json.urlImagemBrinco }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "incrementarTentativa",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1664,
+        224
+      ],
+      "id": "6636d8d8-0896-455f-930b-2f0ae60b4e14"
+    },
+    {
+      "parameters": {},
+      "name": "aguardarRateLimit",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1872,
+        368
+      ],
+      "id": "d89fc05a-cf48-442b-b8f7-4277e7d315ce",
+      "webhookId": "retry-webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"image_url\": {\n    \"url\": \"{{ $json.urlImagemProcessada }}\"\n  }\n}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "responderSucesso",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1760,
+        80
+      ],
+      "id": "e73d9111-15de-47e7-a1fd-5c63d9b50acf"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"image_url\": {\"url\": null, \"error\": {\"code\": \"max_retries_exceeded\", \"message\": \"Falha ao processar imagem apos 3 tentativas\"}}}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "responderErro",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2032,
+        624
+      ],
+      "id": "2afa016e-6181-457c-ade9-ac07015da245"
+    },
+    {
+      "parameters": {
+        "content": "# FotoCelebridade\n\nProjeto: LIGA\nGatilho: Webhook (POST)\nSegurança: Header Auth\nDocs: —\nDescrição: Recebe foto do usuário + imagem de brinco de celebridade via webhook, chama a API fal.ai (nano-banana) para aplicar o brinco na foto com IA generativa. Possui retry automático de até 3 tentativas com intervalo de 5s entre cada. Responde o webhook com a URL da imagem processada ou erro.",
+        "height": 280,
+        "width": 672,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4ef914e2-7fbf-443f-864b-bd31acf063f8",
+      "name": "docWorkflow"
+    },
+    {
+      "parameters": {
+        "content": "## Fluxo de Retry\n\nA API fal.ai pode falhar por instabilidade.\nO workflow tenta até 3x com delay de 5s entre tentativas.\nSe todas falharem, responde o webhook com erro estruturado\n(code: max_retries_exceeded).\n\nVariável 'tentativas' começa em 2 (não 0) porque\no incremento acontece antes do retry — na prática\nsão 2 tentativas extras além da primeira.",
+        "height": 240,
+        "width": 480,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        320
+      ],
+      "id": "e2f83159-d008-480a-8bbd-e933c8843381",
+      "name": "docRetryLogica"
+    }
+  ],
+  "connections": {
+    "receberFotoUsuario": {
+      "main": [
+        [
+          {
+            "node": "estruturarDadosEntrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "estruturarDadosEntrada": {
+      "main": [
+        [
+          {
+            "node": "chamarApiFalAi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "chamarApiFalAi": {
+      "main": [
+        [
+          {
+            "node": "checarSucessoGeracao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "checarSucessoGeracao": {
+      "main": [
+        [
+          {
+            "node": "extrairUrlProcessada",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "checarLimiteTentativas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extrairUrlProcessada": {
+      "main": [
+        [
+          {
+            "node": "responderSucesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "checarLimiteTentativas": {
+      "main": [
+        [
+          {
+            "node": "incrementarTentativa",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "responderErro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "incrementarTentativa": {
+      "main": [
+        [
+          {
+            "node": "aguardarRateLimit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "aguardarRateLimit": {
+      "main": [
+        [
+          {
+            "node": "chamarApiFalAi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "915ac3c1-2731-4d0a-89bc-fc3a4473ceba",
+  "activeVersionId": null,
+  "versionCounter": 3,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-10T03:35:00.361Z",
+      "createdAt": "2026-03-10T03:35:00.361Z",
+      "role": "workflow:owner",
+      "workflowId": "oukLA7mHqtmMvD58bFYyp",
+      "projectId": "aLeETedgrx3HypUV",
+      "project": {
+        "updatedAt": "2026-02-05T18:12:51.008Z",
+        "createdAt": "2026-02-05T17:11:33.764Z",
+        "id": "aLeETedgrx3HypUV",
+        "name": "Miguel Kubrusly <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-02-05T17:11:33.764Z",
+            "createdAt": "2026-02-05T17:11:33.764Z",
+            "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+            "projectId": "aLeETedgrx3HypUV",
+            "user": {
+              "updatedAt": "2026-03-10T03:07:07.287Z",
+              "createdAt": "2026-02-05T17:11:32.394Z",
+              "id": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+              "email": "infra@novadata.com.br",
+              "firstName": "Miguel",
+              "lastName": "Kubrusly",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-02-06T13:42:55.997Z",
+                "personalization_survey_n8n_version": "2.6.0",
+                "automationGoalDevops": [
+                  "data-syncing"
+                ],
+                "companyIndustryExtended": [
+                  "it-industry"
+                ],
+                "companySize": "<20",
+                "companyType": "other",
+                "role": "it",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "4oFgpwW3T5VYLBkmatmZt",
+                "userActivatedAt": 1772566324555,
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-03-10",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-06T15:02:49.033Z",
+      "createdAt": "2026-03-06T15:02:49.033Z",
+      "id": "WefOyCNePUH6cMEC",
+      "name": "prod"
+    },
+    {
+      "updatedAt": "2026-03-10T03:34:58.716Z",
+      "createdAt": "2026-03-10T03:34:58.716Z",
+      "id": "fJ6r9bnRp8TqWHcu",
+      "name": "@fal-ai"
+    }
+  ],
+  "activeVersion": null
+}
