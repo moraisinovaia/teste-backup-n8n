@@ -1,0 +1,814 @@
+{
+  "updatedAt": "2026-03-09T18:49:03.868Z",
+  "createdAt": "2026-03-06T21:05:29.531Z",
+  "id": "HAOPDIhzGI4UGdqQJ7_2G",
+  "name": "[UNIF]Notif.EmissoresFgc.WF_v2.1",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "xheMnVM_dYQ2wwSqwaD53",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/xheMnVM_dYQ2wwSqwaD53",
+          "cachedResultName": "[UNIF]Auth.FetchSessDjango.WF_v2.0"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "baseUrl": "={{ $json.baseUrl }}",
+            "loginPath": "={{ $json.loginPath }}",
+            "csrfFieldName": "csrftoken"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "baseUrl",
+              "displayName": "baseUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "loginPath",
+              "displayName": "loginPath",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "csrfFieldName",
+              "displayName": "csrfFieldName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4b67a4c1-4ff9-4fbe-8ef9-4e6a5242743f",
+      "name": "get sess"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "baseUrl"
+            },
+            {
+              "name": "loginPath"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -224,
+        96
+      ],
+      "id": "68629e63-8552-4ffd-823e-a13a867c8dd3",
+      "name": "Receive Initial Vars"
+    },
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "destinationKey": "emissores_fora_fgc",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "481c06bb-48d4-4710-9a04-90c12137aeb0",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0f89c47f-b2fb-46f5-ab57-0123216e7c2d",
+              "name": "emissores_fora_fgc",
+              "value": "={{ $json.emissores_fora_fgc.itens.notificacoes }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        0
+      ],
+      "id": "f0319b68-33f5-4f8d-b5fa-e933041ae728",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "emissores_fora_fgc",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        896,
+        0
+      ],
+      "id": "50657592-f5b2-46c5-a736-1f2839343402",
+      "name": "Split Out1",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "fileSelector": "/data/repos/unifinance_notificacoes/files/output/emissores_fora_fgc_pf.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "17cbed26-be83-4a3c-a0ee-b54af034e6cb",
+      "name": "Read/Write Files from Disk PF"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$('get sess').item.json.baseUrl}}api/notificacao/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Referer",
+              "value": "={{ $('get sess').item.json.baseUrl }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Cookie",
+              "value": "=csrftoken={{ $('get sess').item.json.csrfCookie }}; sessionid={{ $('get sess').item.json.sessionId }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-CSRFToken",
+              "value": "={{ $('get sess').item.json.csrfCookie }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {
+          "pagination": {
+            "pagination": {
+              "paginationMode": "off"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1344,
+        0
+      ],
+      "id": "9642969f-17a5-48d4-af52-123bb8db162e",
+      "name": "test1",
+      "executeOnce": false,
+      "alwaysOutputData": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ------------------------------\n// Funções auxiliares\n// ------------------------------\nfunction toBRL(n) {\n  return parseFloat(n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });\n}\n\nfunction escapeHtml(str) {\n  return String(str)\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&#39;');\n}\n\n// ------------------------------\n// Processamento principal\n// ------------------------------\nconst new_items = [];\n\nfor (let idx = 0; idx < $input.all().length; idx++) {\n  const j = $input.all()[idx].json;\n\n  const nome = j.nome_alvo ?? \"\";\n  const id = j.id_alvo;\n  const emissores = j.emissores_notificados;\n  const responsaveis = j.responsaveis ?? [1, 2, 4];\n\n  // Monta <ul> de emissores\n  const li_parts = emissores.map(em => {\n    const emissor = escapeHtml(String(em.emissor));\n    const valor = parseFloat(em.valor);\n    return `<li>${emissor}, valor estimado de ${toBRL(valor)}</li>`;\n  });\n\n  const ul_html = `<ul>${li_parts.join(\"\")}</ul>`;\n\n  const descricao_html =\n    `<p>O cliente <strong>${escapeHtml(String(nome))}</strong> possui aplicações sem cobertura do FGC nos seguintes emissores:</p>` +\n    ul_html +\n    `<p><em>Avalie a concentração e o risco da posição.</em></p>`;\n\n  // Uma notificação por responsável\n  for (const resp of responsaveis) {\n    new_items.push({\n      json: {\n        titulo: \"Cliente com aplicações em emissores não cobertos pelo FGC\",\n        descricao: descricao_html,\n        destinatario: resp,\n        cliente_pf_id: id,\n        nome_cliente_pf: nome,\n        tipo_notificacao: \"Cliente não coberto pelo FGC\",\n      },\n      pairedItem: { item: idx },\n    });\n  }\n}\n\nreturn new_items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "c73d524c-74eb-4d8d-833c-1dcbdcddb346",
+      "name": "Code in Python (Beta)"
+    },
+    {
+      "parameters": {
+        "command": "rm /data/repos/unifinance_notificacoes/files/output/emissores_fora_fgc_pf.json"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        0,
+        192
+      ],
+      "id": "ea885a33-581b-4646-bf1a-7e53049d541b",
+      "name": "Execute Command",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "command": "rm /data/repos/unifinance_notificacoes/files/input/emissores_fora_fgc_pf.json"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        224,
+        192
+      ],
+      "id": "fa34351d-c03d-44c2-aefb-226343a40b28",
+      "name": "Execute Command1",
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "get sess": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk PF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receive Initial Vars": {
+      "main": [
+        [
+          {
+            "node": "get sess",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Execute Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Code in Python (Beta)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk PF": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "test1": {
+      "main": [
+        []
+      ]
+    },
+    "Code in Python (Beta)": {
+      "main": [
+        [
+          {
+            "node": "test1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Command": {
+      "main": [
+        [
+          {
+            "node": "Execute Command1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "Receive Initial Vars": [
+      {
+        "json": {
+          "baseUrl": "https://hub-unifinance.novadata.dev/",
+          "loginPath": "login/"
+        }
+      }
+    ]
+  },
+  "versionId": "8e9063fd-e677-435d-b159-ab3f758aa457",
+  "activeVersionId": "8e9063fd-e677-435d-b159-ab3f758aa457",
+  "versionCounter": 39,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-06T21:05:29.531Z",
+      "createdAt": "2026-03-06T21:05:29.531Z",
+      "role": "workflow:owner",
+      "workflowId": "HAOPDIhzGI4UGdqQJ7_2G",
+      "projectId": "aLeETedgrx3HypUV",
+      "project": {
+        "updatedAt": "2026-02-05T18:12:51.008Z",
+        "createdAt": "2026-02-05T17:11:33.764Z",
+        "id": "aLeETedgrx3HypUV",
+        "name": "Miguel Kubrusly <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-02-05T17:11:33.764Z",
+            "createdAt": "2026-02-05T17:11:33.764Z",
+            "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+            "projectId": "aLeETedgrx3HypUV",
+            "user": {
+              "updatedAt": "2026-03-10T03:07:07.287Z",
+              "createdAt": "2026-02-05T17:11:32.394Z",
+              "id": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+              "email": "infra@novadata.com.br",
+              "firstName": "Miguel",
+              "lastName": "Kubrusly",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-02-06T13:42:55.997Z",
+                "personalization_survey_n8n_version": "2.6.0",
+                "automationGoalDevops": [
+                  "data-syncing"
+                ],
+                "companyIndustryExtended": [
+                  "it-industry"
+                ],
+                "companySize": "<20",
+                "companyType": "other",
+                "role": "it",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "4oFgpwW3T5VYLBkmatmZt",
+                "userActivatedAt": 1772566324555,
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-03-10",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-06T15:02:49.033Z",
+      "createdAt": "2026-03-06T15:02:49.033Z",
+      "id": "WefOyCNePUH6cMEC",
+      "name": "prod"
+    },
+    {
+      "updatedAt": "2026-03-06T21:09:38.422Z",
+      "createdAt": "2026-03-06T21:09:38.422Z",
+      "id": "qXDhmpi09wHo88pH",
+      "name": "!fix-case"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-03-09T18:49:05.288Z",
+    "createdAt": "2026-03-09T18:49:03.864Z",
+    "versionId": "8e9063fd-e677-435d-b159-ab3f758aa457",
+    "workflowId": "HAOPDIhzGI4UGdqQJ7_2G",
+    "nodes": [
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "xheMnVM_dYQ2wwSqwaD53",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/xheMnVM_dYQ2wwSqwaD53",
+            "cachedResultName": "[UNIF]Auth.FetchSessDjango.WF_v2.0"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "baseUrl": "={{ $json.baseUrl }}",
+              "loginPath": "={{ $json.loginPath }}",
+              "csrfFieldName": "csrftoken"
+            },
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "baseUrl",
+                "displayName": "baseUrl",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              },
+              {
+                "id": "loginPath",
+                "displayName": "loginPath",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              },
+              {
+                "id": "csrfFieldName",
+                "displayName": "csrfFieldName",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          0
+        ],
+        "id": "4b67a4c1-4ff9-4fbe-8ef9-4e6a5242743f",
+        "name": "get sess"
+      },
+      {
+        "parameters": {
+          "workflowInputs": {
+            "values": [
+              {
+                "name": "baseUrl"
+              },
+              {
+                "name": "loginPath"
+              }
+            ]
+          }
+        },
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          -224,
+          96
+        ],
+        "id": "68629e63-8552-4ffd-823e-a13a867c8dd3",
+        "name": "Receive Initial Vars"
+      },
+      {
+        "parameters": {
+          "operation": "fromJson",
+          "destinationKey": "emissores_fora_fgc",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.extractFromFile",
+        "typeVersion": 1,
+        "position": [
+          448,
+          0
+        ],
+        "id": "481c06bb-48d4-4710-9a04-90c12137aeb0",
+        "name": "Extract from File"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "0f89c47f-b2fb-46f5-ab57-0123216e7c2d",
+                "name": "emissores_fora_fgc",
+                "value": "={{ $json.emissores_fora_fgc.itens.notificacoes }}",
+                "type": "array"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          672,
+          0
+        ],
+        "id": "f0319b68-33f5-4f8d-b5fa-e933041ae728",
+        "name": "Edit Fields"
+      },
+      {
+        "parameters": {
+          "fieldToSplitOut": "emissores_fora_fgc",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.splitOut",
+        "typeVersion": 1,
+        "position": [
+          896,
+          0
+        ],
+        "id": "50657592-f5b2-46c5-a736-1f2839343402",
+        "name": "Split Out1",
+        "executeOnce": false
+      },
+      {
+        "parameters": {
+          "fileSelector": "/data/repos/unifinance_notificacoes/files/output/emissores_fora_fgc_pf.json",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.readWriteFile",
+        "typeVersion": 1,
+        "position": [
+          224,
+          0
+        ],
+        "id": "17cbed26-be83-4a3c-a0ee-b54af034e6cb",
+        "name": "Read/Write Files from Disk PF"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "={{$('get sess').item.json.baseUrl}}api/notificacao/",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Referer",
+                "value": "={{ $('get sess').item.json.baseUrl }}"
+              },
+              {
+                "name": "Accept",
+                "value": "application/json"
+              },
+              {
+                "name": "Cookie",
+                "value": "=csrftoken={{ $('get sess').item.json.csrfCookie }}; sessionid={{ $('get sess').item.json.sessionId }}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "X-CSRFToken",
+                "value": "={{ $('get sess').item.json.csrfCookie }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json }}",
+          "options": {
+            "pagination": {
+              "pagination": {
+                "paginationMode": "off"
+              }
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1344,
+          0
+        ],
+        "id": "9642969f-17a5-48d4-af52-123bb8db162e",
+        "name": "test1",
+        "executeOnce": false,
+        "alwaysOutputData": false,
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "// ------------------------------\n// Funções auxiliares\n// ------------------------------\nfunction toBRL(n) {\n  return parseFloat(n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });\n}\n\nfunction escapeHtml(str) {\n  return String(str)\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&#39;');\n}\n\n// ------------------------------\n// Processamento principal\n// ------------------------------\nconst new_items = [];\n\nfor (let idx = 0; idx < $input.all().length; idx++) {\n  const j = $input.all()[idx].json;\n\n  const nome = j.nome_alvo ?? \"\";\n  const id = j.id_alvo;\n  const emissores = j.emissores_notificados;\n  const responsaveis = j.responsaveis ?? [1, 2, 4];\n\n  // Monta <ul> de emissores\n  const li_parts = emissores.map(em => {\n    const emissor = escapeHtml(String(em.emissor));\n    const valor = parseFloat(em.valor);\n    return `<li>${emissor}, valor estimado de ${toBRL(valor)}</li>`;\n  });\n\n  const ul_html = `<ul>${li_parts.join(\"\")}</ul>`;\n\n  const descricao_html =\n    `<p>O cliente <strong>${escapeHtml(String(nome))}</strong> possui aplicações sem cobertura do FGC nos seguintes emissores:</p>` +\n    ul_html +\n    `<p><em>Avalie a concentração e o risco da posição.</em></p>`;\n\n  // Uma notificação por responsável\n  for (const resp of responsaveis) {\n    new_items.push({\n      json: {\n        titulo: \"Cliente com aplicações em emissores não cobertos pelo FGC\",\n        descricao: descricao_html,\n        destinatario: resp,\n        cliente_pf_id: id,\n        nome_cliente_pf: nome,\n        tipo_notificacao: \"Cliente não coberto pelo FGC\",\n      },\n      pairedItem: { item: idx },\n    });\n  }\n}\n\nreturn new_items;"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1120,
+          0
+        ],
+        "id": "c73d524c-74eb-4d8d-833c-1dcbdcddb346",
+        "name": "Code in Python (Beta)"
+      },
+      {
+        "parameters": {
+          "command": "rm /data/repos/unifinance_notificacoes/files/output/emissores_fora_fgc_pf.json"
+        },
+        "type": "n8n-nodes-base.executeCommand",
+        "typeVersion": 1,
+        "position": [
+          0,
+          192
+        ],
+        "id": "ea885a33-581b-4646-bf1a-7e53049d541b",
+        "name": "Execute Command",
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "command": "rm /data/repos/unifinance_notificacoes/files/input/emissores_fora_fgc_pf.json"
+        },
+        "type": "n8n-nodes-base.executeCommand",
+        "typeVersion": 1,
+        "position": [
+          224,
+          192
+        ],
+        "id": "fa34351d-c03d-44c2-aefb-226343a40b28",
+        "name": "Execute Command1",
+        "onError": "continueRegularOutput"
+      }
+    ],
+    "connections": {
+      "get sess": {
+        "main": [
+          [
+            {
+              "node": "Read/Write Files from Disk PF",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Receive Initial Vars": {
+        "main": [
+          [
+            {
+              "node": "get sess",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Execute Command",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract from File": {
+        "main": [
+          [
+            {
+              "node": "Edit Fields",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Edit Fields": {
+        "main": [
+          [
+            {
+              "node": "Split Out1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Split Out1": {
+        "main": [
+          [
+            {
+              "node": "Code in Python (Beta)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read/Write Files from Disk PF": {
+        "main": [
+          [
+            {
+              "node": "Extract from File",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "test1": {
+        "main": [
+          []
+        ]
+      },
+      "Code in Python (Beta)": {
+        "main": [
+          [
+            {
+              "node": "test1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Execute Command": {
+        "main": [
+          [
+            {
+              "node": "Execute Command1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Miguel Kubrusly",
+    "name": "Version 8e9063fd",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-09T18:49:05.285Z",
+        "id": 99,
+        "workflowId": "HAOPDIhzGI4UGdqQJ7_2G",
+        "versionId": "8e9063fd-e677-435d-b159-ab3f758aa457",
+        "event": "activated",
+        "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e"
+      }
+    ]
+  }
+}
