@@ -1,0 +1,2736 @@
+{
+  "updatedAt": "2026-03-10T04:27:59.969Z",
+  "createdAt": "2026-03-10T03:57:09.520Z",
+  "id": "hNZyAa31OWTjGB1gPjUV5",
+  "name": "[NEAT]Services.OrquestrarRelatorios.CRON_v1.0",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 * * 1"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        48,
+        432
+      ],
+      "id": "04fda5c8-bc73-4637-935e-aa92d15a6808",
+      "name": "agendarExecucaoSemanal"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Lista fixa de projetos para processar\nconst projetos = [\n  { projeto_id: 594 }\n  // Adicione mais projetos aqui conforme necessário:\n  // { projeto_id: 523 },\n  // { projeto_id: 601 }\n];\n\nconsole.log(`📋 Total de projetos a processar: ${projetos.length}`);\n\n// Retorna cada projeto como um item separado\nreturn projetos.map(projeto => ({\n  json: projeto\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        432
+      ],
+      "id": "487321d6-34d0-4871-89a2-d9b088f40242",
+      "name": "listaProjetosFixa"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        464,
+        432
+      ],
+      "id": "45803c45-1cfd-4411-8927-2df4bcf0808a",
+      "name": "loopProjetos"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        672,
+        336
+      ],
+      "id": "f15ae1c3-68c9-4706-83b8-8a84043adf72",
+      "name": "finalizarLoop"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "U-3xjDqErv6qXvNqNiN78",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/U-3xjDqErv6qXvNqNiN78",
+          "cachedResultName": "[NEAT]Db.ColetarDadosProjeto.WF_v1.0"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "projeto_id": "={{ $json.projeto_id }}"
+          },
+          "matchingColumns": [
+            "projeto_id"
+          ],
+          "schema": [
+            {
+              "id": "projeto_id",
+              "displayName": "projeto_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        656,
+        592
+      ],
+      "id": "2e446a05-87f1-4271-ac4b-7a76d9c966e9",
+      "name": "executarColetaDados"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "mdJ7GRE5M6S_G_7FX3pOw",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/mdJ7GRE5M6S_G_7FX3pOw",
+          "cachedResultName": "[NEAT]Services.GerarRelatorioIA.WF_v1.0"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "dados_projeto": "={{ $json }}"
+          },
+          "matchingColumns": [
+            "dados_projeto"
+          ],
+          "schema": [
+            {
+              "id": "dados_projeto",
+              "displayName": "dados_projeto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "object"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        816,
+        704
+      ],
+      "id": "94cc4737-7473-45a5-962f-e39371ca6ce4",
+      "name": "executarGeracaoRelatorio"
+    },
+    {
+      "parameters": {
+        "content": "# OrquestrarRelatorios\n\nProjeto: NEAT\nGatilho: CRON — toda segunda-feira às 00:00\nSegurança: Nenhuma (execução interna)\nDocs: —\nDescrição: Dispara semanalmente a coleta e geração de relatórios para cada projeto cadastrado na lista fixa.\n\nSub-workflows chamados:\n1. [NEAT]Db.ColetarDadosProjeto.WF_v1.0\n2. [NEAT]Services.GerarRelatorioIA.WF_v1.0\n\nPara adicionar projetos: editar o nodo listaProjetosFixa.",
+        "height": 380,
+        "width": 500,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "44e48421-7cf0-4746-93de-9a138afcbbd2",
+      "name": "docWorkflow"
+    }
+  ],
+  "connections": {
+    "agendarExecucaoSemanal": {
+      "main": [
+        [
+          {
+            "node": "listaProjetosFixa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "listaProjetosFixa": {
+      "main": [
+        [
+          {
+            "node": "loopProjetos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "loopProjetos": {
+      "main": [
+        [
+          {
+            "node": "finalizarLoop",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "executarColetaDados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "executarColetaDados": {
+      "main": [
+        [
+          {
+            "node": "executarGeracaoRelatorio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "executarGeracaoRelatorio": {
+      "main": [
+        [
+          {
+            "node": "loopProjetos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "executarColetaDados": [
+      {
+        "json": {
+          "projeto_info": {
+            "id": 594,
+            "nome": "Sustentação LDK"
+          },
+          "cards": [
+            {
+              "id": 15522,
+              "titulo": "Bug: Kanban (POs finalizados que n saem do Kanban)",
+              "descricao_limpa": "Gab 10/2: esses pedido já estão finalizados e estão aparecendo no kanban igual... [imagem] ESSE TBM [imagem] [imagem] [imagem] [imagem] ** esse além de estar finalizado, tá aparecendo duplicado. [imagem] ** esse pedido tbm ta duplicando todas as faturas (423, 411 e 410 estão aparecendo 2x em doc de embarque) [imagem] [imagem] [imagem] [imagem] [imagem] [imagem] [imagem] [imagem] [imagem] [imagem] [imagem] [imagem] ** Alerta duplicado abaixo tbm: [imagem] ** DUPLICADO TBM... [imagem] [imagem] [imagem]",
+              "fase_atual": 3,
+              "fase_atual_nome": {
+                "nome": "Na Fila",
+                "ordem": 30,
+                "conclusao": false,
+                "testes": false,
+                "reprovacao": false,
+                "arquivamento": false
+              },
+              "responsaveis": [
+                {
+                  "id": 182,
+                  "nome": "Gabriela LDK"
+                },
+                {
+                  "id": 50,
+                  "nome": "Allan Safra"
+                }
+              ],
+              "tempo_trabalhado_horas": 0,
+              "orcado_horas": 0,
+              "pontos_totais": null,
+              "em_andamento": false,
+              "data_criacao": "2026-02-10T16:13:39.085734-03:00",
+              "data_conclusao": null,
+              "data_prevista": null,
+              "data_desejada": null,
+              "sub_projeto": null,
+              "tags": [
+                1
+              ],
+              "logs_fase": [],
+              "tempo_por_fase": {},
+              "dias_na_fase_atual": null,
+              "maior_tempo_fase": null,
+              "dados_usuario": {
+                "id": 182,
+                "nome": "Gabriela LDK"
+              },
+              "anomalias": [],
+              "total_anomalias": 0,
+              "tem_alertas_criticos": false,
+              "metricas_deteccao": {
+                "reprovacoes": 0,
+                "reaberturas": 0,
+                "total_movimentacoes": 0,
+                "dias_sem_movimentacao": null,
+                "alteracoes_estimativa": 0,
+                "tempo_orcado": 0,
+                "tempo_trabalhado": 0,
+                "pontos": null,
+                "estouro_orcamento_percent": null
+              },
+              "times": [
+                {
+                  "equipe": "Externo",
+                  "nome": "Gabriela LDK",
+                  "user_id": 182,
+                  "nivel": null,
+                  "cargo": null,
+                  "ativo_no_projeto": null,
+                  "horas_periodo": 0
+                },
+                {
+                  "equipe": "Gestão",
+                  "nome": "Allan Siqueira Safra Terra",
+                  "user_id": 50,
+                  "nivel": "Pleno",
+                  "cargo": "Coordenador de Projetos - Nível Pleno",
+                  "ativo_no_projeto": false,
+                  "horas_periodo": 0
+                }
+              ],
+              "equipes_envolvidas": [
+                "Gestão"
+              ],
+              "sprint_identificada": null,
+              "sprint_codigo": null,
+              "sprint_info": null
+            },
+            {
+              "id": 9866,
+              "titulo": "OBS de pessoas (Admin -> Front)",
+              "descricao_limpa": "Gab 4/4: NADA prioridade: Temos um campo de OBS no cadastro de pessoas que é pra colocarmos informações pertinentes (mas internas), sobre aquele cliente / fornecedor, n estamos utilizando porque ele fica bem escondido (entra no sistema, abre cadastro, abre pessoas e vai indo...) Gostaríamos de um tooltip (eu amei tooltips) no nome dos clientes / fornecedores onde pudéssemos abrir e ver esse campo de OBS (só visualização mesmo). Por que não pode ser no campo de ''observações'' do pedido? Porque são informações da pessoa mesmo, não do processo. Campo do cadastro de pessoas: [imagem] Tooltip no cantinho do nome no pedido: [imagem]",
+              "fase_atual": 3,
+              "fase_atual_nome": {
+                "nome": "Na Fila",
+                "ordem": 30,
+                "conclusao": false,
+                "testes": false,
+                "reprovacao": false,
+                "arquivamento": false
+              },
+              "responsaveis": [
+                {
+                  "id": 182,
+                  "nome": "Gabriela LDK"
+                },
+                {
+                  "id": 50,
+                  "nome": "Allan Safra"
+                }
+              ],
+              "tempo_trabalhado_horas": 0,
+              "orcado_horas": 0,
+              "pontos_totais": null,
+              "em_andamento": false,
+              "data_criacao": "2025-04-04T14:24:32.638496-03:00",
+              "data_conclusao": null,
+              "data_prevista": null,
+              "data_desejada": null,
+              "sub_projeto": null,
+              "tags": [
+                5
+              ],
+              "logs_fase": [],
+              "tempo_por_fase": {},
+              "dias_na_fase_atual": null,
+              "maior_tempo_fase": null,
+              "dados_usuario": {
+                "id": 108,
+                "nome": "Lucas Matheus"
+              },
+              "anomalias": [],
+              "total_anomalias": 0,
+              "tem_alertas_criticos": false,
+              "metricas_deteccao": {
+                "reprovacoes": 0,
+                "reaberturas": 0,
+                "total_movimentacoes": 0,
+                "dias_sem_movimentacao": null,
+                "alteracoes_estimativa": 0,
+                "tempo_orcado": 0,
+                "tempo_trabalhado": 0,
+                "pontos": null,
+                "estouro_orcamento_percent": null
+              },
+              "times": [
+                {
+                  "equipe": "Externo",
+                  "nome": "Gabriela LDK",
+                  "user_id": 182,
+                  "nivel": null,
+                  "cargo": null,
+                  "ativo_no_projeto": null,
+                  "horas_periodo": 0
+                },
+                {
+                  "equipe": "Gestão",
+                  "nome": "Allan Siqueira Safra Terra",
+                  "user_id": 50,
+                  "nivel": "Pleno",
+                  "cargo": "Coordenador de Projetos - Nível Pleno",
+                  "ativo_no_projeto": false,
+                  "horas_periodo": 0
+                }
+              ],
+              "equipes_envolvidas": [
+                "Gestão"
+              ],
+              "sprint_identificada": null,
+              "sprint_codigo": null,
+              "sprint_info": null
+            },
+            {
+              "id": 15528,
+              "titulo": "Bug: Inspeção",
+              "descricao_limpa": "Gab 10/2: Local ainda tá aparecendo como número!!! [imagem] Gab 26/2: n aparece artigo e n salva a inspeção.. [imagem] 26/2: quantidade negativa no PO 250114 [imagem]",
+              "fase_atual": 10,
+              "fase_atual_nome": {
+                "nome": "Sprint Atual",
+                "ordem": 35,
+                "conclusao": false,
+                "testes": false,
+                "reprovacao": false,
+                "arquivamento": false
+              },
+              "responsaveis": [
+                {
+                  "id": 182,
+                  "nome": "Gabriela LDK"
+                },
+                {
+                  "id": 50,
+                  "nome": "Allan Safra"
+                }
+              ],
+              "tempo_trabalhado_horas": 0,
+              "orcado_horas": 0,
+              "pontos_totais": null,
+              "em_andamento": false,
+              "data_criacao": "2026-02-10T17:39:00.506521-03:00",
+              "data_conclusao": null,
+              "data_prevista": null,
+              "data_desejada": "2026-03-09",
+              "sub_projeto": null,
+              "tags": [
+                1
+              ],
+              "logs_fase": [
+                {
+                  "data": "2026-03-05T08:42:30.477418-03:00",
+                  "de": "Na Fila",
+                  "para": "Sprint Atual",
+                  "usuario": "lucas.matheus",
+                  "frase": "moveu o card de Na Fila para Sprint Atual"
+                },
+                {
+                  "data": "2026-03-09T10:03:24.953734-03:00",
+                  "de": "Sprint Atual",
+                  "para": "Em Andamento",
+                  "usuario": "bruna.maria",
+                  "frase": "moveu o card de Sprint Atual para Em Andamento"
+                },
+                {
+                  "data": "2026-03-09T10:05:41.645198-03:00",
+                  "de": "Em Andamento",
+                  "para": "Sprint Atual",
+                  "usuario": "bruna.maria",
+                  "frase": "moveu o card de Em Andamento para Sprint Atual"
+                }
+              ],
+              "tempo_por_fase": {
+                "Sprint Atual": 112.70093694444444,
+                "Em Andamento": 0.03797
+              },
+              "dias_na_fase_atual": 0,
+              "maior_tempo_fase": {
+                "fase": "Sprint Atual",
+                "horas": 113
+              },
+              "dados_usuario": {
+                "id": 182,
+                "nome": "Gabriela LDK"
+              },
+              "anomalias": [
+                {
+                  "tipo": "DEADLINE_ESTOURADO",
+                  "severidade": "BAIXA",
+                  "valor": 1,
+                  "mensagem": "Deadline (2026-03-09) estourado há 1 dias",
+                  "acao": "Repriorizar ou atualizar deadline"
+                }
+              ],
+              "total_anomalias": 1,
+              "tem_alertas_criticos": false,
+              "metricas_deteccao": {
+                "reprovacoes": 0,
+                "reaberturas": 0,
+                "total_movimentacoes": 3,
+                "dias_sem_movimentacao": 0,
+                "alteracoes_estimativa": 0,
+                "tempo_orcado": 0,
+                "tempo_trabalhado": 0,
+                "pontos": null,
+                "estouro_orcamento_percent": null
+              },
+              "times": [
+                {
+                  "equipe": "Externo",
+                  "nome": "Gabriela LDK",
+                  "user_id": 182,
+                  "nivel": null,
+                  "cargo": null,
+                  "ativo_no_projeto": null,
+                  "horas_periodo": 0
+                },
+                {
+                  "equipe": "Gestão",
+                  "nome": "Allan Siqueira Safra Terra",
+                  "user_id": 50,
+                  "nivel": "Pleno",
+                  "cargo": "Coordenador de Projetos - Nível Pleno",
+                  "ativo_no_projeto": false,
+                  "horas_periodo": 0
+                }
+              ],
+              "equipes_envolvidas": [
+                "Gestão"
+              ],
+              "sprint_identificada": "Sprint 02/03 a 08/03",
+              "sprint_codigo": "2026-W10",
+              "sprint_info": {
+                "nome": "Sprint 02/03 a 08/03",
+                "codigo": "2026-W10",
+                "periodo": {
+                  "inicio": "2026-03-02T11:42:30.477Z",
+                  "fim": "2026-03-08T11:42:30.477Z"
+                },
+                "total_cards_sprint": 5
+              }
+            },
+            {
+              "id": 15488,
+              "titulo": "Bug: Alertas",
+              "descricao_limpa": "Gab 6/2: Esse alerta no ME n faz o menor sentido... [imagem] Atualização João: A aba em que o alerta está sendo exibido está errada. Esse alerta deveria estar sendo exibido na aba Informações de embarque .",
+              "fase_atual": 4,
+              "fase_atual_nome": {
+                "nome": "Em Andamento",
+                "ordem": 40,
+                "conclusao": false,
+                "testes": false,
+                "reprovacao": false,
+                "arquivamento": false
+              },
+              "responsaveis": [
+                {
+                  "id": 135,
+                  "nome": "Bruna Maria"
+                },
+                {
+                  "id": 182,
+                  "nome": "Gabriela LDK"
+                },
+                {
+                  "id": 50,
+                  "nome": "Allan Safra"
+                }
+              ],
+              "tempo_trabalhado_horas": 1.15,
+              "orcado_horas": 2,
+              "pontos_totais": 1,
+              "em_andamento": true,
+              "data_criacao": "2026-02-06T15:32:05.288166-03:00",
+              "data_conclusao": null,
+              "data_prevista": null,
+              "data_desejada": "2026-03-03",
+              "sub_projeto": null,
+              "tags": [
+                1,
+                4,
+                5
+              ],
+              "logs_fase": [
+                {
+                  "data": "2026-03-03T17:48:56.375684-03:00",
+                  "de": "Sprint Atual",
+                  "para": "Em Andamento",
+                  "usuario": "bruna.maria",
+                  "frase": "moveu o card de Sprint Atual para Em Andamento"
+                }
+              ],
+              "tempo_por_fase": {
+                "Em Andamento": 151.63179916666667
+              },
+              "dias_na_fase_atual": 6,
+              "maior_tempo_fase": {
+                "fase": "Em Andamento",
+                "horas": 152
+              },
+              "dados_usuario": {
+                "id": 108,
+                "nome": "Lucas Matheus"
+              },
+              "anomalias": [
+                {
+                  "tipo": "DEADLINE_ESTOURADO",
+                  "severidade": "MEDIA",
+                  "valor": 7,
+                  "mensagem": "Deadline (2026-03-03) estourado há 7 dias",
+                  "acao": "Repriorizar ou atualizar deadline"
+                }
+              ],
+              "total_anomalias": 1,
+              "tem_alertas_criticos": false,
+              "metricas_deteccao": {
+                "reprovacoes": 0,
+                "reaberturas": 0,
+                "total_movimentacoes": 1,
+                "dias_sem_movimentacao": 6,
+                "alteracoes_estimativa": 0,
+                "tempo_orcado": 2,
+                "tempo_trabalhado": 1.15,
+                "pontos": 1,
+                "estouro_orcamento_percent": -43
+              },
+              "times": [
+                {
+                  "equipe": "Backend",
+                  "nome": "Bruna Maria Pinto",
+                  "user_id": 135,
+                  "nivel": "Júnior",
+                  "cargo": "Desenvolvedor Backend - Nível Júnior",
+                  "ativo_no_projeto": true,
+                  "horas_periodo": 23.07
+                },
+                {
+                  "equipe": "Externo",
+                  "nome": "Gabriela LDK",
+                  "user_id": 182,
+                  "nivel": null,
+                  "cargo": null,
+                  "ativo_no_projeto": null,
+                  "horas_periodo": 0
+                },
+                {
+                  "equipe": "Gestão",
+                  "nome": "Allan Siqueira Safra Terra",
+                  "user_id": 50,
+                  "nivel": "Pleno",
+                  "cargo": "Coordenador de Projetos - Nível Pleno",
+                  "ativo_no_projeto": false,
+                  "horas_periodo": 0
+                }
+              ],
+              "equipes_envolvidas": [
+                "Backend",
+                "Gestão"
+              ],
+              "sprint_identificada": "Sprint 02/03 a 08/03",
+              "sprint_codigo": "2026-W10",
+              "sprint_info": {
+                "nome": "Sprint 02/03 a 08/03",
+                "codigo": "2026-W10",
+                "periodo": {
+                  "inicio": "2026-03-02T11:42:30.477Z",
+                  "fim": "2026-03-08T11:42:30.477Z"
+                },
+                "total_cards_sprint": 5
+              }
+            },
+            {
+              "id": 15492,
+              "titulo": "Bug: Kanban cards fatura",
+              "descricao_limpa": "Gab 6/2: Cards de fatura na parte de ''qtde'' deve aparecer a quantidade de cnts DA fatura, não o total do pedido... [imagem]",
+              "fase_atual": 4,
+              "fase_atual_nome": {
+                "nome": "Em Andamento",
+                "ordem": 40,
+                "conclusao": false,
+                "testes": false,
+                "reprovacao": false,
+                "arquivamento": false
+              },
+              "responsaveis": [
+                {
+                  "id": 135,
+                  "nome": "Bruna Maria"
+                },
+                {
+                  "id": 182,
+                  "nome": "Gabriela LDK"
+                },
+                {
+                  "id": 50,
+                  "nome": "Allan Safra"
+                }
+              ],
+              "tempo_trabalhado_horas": 1.6666666666666665,
+              "orcado_horas": 2,
+              "pontos_totais": 1,
+              "em_andamento": true,
+              "data_criacao": "2026-02-06T16:55:51.901418-03:00",
+              "data_conclusao": null,
+              "data_prevista": null,
+              "data_desejada": "2026-03-06",
+              "sub_projeto": null,
+              "tags": [
+                1,
+                4,
+                5
+              ],
+              "logs_fase": [
+                {
+                  "data": "2026-03-06T10:55:55.140480-03:00",
+                  "de": "Sprint Atual",
+                  "para": "Em Andamento",
+                  "usuario": "bruna.maria",
+                  "frase": "moveu o card de Sprint Atual para Em Andamento"
+                }
+              ],
+              "tempo_por_fase": {
+                "Em Andamento": 86.51555222222223
+              },
+              "dias_na_fase_atual": 3,
+              "maior_tempo_fase": {
+                "fase": "Em Andamento",
+                "horas": 87
+              },
+              "dados_usuario": {
+                "id": 137,
+                "nome": "João Patrão"
+              },
+              "anomalias": [
+                {
+                  "tipo": "DEADLINE_ESTOURADO",
+                  "severidade": "BAIXA",
+                  "valor": 4,
+                  "mensagem": "Deadline (2026-03-06) estourado há 4 dias",
+                  "acao": "Repriorizar ou atualizar deadline"
+                }
+              ],
+              "total_anomalias": 1,
+              "tem_alertas_criticos": false,
+              "metricas_deteccao": {
+                "reprovacoes": 0,
+                "reaberturas": 0,
+                "total_movimentacoes": 1,
+                "dias_sem_movimentacao": 3,
+                "alteracoes_estimativa": 0,
+                "tempo_orcado": 2,
+                "tempo_trabalhado": 1.6666666666666665,
+                "pontos": 1,
+                "estouro_orcamento_percent": -17
+              },
+              "times": [
+                {
+                  "equipe": "Backend",
+                  "nome": "Bruna Maria Pinto",
+                  "user_id": 135,
+                  "nivel": "Júnior",
+                  "cargo": "Desenvolvedor Backend - Nível Júnior",
+                  "ativo_no_projeto": true,
+                  "horas_periodo": 23.07
+                },
+                {
+                  "equipe": "Externo",
+                  "nome": "Gabriela LDK",
+                  "user_id": 182,
+                  "nivel": null,
+                  "cargo": null,
+                  "ativo_no_projeto": null,
+                  "horas_periodo": 0
+                },
+                {
+                  "equipe": "Gestão",
+                  "nome": "Allan Siqueira Safra Terra",
+                  "user_id": 50,
+                  "nivel": "Pleno",
+                  "cargo": "Coordenador de Projetos - Nível Pleno",
+                  "ativo_no_projeto": false,
+                  "horas_periodo": 0
+                }
+              ],
+              "equipes_envolvidas": [
+                "Backend",
+                "Gestão"
+              ],
+              "sprint_identificada": "Sprint 02/03 a 08/03",
+              "sprint_codigo": "2026-W10",
+              "sprint_info": {
+                "nome": "Sprint 02/03 a 08/03",
+                "codigo": "2026-W10",
+                "periodo": {
+                  "inicio": "2026-03-02T11:42:30.477Z",
+                  "fim": "2026-03-08T11:42:30.477Z"
+                },
+                "total_cards_sprint": 5
+              }
+            },
+            {
+              "id": 15599,
+              "titulo": "Trocar versão do Django para uma mais atualizada",
+              "descricao_limpa": "",
+              "fase_atual": 13,
+              "fase_atual_nome": {
+                "nome": "Aguardando Deploy",
+                "ordem": 45,
+                "conclusao": false,
+                "testes": false,
+                "reprovacao": false,
+                "arquivamento": false
+              },
+              "responsaveis": [
+                {
+                  "id": 135,
+                  "nome": "Bruna Maria"
+                },
+                {
+                  "id": 50,
+                  "nome": "Allan Safra"
+                }
+              ],
+              "tempo_trabalhado_horas": 6.133333333333334,
+              "orcado_horas": 7,
+              "pontos_totais": 1,
+              "em_andamento": true,
+              "data_criacao": "2026-02-19T10:25:30.903822-03:00",
+              "data_conclusao": null,
+              "data_prevista": null,
+              "data_desejada": null,
+              "sub_projeto": null,
+              "tags": [
+                5
+              ],
+              "logs_fase": [
+                {
+                  "data": "2026-03-09T11:17:01.235545-03:00",
+                  "de": "Em Andamento",
+                  "para": "Aguardando Deploy",
+                  "usuario": "bruna.maria",
+                  "frase": "moveu o card de Em Andamento para Aguardando Deploy"
+                }
+              ],
+              "tempo_por_fase": {
+                "Aguardando Deploy": 14.163932222222222
+              },
+              "dias_na_fase_atual": 0,
+              "maior_tempo_fase": {
+                "fase": "Aguardando Deploy",
+                "horas": 14
+              },
+              "dados_usuario": {
+                "id": 135,
+                "nome": "Bruna Maria"
+              },
+              "anomalias": [],
+              "total_anomalias": 0,
+              "tem_alertas_criticos": false,
+              "metricas_deteccao": {
+                "reprovacoes": 0,
+                "reaberturas": 0,
+                "total_movimentacoes": 1,
+                "dias_sem_movimentacao": 0,
+                "alteracoes_estimativa": 0,
+                "tempo_orcado": 7,
+                "tempo_trabalhado": 6.133333333333334,
+                "pontos": 1,
+                "estouro_orcamento_percent": -12
+              },
+              "times": [
+                {
+                  "equipe": "Backend",
+                  "nome": "Bruna Maria Pinto",
+                  "user_id": 135,
+                  "nivel": "Júnior",
+                  "cargo": "Desenvolvedor Backend - Nível Júnior",
+                  "ativo_no_projeto": true,
+                  "horas_periodo": 23.07
+                },
+                {
+                  "equipe": "Gestão",
+                  "nome": "Allan Siqueira Safra Terra",
+                  "user_id": 50,
+                  "nivel": "Pleno",
+                  "cargo": "Coordenador de Projetos - Nível Pleno",
+                  "ativo_no_projeto": false,
+                  "horas_periodo": 0
+                }
+              ],
+              "equipes_envolvidas": [
+                "Backend",
+                "Gestão"
+              ],
+              "sprint_identificada": "Sprint 09/03 a 15/03",
+              "sprint_codigo": "2026-W11",
+              "sprint_info": {
+                "nome": "Sprint 09/03 a 15/03",
+                "codigo": "2026-W11",
+                "periodo": {
+                  "inicio": "2026-03-09T14:17:01.235Z",
+                  "fim": "2026-03-15T14:17:01.235Z"
+                },
+                "total_cards_sprint": 4
+              }
+            },
+            {
+              "id": 15391,
+              "titulo": "Bug: produção LDK",
+              "descricao_limpa": "Gab 2/2: PO Finalizado já, mas com alerta pendente. [imagem] [imagem] [imagem] Gab 2/2: Alerta de adiantamento em saldo, mas já tá zerado [imagem] [imagem] Gab 2/2: Alerta ''atualizar relatórios'' é da aba ''inspeções'' Alerta de ''copia da LC'' não some [imagem] [imagem]",
+              "fase_atual": 13,
+              "fase_atual_nome": {
+                "nome": "Aguardando Deploy",
+                "ordem": 45,
+                "conclusao": false,
+                "testes": false,
+                "reprovacao": false,
+                "arquivamento": false
+              },
+              "responsaveis": [
+                {
+                  "id": 135,
+                  "nome": "Bruna Maria"
+                },
+                {
+                  "id": 182,
+                  "nome": "Gabriela LDK"
+                },
+                {
+                  "id": 50,
+                  "nome": "Allan Safra"
+                }
+              ],
+              "tempo_trabalhado_horas": 5.183333333333334,
+              "orcado_horas": 3,
+              "pontos_totais": 1,
+              "em_andamento": true,
+              "data_criacao": "2026-02-02T14:32:18.026692-03:00",
+              "data_conclusao": null,
+              "data_prevista": null,
+              "data_desejada": "2026-03-04",
+              "sub_projeto": null,
+              "tags": [
+                1,
+                4,
+                5
+              ],
+              "logs_fase": [
+                {
+                  "data": "2026-03-04T09:07:47.004404-03:00",
+                  "de": "Sprint Atual",
+                  "para": "Em Andamento",
+                  "usuario": "bruna.maria",
+                  "frase": "moveu o card de Sprint Atual para Em Andamento"
+                },
+                {
+                  "data": "2026-03-09T09:57:01.279678-03:00",
+                  "de": "Em Andamento",
+                  "para": "Aguardando Deploy",
+                  "usuario": "bruna.maria",
+                  "frase": "moveu o card de Em Andamento para Aguardando Deploy"
+                }
+              ],
+              "tempo_por_fase": {
+                "Em Andamento": 120.82063194444444,
+                "Aguardando Deploy": 15.497358055555555
+              },
+              "dias_na_fase_atual": 0,
+              "maior_tempo_fase": {
+                "fase": "Em Andamento",
+                "horas": 121
+              },
+              "dados_usuario": {
+                "id": 182,
+                "nome": "Gabriela LDK"
+              },
+              "anomalias": [
+                {
+                  "tipo": "DEADLINE_ESTOURADO",
+                  "severidade": "BAIXA",
+                  "valor": 6,
+                  "mensagem": "Deadline (2026-03-04) estourado há 6 dias",
+                  "acao": "Repriorizar ou atualizar deadline"
+                },
+                {
+                  "tipo": "ESTOURO_ORCAMENTO",
+                  "severidade": "MEDIA",
+                  "valor": 73,
+                  "mensagem": "Acima do orçamento em 73% (5.2h / 3h orçadas)",
+                  "acao": "Monitorar e comunicar ao time"
+                }
+              ],
+              "total_anomalias": 2,
+              "tem_alertas_criticos": false,
+              "metricas_deteccao": {
+                "reprovacoes": 0,
+                "reaberturas": 0,
+                "total_movimentacoes": 2,
+                "dias_sem_movimentacao": 0,
+                "alteracoes_estimativa": 0,
+                "tempo_orcado": 3,
+                "tempo_trabalhado": 5.183333333333334,
+                "pontos": 1,
+                "estouro_orcamento_percent": 73
+              },
+              "times": [
+                {
+                  "equipe": "Backend",
+                  "nome": "Bruna Maria Pinto",
+                  "user_id": 135,
+                  "nivel": "Júnior",
+                  "cargo": "Desenvolvedor Backend - Nível Júnior",
+                  "ativo_no_projeto": true,
+                  "horas_periodo": 23.07
+                },
+                {
+                  "equipe": "Externo",
+                  "nome": "Gabriela LDK",
+                  "user_id": 182,
+                  "nivel": null,
+                  "cargo": null,
+                  "ativo_no_projeto": null,
+                  "horas_periodo": 0
+                },
+                {
+                  "equipe": "Gestão",
+                  "nome": "Allan Siqueira Safra Terra",
+                  "user_id": 50,
+                  "nivel": "Pleno",
+                  "cargo": "Coordenador de Projetos - Nível Pleno",
+                  "ativo_no_projeto": false,
+                  "horas_periodo": 0
+                }
+              ],
+              "equipes_envolvidas": [
+                "Backend",
+                "Gestão"
+              ],
+              "sprint_identificada": "Sprint 02/03 a 08/03",
+              "sprint_codigo": "2026-W10",
+              "sprint_info": {
+                "nome": "Sprint 02/03 a 08/03",
+                "codigo": "2026-W10",
+                "periodo": {
+                  "inicio": "2026-03-02T11:42:30.477Z",
+                  "fim": "2026-03-08T11:42:30.477Z"
+                },
+                "total_cards_sprint": 5
+              }
+            },
+            {
+              "id": 15382,
+              "titulo": "Pesquisa de cards - Kanban",
+              "descricao_limpa": "Gab 2/2: preciso que tenha um campo search no kanban para que eu possa achar pedidos e faturas com facilidade.",
+              "fase_atual": 5,
+              "fase_atual_nome": {
+                "nome": "Em Testes",
+                "ordem": 50,
+                "conclusao": false,
+                "testes": true,
+                "reprovacao": false,
+                "arquivamento": false
+              },
+              "responsaveis": [
+                {
+                  "id": 182,
+                  "nome": "Gabriela LDK"
+                },
+                {
+                  "id": 50,
+                  "nome": "Allan Safra"
+                }
+              ],
+              "tempo_trabalhado_horas": 1.7333333333333334,
+              "orcado_horas": 2,
+              "pontos_totais": 1,
+              "em_andamento": true,
+              "data_criacao": "2026-02-02T10:23:28.345680-03:00",
+              "data_conclusao": null,
+              "data_prevista": null,
+              "data_desejada": "2026-02-05",
+              "sub_projeto": null,
+              "tags": [
+                4,
+                5
+              ],
+              "logs_fase": [
+                {
+                  "data": "2026-03-09T15:07:32.019314-03:00",
+                  "de": "Aguardando Deploy",
+                  "para": "Em Testes",
+                  "usuario": "joao.patrao",
+                  "frase": "moveu o card de Aguardando Deploy para Em Testes"
+                }
+              ],
+              "tempo_por_fase": {
+                "Em Testes": 10.322216388888888
+              },
+              "dias_na_fase_atual": 0,
+              "maior_tempo_fase": {
+                "fase": "Em Testes",
+                "horas": 10
+              },
+              "dados_usuario": {
+                "id": 135,
+                "nome": "Bruna Maria"
+              },
+              "anomalias": [
+                {
+                  "tipo": "DEADLINE_ESTOURADO",
+                  "severidade": "ALTA",
+                  "valor": 33,
+                  "mensagem": "Deadline (2026-02-05) estourado há 33 dias",
+                  "acao": "Repriorizar ou atualizar deadline"
+                }
+              ],
+              "total_anomalias": 1,
+              "tem_alertas_criticos": true,
+              "metricas_deteccao": {
+                "reprovacoes": 0,
+                "reaberturas": 0,
+                "total_movimentacoes": 1,
+                "dias_sem_movimentacao": 0,
+                "alteracoes_estimativa": 0,
+                "tempo_orcado": 2,
+                "tempo_trabalhado": 1.7333333333333334,
+                "pontos": 1,
+                "estouro_orcamento_percent": -13
+              },
+              "times": [
+                {
+                  "equipe": "Externo",
+                  "nome": "Gabriela LDK",
+                  "user_id": 182,
+                  "nivel": null,
+                  "cargo": null,
+                  "ativo_no_projeto": null,
+                  "horas_periodo": 0
+                },
+                {
+                  "equipe": "Gestão",
+                  "nome": "Allan Siqueira Safra Terra",
+                  "user_id": 50,
+                  "nivel": "Pleno",
+                  "cargo": "Coordenador de Projetos - Nível Pleno",
+                  "ativo_no_projeto": false,
+                  "horas_periodo": 0
+                }
+              ],
+              "equipes_envolvidas": [
+                "Gestão"
+              ],
+              "sprint_identificada": "Sprint 09/03 a 15/03",
+              "sprint_codigo": "2026-W11",
+              "sprint_info": {
+                "nome": "Sprint 09/03 a 15/03",
+                "codigo": "2026-W11",
+                "periodo": {
+                  "inicio": "2026-03-09T14:17:01.235Z",
+                  "fim": "2026-03-15T14:17:01.235Z"
+                },
+                "total_cards_sprint": 4
+              }
+            },
+            {
+              "id": 15384,
+              "titulo": "aumentar campo texto",
+              "descricao_limpa": "Gab 2/2: Aumentar esse campo nas faturas [imagem]",
+              "fase_atual": 5,
+              "fase_atual_nome": {
+                "nome": "Em Testes",
+                "ordem": 50,
+                "conclusao": false,
+                "testes": true,
+                "reprovacao": false,
+                "arquivamento": false
+              },
+              "responsaveis": [
+                {
+                  "id": 182,
+                  "nome": "Gabriela LDK"
+                },
+                {
+                  "id": 50,
+                  "nome": "Allan Safra"
+                }
+              ],
+              "tempo_trabalhado_horas": 0,
+              "orcado_horas": 0,
+              "pontos_totais": null,
+              "em_andamento": false,
+              "data_criacao": "2026-02-02T11:08:10.221468-03:00",
+              "data_conclusao": null,
+              "data_prevista": null,
+              "data_desejada": "2026-02-05",
+              "sub_projeto": null,
+              "tags": [
+                4
+              ],
+              "logs_fase": [
+                {
+                  "data": "2026-03-09T15:07:01.270273-03:00",
+                  "de": "Aguardando Deploy",
+                  "para": "Em Testes",
+                  "usuario": "joao.patrao",
+                  "frase": "moveu o card de Aguardando Deploy para Em Testes"
+                }
+              ],
+              "tempo_por_fase": {
+                "Em Testes": 10.330813055555556
+              },
+              "dias_na_fase_atual": 0,
+              "maior_tempo_fase": {
+                "fase": "Em Testes",
+                "horas": 10
+              },
+              "dados_usuario": {
+                "id": 137,
+                "nome": "João Patrão"
+              },
+              "anomalias": [
+                {
+                  "tipo": "DEADLINE_ESTOURADO",
+                  "severidade": "ALTA",
+                  "valor": 33,
+                  "mensagem": "Deadline (2026-02-05) estourado há 33 dias",
+                  "acao": "Repriorizar ou atualizar deadline"
+                }
+              ],
+              "total_anomalias": 1,
+              "tem_alertas_criticos": true,
+              "metricas_deteccao": {
+                "reprovacoes": 0,
+                "reaberturas": 0,
+                "total_movimentacoes": 1,
+                "dias_sem_movimentacao": 0,
+                "alteracoes_estimativa": 0,
+                "tempo_orcado": 0,
+                "tempo_trabalhado": 0,
+                "pontos": null,
+                "estouro_orcamento_percent": null
+              },
+              "times": [
+                {
+                  "equipe": "Externo",
+                  "nome": "Gabriela LDK",
+                  "user_id": 182,
+                  "nivel": null,
+                  "cargo": null,
+                  "ativo_no_projeto": null,
+                  "horas_periodo": 0
+                },
+                {
+                  "equipe": "Gestão",
+                  "nome": "Allan Siqueira Safra Terra",
+                  "user_id": 50,
+                  "nivel": "Pleno",
+                  "cargo": "Coordenador de Projetos - Nível Pleno",
+                  "ativo_no_projeto": false,
+                  "horas_periodo": 0
+                }
+              ],
+              "equipes_envolvidas": [
+                "Gestão"
+              ],
+              "sprint_identificada": "Sprint 09/03 a 15/03",
+              "sprint_codigo": "2026-W11",
+              "sprint_info": {
+                "nome": "Sprint 09/03 a 15/03",
+                "codigo": "2026-W11",
+                "periodo": {
+                  "inicio": "2026-03-09T14:17:01.235Z",
+                  "fim": "2026-03-15T14:17:01.235Z"
+                },
+                "total_cards_sprint": 4
+              }
+            },
+            {
+              "id": 15527,
+              "titulo": "Bug: informações de embarque",
+              "descricao_limpa": "Gab 10/2: ainda tá escrito errado... Deveria ser ''Março'' [imagem]",
+              "fase_atual": 5,
+              "fase_atual_nome": {
+                "nome": "Em Testes",
+                "ordem": 50,
+                "conclusao": false,
+                "testes": true,
+                "reprovacao": false,
+                "arquivamento": false
+              },
+              "responsaveis": [
+                {
+                  "id": 182,
+                  "nome": "Gabriela LDK"
+                },
+                {
+                  "id": 50,
+                  "nome": "Allan Safra"
+                }
+              ],
+              "tempo_trabalhado_horas": 0,
+              "orcado_horas": 0,
+              "pontos_totais": null,
+              "em_andamento": false,
+              "data_criacao": "2026-02-10T17:07:31.909450-03:00",
+              "data_conclusao": null,
+              "data_prevista": null,
+              "data_desejada": "2026-03-03",
+              "sub_projeto": null,
+              "tags": [
+                1
+              ],
+              "logs_fase": [
+                {
+                  "data": "2026-03-03T15:14:23.227967-03:00",
+                  "de": "Na Fila",
+                  "para": "Sprint Atual",
+                  "usuario": "lucas.matheus",
+                  "frase": "moveu o card de Na Fila para Sprint Atual"
+                },
+                {
+                  "data": "2026-03-03T15:21:54.541877-03:00",
+                  "de": "Sprint Atual",
+                  "para": "Em Andamento",
+                  "usuario": "lucas.matheus",
+                  "frase": "moveu o card de Sprint Atual para Em Andamento"
+                },
+                {
+                  "data": "2026-03-03T15:23:00.622672-03:00",
+                  "de": "Em Andamento",
+                  "para": "Aguardando Deploy",
+                  "usuario": "lucas.matheus",
+                  "frase": "moveu o card de Em Andamento para Aguardando Deploy"
+                },
+                {
+                  "data": "2026-03-09T11:30:14.094062-03:00",
+                  "de": "Aguardando Deploy",
+                  "para": "Em Testes",
+                  "usuario": "joao.patrao",
+                  "frase": "moveu o card de Aguardando Deploy para Em Testes"
+                }
+              ],
+              "tempo_por_fase": {
+                "Sprint Atual": 0.125365,
+                "Em Andamento": 0.01835583333333333,
+                "Aguardando Deploy": 140.12040888888887,
+                "Em Testes": 13.9440175
+              },
+              "dias_na_fase_atual": 0,
+              "maior_tempo_fase": {
+                "fase": "Aguardando Deploy",
+                "horas": 140
+              },
+              "dados_usuario": {
+                "id": 108,
+                "nome": "Lucas Matheus"
+              },
+              "anomalias": [
+                {
+                  "tipo": "DEADLINE_ESTOURADO",
+                  "severidade": "MEDIA",
+                  "valor": 7,
+                  "mensagem": "Deadline (2026-03-03) estourado há 7 dias",
+                  "acao": "Repriorizar ou atualizar deadline"
+                }
+              ],
+              "total_anomalias": 1,
+              "tem_alertas_criticos": false,
+              "metricas_deteccao": {
+                "reprovacoes": 0,
+                "reaberturas": 0,
+                "total_movimentacoes": 4,
+                "dias_sem_movimentacao": 0,
+                "alteracoes_estimativa": 0,
+                "tempo_orcado": 0,
+                "tempo_trabalhado": 0,
+                "pontos": null,
+                "estouro_orcamento_percent": null
+              },
+              "times": [
+                {
+                  "equipe": "Externo",
+                  "nome": "Gabriela LDK",
+                  "user_id": 182,
+                  "nivel": null,
+                  "cargo": null,
+                  "ativo_no_projeto": null,
+                  "horas_periodo": 0
+                },
+                {
+                  "equipe": "Gestão",
+                  "nome": "Allan Siqueira Safra Terra",
+                  "user_id": 50,
+                  "nivel": "Pleno",
+                  "cargo": "Coordenador de Projetos - Nível Pleno",
+                  "ativo_no_projeto": false,
+                  "horas_periodo": 0
+                }
+              ],
+              "equipes_envolvidas": [
+                "Gestão"
+              ],
+              "sprint_identificada": "Sprint 02/03 a 08/03",
+              "sprint_codigo": "2026-W10",
+              "sprint_info": {
+                "nome": "Sprint 02/03 a 08/03",
+                "codigo": "2026-W10",
+                "periodo": {
+                  "inicio": "2026-03-02T11:42:30.477Z",
+                  "fim": "2026-03-08T11:42:30.477Z"
+                },
+                "total_cards_sprint": 5
+              }
+            },
+            {
+              "id": 15398,
+              "titulo": "Bug: PDF",
+              "descricao_limpa": "Gab 2/2: ''características'' tá com quebra de linha. ajustar! [imagem]",
+              "fase_atual": 5,
+              "fase_atual_nome": {
+                "nome": "Em Testes",
+                "ordem": 50,
+                "conclusao": false,
+                "testes": true,
+                "reprovacao": false,
+                "arquivamento": false
+              },
+              "responsaveis": [
+                {
+                  "id": 182,
+                  "nome": "Gabriela LDK"
+                },
+                {
+                  "id": 50,
+                  "nome": "Allan Safra"
+                }
+              ],
+              "tempo_trabalhado_horas": 0,
+              "orcado_horas": 0,
+              "pontos_totais": null,
+              "em_andamento": false,
+              "data_criacao": "2026-02-02T17:05:40.361858-03:00",
+              "data_conclusao": null,
+              "data_prevista": null,
+              "data_desejada": "2026-02-05",
+              "sub_projeto": null,
+              "tags": [
+                1,
+                4
+              ],
+              "logs_fase": [
+                {
+                  "data": "2026-03-09T15:05:24.677889-03:00",
+                  "de": "Aguardando Deploy",
+                  "para": "Em Testes",
+                  "usuario": "joao.patrao",
+                  "frase": "moveu o card de Aguardando Deploy para Em Testes"
+                }
+              ],
+              "tempo_por_fase": {
+                "Em Testes": 10.357821388888889
+              },
+              "dias_na_fase_atual": 0,
+              "maior_tempo_fase": {
+                "fase": "Em Testes",
+                "horas": 10
+              },
+              "dados_usuario": {
+                "id": 137,
+                "nome": "João Patrão"
+              },
+              "anomalias": [
+                {
+                  "tipo": "DEADLINE_ESTOURADO",
+                  "severidade": "ALTA",
+                  "valor": 33,
+                  "mensagem": "Deadline (2026-02-05) estourado há 33 dias",
+                  "acao": "Repriorizar ou atualizar deadline"
+                }
+              ],
+              "total_anomalias": 1,
+              "tem_alertas_criticos": true,
+              "metricas_deteccao": {
+                "reprovacoes": 0,
+                "reaberturas": 0,
+                "total_movimentacoes": 1,
+                "dias_sem_movimentacao": 0,
+                "alteracoes_estimativa": 0,
+                "tempo_orcado": 0,
+                "tempo_trabalhado": 0,
+                "pontos": null,
+                "estouro_orcamento_percent": null
+              },
+              "times": [
+                {
+                  "equipe": "Externo",
+                  "nome": "Gabriela LDK",
+                  "user_id": 182,
+                  "nivel": null,
+                  "cargo": null,
+                  "ativo_no_projeto": null,
+                  "horas_periodo": 0
+                },
+                {
+                  "equipe": "Gestão",
+                  "nome": "Allan Siqueira Safra Terra",
+                  "user_id": 50,
+                  "nivel": "Pleno",
+                  "cargo": "Coordenador de Projetos - Nível Pleno",
+                  "ativo_no_projeto": false,
+                  "horas_periodo": 0
+                }
+              ],
+              "equipes_envolvidas": [
+                "Gestão"
+              ],
+              "sprint_identificada": "Sprint 09/03 a 15/03",
+              "sprint_codigo": "2026-W11",
+              "sprint_info": {
+                "nome": "Sprint 09/03 a 15/03",
+                "codigo": "2026-W11",
+                "periodo": {
+                  "inicio": "2026-03-09T14:17:01.235Z",
+                  "fim": "2026-03-15T14:17:01.235Z"
+                },
+                "total_cards_sprint": 4
+              }
+            },
+            {
+              "id": 15424,
+              "titulo": "Ajustar inspeção do pedido.",
+              "descricao_limpa": "Nesse pedido, foi ajustado pra não ter inspeção no momento da emissão. Porém, na seção das faturas, a aba de inspeção ainda aparece, assim como um alerta de pendência. Só pra não ficar confuso, no caso desse pedido, não teremos inspeção [imagem] OBS: tinha um artigo que tava como \"Sim\" e a cliente ajustou para \"Não\" mas a aba de inspeções e o alerta não sairam.",
+              "fase_atual": 5,
+              "fase_atual_nome": {
+                "nome": "Em Testes",
+                "ordem": 50,
+                "conclusao": false,
+                "testes": true,
+                "reprovacao": false,
+                "arquivamento": false
+              },
+              "responsaveis": [
+                {
+                  "id": 50,
+                  "nome": "Allan Safra"
+                }
+              ],
+              "tempo_trabalhado_horas": 2.4166666666666665,
+              "orcado_horas": 2,
+              "pontos_totais": 1,
+              "em_andamento": true,
+              "data_criacao": "2026-02-03T16:10:30.379549-03:00",
+              "data_conclusao": null,
+              "data_prevista": null,
+              "data_desejada": "2026-02-23",
+              "sub_projeto": null,
+              "tags": [
+                4,
+                5
+              ],
+              "logs_fase": [
+                {
+                  "data": "2026-02-23T16:37:15.199103-03:00",
+                  "de": "Aguardando Deploy",
+                  "para": "Em Andamento",
+                  "usuario": "bruna.maria",
+                  "frase": "moveu o card de Aguardando Deploy para Em Andamento"
+                },
+                {
+                  "data": "2026-03-03T17:48:46.818116-03:00",
+                  "de": "Em Andamento",
+                  "para": "Em Testes",
+                  "usuario": "bruna.maria",
+                  "frase": "moveu o card de Em Andamento para Em Testes"
+                }
+              ],
+              "tempo_por_fase": {
+                "Em Andamento": 193.19211638888888,
+                "Em Testes": 151.63507388888888
+              },
+              "dias_na_fase_atual": 6,
+              "maior_tempo_fase": {
+                "fase": "Em Andamento",
+                "horas": 193
+              },
+              "dados_usuario": {
+                "id": 135,
+                "nome": "Bruna Maria"
+              },
+              "anomalias": [
+                {
+                  "tipo": "DEADLINE_ESTOURADO",
+                  "severidade": "ALTA",
+                  "valor": 15,
+                  "mensagem": "Deadline (2026-02-23) estourado há 15 dias",
+                  "acao": "Repriorizar ou atualizar deadline"
+                }
+              ],
+              "total_anomalias": 1,
+              "tem_alertas_criticos": true,
+              "metricas_deteccao": {
+                "reprovacoes": 0,
+                "reaberturas": 0,
+                "total_movimentacoes": 2,
+                "dias_sem_movimentacao": 6,
+                "alteracoes_estimativa": 0,
+                "tempo_orcado": 2,
+                "tempo_trabalhado": 2.4166666666666665,
+                "pontos": 1,
+                "estouro_orcamento_percent": 21
+              },
+              "times": [
+                {
+                  "equipe": "Gestão",
+                  "nome": "Allan Siqueira Safra Terra",
+                  "user_id": 50,
+                  "nivel": "Pleno",
+                  "cargo": "Coordenador de Projetos - Nível Pleno",
+                  "ativo_no_projeto": false,
+                  "horas_periodo": 0
+                }
+              ],
+              "equipes_envolvidas": [
+                "Gestão"
+              ],
+              "sprint_identificada": "Sprint 23/02 a 01/03",
+              "sprint_codigo": "2026-W09",
+              "sprint_info": {
+                "nome": "Sprint 23/02 a 01/03",
+                "codigo": "2026-W09",
+                "periodo": {
+                  "inicio": "2026-02-23T19:37:15.199Z",
+                  "fim": "2026-03-01T19:37:15.199Z"
+                },
+                "total_cards_sprint": 5
+              }
+            },
+            {
+              "id": 14341,
+              "titulo": "Mudança de Endereço",
+              "descricao_limpa": "Gab 6/11: 📌 Contexto atual Hoje temos vários campos de endereço no cadastro de pessoas, e o layout do pedido em PDF puxa informações desses campos diferentes , o que gera: inconsistência de dados no PDF dificuldade de manutenção risco de erro quando algum campo não é atualizado 💡 Proposta Centralizar as informações, separando o que é exibido no PDF do que é usado para controle interno . 🧱 Estrutura sugerida de campos 1️⃣ Endereço (único) Manter apenas um campo de endereço (campo já existente ) -- atual campo ''endereço exterior'' -- existe ok quero que tenha isso no campo: [imagem] Esse será o único campo utilizado no layout do pedido em PDF. 📄 No PDF do pedido deve aparecer apenas: Razão social Endereço (campo único) (respeitando quebra de linhas) 2️⃣ Dados cadastrais (campos separados) Criar/manter campos individuais para uso sistêmico: CNPJ / CPF Nome da empresa (razão social) Nome fantasia Cidade País 👉 Esses dados NÃO aparecem no PDF , apenas ficam registrados no sistema. 3️⃣ Classificações da pessoa (checkboxes) 🔹 Tipo de pessoa Mercado interno Mercado externo ⚠️ Um mesmo cadastro pode ter mais de um tipo selecionado . 🔹 Grupo pessoa Cliente Fornecedor Representante Agente etc etc (já temos cadastrados) ⚠️ Um mesmo cadastro pode pertencer a mais de um grupo . 📄 Regras do PDF (pedido) O layout do pedido em PDF deve puxar somente : Razão Social Endereço (campo único) Nenhuma outra informação cadastral deve interferir no PDF. 🎯 Intuito dos demais campos Os demais dados (CNPJ/CPF, razão social, tipo de pessoa, grupo pessoa, etc) têm como objetivo: Registro correto no sistema Uso em demandas futuras Integrações e controles do financeiro Classificação e filtros internos ✅ Resultado esperado PDF padronizado e confiável Menos campos redundantes Cadastro mais organizado e escalável Base preparada para usos futuros (financeiro, relatórios, integrações) [imagem] [imagem] ***** como vamos organizar com os dados já existentes? passo 1: reorganizar a lógica cfe acima; passo 2: LDK refaz todos os cadastros; passo 3: excluímos os campos que não serão mais utilizados. ATUALIZAÇÃO ALLAN 26/02/2026 Era para ser checkboxes para os grupos, e está dessa forma: [imagem] Era para ser checkboxes para os tipos de pessoa: n mudou nada [imagem] O campo \"País\" não está disponível: [imagem]",
+              "fase_atual": 5,
+              "fase_atual_nome": {
+                "nome": "Em Testes",
+                "ordem": 50,
+                "conclusao": false,
+                "testes": true,
+                "reprovacao": false,
+                "arquivamento": false
+              },
+              "responsaveis": [
+                {
+                  "id": 135,
+                  "nome": "Bruna Maria"
+                },
+                {
+                  "id": 182,
+                  "nome": "Gabriela LDK"
+                },
+                {
+                  "id": 50,
+                  "nome": "Allan Safra"
+                }
+              ],
+              "tempo_trabalhado_horas": 7.216666666666667,
+              "orcado_horas": 8,
+              "pontos_totais": 1,
+              "em_andamento": true,
+              "data_criacao": "2025-11-06T10:24:08.602773-03:00",
+              "data_conclusao": null,
+              "data_prevista": null,
+              "data_desejada": "2026-03-04",
+              "sub_projeto": null,
+              "tags": [
+                2,
+                4,
+                5
+              ],
+              "logs_fase": [
+                {
+                  "data": "2026-02-23T10:19:35.178853-03:00",
+                  "de": "Em Andamento",
+                  "para": "Em Testes",
+                  "usuario": "bruna.maria",
+                  "frase": "moveu o card de Em Andamento para Em Testes"
+                },
+                {
+                  "data": "2026-02-23T16:41:14.618947-03:00",
+                  "de": "Em Testes",
+                  "para": "Aguardando Deploy",
+                  "usuario": "allan.safra",
+                  "frase": "moveu o card de Em Testes para Aguardando Deploy"
+                },
+                {
+                  "data": "2026-02-23T16:56:42.675588-03:00",
+                  "de": "Aguardando Deploy",
+                  "para": "Em Testes",
+                  "usuario": "allan.safra",
+                  "frase": "moveu o card de Aguardando Deploy para Em Testes"
+                },
+                {
+                  "data": "2026-02-26T12:12:30.177583-03:00",
+                  "de": "Em Testes",
+                  "para": "Em Andamento",
+                  "usuario": "allan.safra",
+                  "frase": "moveu o card de Em Testes para Em Andamento"
+                },
+                {
+                  "data": "2026-03-03T14:59:30.285529-03:00",
+                  "de": "Em Andamento",
+                  "para": "Em Testes",
+                  "usuario": "joao.patrao",
+                  "frase": "moveu o card de Em Andamento para Em Testes"
+                }
+              ],
+              "tempo_por_fase": {
+                "Em Testes": 228.080735,
+                "Aguardando Deploy": 0.2577936111111111,
+                "Em Andamento": 122.78336333333333
+              },
+              "dias_na_fase_atual": 6,
+              "maior_tempo_fase": {
+                "fase": "Em Testes",
+                "horas": 228
+              },
+              "dados_usuario": {
+                "id": 135,
+                "nome": "Bruna Maria"
+              },
+              "anomalias": [
+                {
+                  "tipo": "REPROVACOES",
+                  "severidade": "MEDIA",
+                  "valor": 2,
+                  "mensagem": "Reprovou 2x nos testes",
+                  "acao": "Monitorar qualidade das entregas"
+                },
+                {
+                  "tipo": "DEADLINE_ESTOURADO",
+                  "severidade": "BAIXA",
+                  "valor": 6,
+                  "mensagem": "Deadline (2026-03-04) estourado há 6 dias",
+                  "acao": "Repriorizar ou atualizar deadline"
+                }
+              ],
+              "total_anomalias": 2,
+              "tem_alertas_criticos": false,
+              "metricas_deteccao": {
+                "reprovacoes": 2,
+                "reaberturas": 0,
+                "total_movimentacoes": 5,
+                "dias_sem_movimentacao": 6,
+                "alteracoes_estimativa": 0,
+                "tempo_orcado": 8,
+                "tempo_trabalhado": 7.216666666666667,
+                "pontos": 1,
+                "estouro_orcamento_percent": -10
+              },
+              "times": [
+                {
+                  "equipe": "Backend",
+                  "nome": "Bruna Maria Pinto",
+                  "user_id": 135,
+                  "nivel": "Júnior",
+                  "cargo": "Desenvolvedor Backend - Nível Júnior",
+                  "ativo_no_projeto": true,
+                  "horas_periodo": 23.07
+                },
+                {
+                  "equipe": "Externo",
+                  "nome": "Gabriela LDK",
+                  "user_id": 182,
+                  "nivel": null,
+                  "cargo": null,
+                  "ativo_no_projeto": null,
+                  "horas_periodo": 0
+                },
+                {
+                  "equipe": "Gestão",
+                  "nome": "Allan Siqueira Safra Terra",
+                  "user_id": 50,
+                  "nivel": "Pleno",
+                  "cargo": "Coordenador de Projetos - Nível Pleno",
+                  "ativo_no_projeto": false,
+                  "horas_periodo": 0
+                }
+              ],
+              "equipes_envolvidas": [
+                "Backend",
+                "Gestão"
+              ],
+              "sprint_identificada": "Sprint 23/02 a 01/03",
+              "sprint_codigo": "2026-W09",
+              "sprint_info": {
+                "nome": "Sprint 23/02 a 01/03",
+                "codigo": "2026-W09",
+                "periodo": {
+                  "inicio": "2026-02-23T19:37:15.199Z",
+                  "fim": "2026-03-01T19:37:15.199Z"
+                },
+                "total_cards_sprint": 5
+              }
+            },
+            {
+              "id": 15393,
+              "titulo": "Bug: Kanban - coluna F-UP ETA",
+              "descricao_limpa": "Gab 2/2: Todas as faturas do PO 251109 estão com o campo 'Fup ETA' vazios, mas não estão aparecendo no Kanban. [imagem]",
+              "fase_atual": 5,
+              "fase_atual_nome": {
+                "nome": "Em Testes",
+                "ordem": 50,
+                "conclusao": false,
+                "testes": true,
+                "reprovacao": false,
+                "arquivamento": false
+              },
+              "responsaveis": [
+                {
+                  "id": 182,
+                  "nome": "Gabriela LDK"
+                },
+                {
+                  "id": 50,
+                  "nome": "Allan Safra"
+                }
+              ],
+              "tempo_trabalhado_horas": 0.48333333333333334,
+              "orcado_horas": 2,
+              "pontos_totais": 1,
+              "em_andamento": true,
+              "data_criacao": "2026-02-02T15:01:44.778972-03:00",
+              "data_conclusao": null,
+              "data_prevista": null,
+              "data_desejada": "2026-02-23",
+              "sub_projeto": null,
+              "tags": [
+                1,
+                4,
+                5
+              ],
+              "logs_fase": [
+                {
+                  "data": "2026-02-23T10:04:43.362244-03:00",
+                  "de": "Sprint Atual",
+                  "para": "Em Andamento",
+                  "usuario": "bruna.maria",
+                  "frase": "moveu o card de Sprint Atual para Em Andamento"
+                },
+                {
+                  "data": "2026-03-02T09:53:24.059081-03:00",
+                  "de": "Em Andamento",
+                  "para": "Em Testes",
+                  "usuario": "bruna.maria",
+                  "frase": "moveu o card de Em Andamento para Em Testes"
+                }
+              ],
+              "tempo_por_fase": {
+                "Em Andamento": 167.81130472222222,
+                "Em Testes": 183.5584
+              },
+              "dias_na_fase_atual": 7,
+              "maior_tempo_fase": {
+                "fase": "Em Testes",
+                "horas": 184
+              },
+              "dados_usuario": {
+                "id": 135,
+                "nome": "Bruna Maria"
+              },
+              "anomalias": [
+                {
+                  "tipo": "TRAVADO_ATENCAO",
+                  "severidade": "MEDIA",
+                  "valor": 7,
+                  "mensagem": "Em Em Testes há 7 dias",
+                  "acao": "Monitorar progresso do card"
+                },
+                {
+                  "tipo": "DEADLINE_ESTOURADO",
+                  "severidade": "ALTA",
+                  "valor": 15,
+                  "mensagem": "Deadline (2026-02-23) estourado há 15 dias",
+                  "acao": "Repriorizar ou atualizar deadline"
+                }
+              ],
+              "total_anomalias": 2,
+              "tem_alertas_criticos": true,
+              "metricas_deteccao": {
+                "reprovacoes": 0,
+                "reaberturas": 0,
+                "total_movimentacoes": 2,
+                "dias_sem_movimentacao": 7,
+                "alteracoes_estimativa": 0,
+                "tempo_orcado": 2,
+                "tempo_trabalhado": 0.48333333333333334,
+                "pontos": 1,
+                "estouro_orcamento_percent": -76
+              },
+              "times": [
+                {
+                  "equipe": "Externo",
+                  "nome": "Gabriela LDK",
+                  "user_id": 182,
+                  "nivel": null,
+                  "cargo": null,
+                  "ativo_no_projeto": null,
+                  "horas_periodo": 0
+                },
+                {
+                  "equipe": "Gestão",
+                  "nome": "Allan Siqueira Safra Terra",
+                  "user_id": 50,
+                  "nivel": "Pleno",
+                  "cargo": "Coordenador de Projetos - Nível Pleno",
+                  "ativo_no_projeto": false,
+                  "horas_periodo": 0
+                }
+              ],
+              "equipes_envolvidas": [
+                "Gestão"
+              ],
+              "sprint_identificada": "Sprint 23/02 a 01/03",
+              "sprint_codigo": "2026-W09",
+              "sprint_info": {
+                "nome": "Sprint 23/02 a 01/03",
+                "codigo": "2026-W09",
+                "periodo": {
+                  "inicio": "2026-02-23T19:37:15.199Z",
+                  "fim": "2026-03-01T19:37:15.199Z"
+                },
+                "total_cards_sprint": 5
+              }
+            },
+            {
+              "id": 15396,
+              "titulo": "✅Bug: Busca avançada",
+              "descricao_limpa": "Gab 2/2: Busca avançada n está funcionando... eu seleciono um filtro e ele aparece como ''no data available'' [imagem] [imagem]",
+              "fase_atual": 5,
+              "fase_atual_nome": {
+                "nome": "Em Testes",
+                "ordem": 50,
+                "conclusao": false,
+                "testes": true,
+                "reprovacao": false,
+                "arquivamento": false
+              },
+              "responsaveis": [
+                {
+                  "id": 182,
+                  "nome": "Gabriela LDK"
+                },
+                {
+                  "id": 50,
+                  "nome": "Allan Safra"
+                }
+              ],
+              "tempo_trabalhado_horas": 0,
+              "orcado_horas": 0,
+              "pontos_totais": null,
+              "em_andamento": false,
+              "data_criacao": "2026-02-02T15:38:52.725590-03:00",
+              "data_conclusao": null,
+              "data_prevista": null,
+              "data_desejada": null,
+              "sub_projeto": null,
+              "tags": [
+                1,
+                4,
+                5
+              ],
+              "logs_fase": [
+                {
+                  "data": "2026-02-23T16:37:01.774896-03:00",
+                  "de": "Aguardando Deploy",
+                  "para": "Em Testes",
+                  "usuario": "bruna.maria",
+                  "frase": "moveu o card de Aguardando Deploy para Em Testes"
+                }
+              ],
+              "tempo_por_fase": {
+                "Em Testes": 344.83132416666666
+              },
+              "dias_na_fase_atual": 14,
+              "maior_tempo_fase": {
+                "fase": "Em Testes",
+                "horas": 345
+              },
+              "dados_usuario": {
+                "id": 135,
+                "nome": "Bruna Maria"
+              },
+              "anomalias": [
+                {
+                  "tipo": "TRAVADO_CRITICO",
+                  "severidade": "ALTA",
+                  "valor": 14,
+                  "mensagem": "Em Em Testes há 14 dias sem progresso",
+                  "acao": "Verificar bloqueios técnicos ou falta de priorização"
+                }
+              ],
+              "total_anomalias": 1,
+              "tem_alertas_criticos": true,
+              "metricas_deteccao": {
+                "reprovacoes": 0,
+                "reaberturas": 0,
+                "total_movimentacoes": 1,
+                "dias_sem_movimentacao": 14,
+                "alteracoes_estimativa": 0,
+                "tempo_orcado": 0,
+                "tempo_trabalhado": 0,
+                "pontos": null,
+                "estouro_orcamento_percent": null
+              },
+              "times": [
+                {
+                  "equipe": "Externo",
+                  "nome": "Gabriela LDK",
+                  "user_id": 182,
+                  "nivel": null,
+                  "cargo": null,
+                  "ativo_no_projeto": null,
+                  "horas_periodo": 0
+                },
+                {
+                  "equipe": "Gestão",
+                  "nome": "Allan Siqueira Safra Terra",
+                  "user_id": 50,
+                  "nivel": "Pleno",
+                  "cargo": "Coordenador de Projetos - Nível Pleno",
+                  "ativo_no_projeto": false,
+                  "horas_periodo": 0
+                }
+              ],
+              "equipes_envolvidas": [
+                "Gestão"
+              ],
+              "sprint_identificada": "Sprint 23/02 a 01/03",
+              "sprint_codigo": "2026-W09",
+              "sprint_info": {
+                "nome": "Sprint 23/02 a 01/03",
+                "codigo": "2026-W09",
+                "periodo": {
+                  "inicio": "2026-02-23T19:37:15.199Z",
+                  "fim": "2026-03-01T19:37:15.199Z"
+                },
+                "total_cards_sprint": 5
+              }
+            },
+            {
+              "id": 11356,
+              "titulo": "✅ Pesquisa por número de pedido na lupa da tela de visualização",
+              "descricao_limpa": "Gab 11/6: quando eu pesquiso um pedido, ele mostra todas as opções de pedido com aquele inicio. Ex: quero pesquisar o PO 250110, aparece o 250110, 2501100, 2501101 e assim por diante.&nbsp; O que pensamos: pra puxar o exato pedido que precisamos, pensamos que a lupa deveria só pesquisar depois que déssemos um espaço, então PO 250110 eu pesquiso como 250110_ ( ''_'' = barra de espaço hehe).",
+              "fase_atual": 5,
+              "fase_atual_nome": {
+                "nome": "Em Testes",
+                "ordem": 50,
+                "conclusao": false,
+                "testes": true,
+                "reprovacao": false,
+                "arquivamento": false
+              },
+              "responsaveis": [
+                {
+                  "id": 126,
+                  "nome": "Deborah Alves"
+                },
+                {
+                  "id": 50,
+                  "nome": "Allan Safra"
+                }
+              ],
+              "tempo_trabalhado_horas": 42.93333333333333,
+              "orcado_horas": 3,
+              "pontos_totais": 2,
+              "em_andamento": true,
+              "data_criacao": "2025-05-29T16:36:21.133256-03:00",
+              "data_conclusao": null,
+              "data_prevista": null,
+              "data_desejada": "2026-02-12",
+              "sub_projeto": null,
+              "tags": [
+                4,
+                5
+              ],
+              "logs_fase": [],
+              "tempo_por_fase": {},
+              "dias_na_fase_atual": null,
+              "maior_tempo_fase": null,
+              "dados_usuario": {
+                "id": 182,
+                "nome": "Gabriela LDK"
+              },
+              "anomalias": [
+                {
+                  "tipo": "TEMPO_ALTO",
+                  "severidade": "MEDIA",
+                  "valor": 43,
+                  "mensagem": "Tempo trabalhado de 43h",
+                  "acao": "Monitorar evolução do card"
+                },
+                {
+                  "tipo": "DEADLINE_ESTOURADO",
+                  "severidade": "ALTA",
+                  "valor": 26,
+                  "mensagem": "Deadline (2026-02-12) estourado há 26 dias",
+                  "acao": "Repriorizar ou atualizar deadline"
+                },
+                {
+                  "tipo": "ESTOURO_ORCAMENTO_CRITICO",
+                  "severidade": "ALTA",
+                  "valor": 1331,
+                  "mensagem": "Estourou orçamento em 1331% (42.9h / 3h orçadas)",
+                  "acao": "Revisar escopo e parar work-in-progress se possível"
+                }
+              ],
+              "total_anomalias": 3,
+              "tem_alertas_criticos": true,
+              "metricas_deteccao": {
+                "reprovacoes": 0,
+                "reaberturas": 0,
+                "total_movimentacoes": 0,
+                "dias_sem_movimentacao": null,
+                "alteracoes_estimativa": 0,
+                "tempo_orcado": 3,
+                "tempo_trabalhado": 42.93333333333333,
+                "pontos": 2,
+                "estouro_orcamento_percent": 1331
+              },
+              "times": [
+                {
+                  "equipe": "Gestão",
+                  "nome": "Deborah Grazielle Alves da Silva",
+                  "user_id": 126,
+                  "nivel": "Júnior",
+                  "cargo": "Coordenador de Projetos - Nível Júnior",
+                  "ativo_no_projeto": false,
+                  "horas_periodo": 0
+                },
+                {
+                  "equipe": "Gestão",
+                  "nome": "Allan Siqueira Safra Terra",
+                  "user_id": 50,
+                  "nivel": "Pleno",
+                  "cargo": "Coordenador de Projetos - Nível Pleno",
+                  "ativo_no_projeto": false,
+                  "horas_periodo": 0
+                }
+              ],
+              "equipes_envolvidas": [
+                "Gestão"
+              ],
+              "sprint_identificada": "Sprint 26/05 a 01/06",
+              "sprint_codigo": "2025-W22",
+              "sprint_info": {
+                "nome": "Sprint 26/05 a 01/06",
+                "codigo": "2025-W22",
+                "periodo": {
+                  "inicio": "2025-05-26T19:36:21.133Z",
+                  "fim": "2025-06-01T19:36:21.133Z"
+                },
+                "total_cards_sprint": 1
+              }
+            },
+            {
+              "id": 15580,
+              "titulo": "Verificar exclusões de pedidos.",
+              "descricao_limpa": "Verificar exclusões de pedidos, que estão dando erro e bagunçando a ordem de criação dos próximos. E alguns pedidos não são excluidos.",
+              "fase_atual": 5,
+              "fase_atual_nome": {
+                "nome": "Em Testes",
+                "ordem": 50,
+                "conclusao": false,
+                "testes": true,
+                "reprovacao": false,
+                "arquivamento": false
+              },
+              "responsaveis": [
+                {
+                  "id": 50,
+                  "nome": "Allan Safra"
+                }
+              ],
+              "tempo_trabalhado_horas": 12.25,
+              "orcado_horas": 1,
+              "pontos_totais": 1,
+              "em_andamento": true,
+              "data_criacao": "2026-02-13T14:17:08.776706-03:00",
+              "data_conclusao": null,
+              "data_prevista": null,
+              "data_desejada": "2026-02-26",
+              "sub_projeto": null,
+              "tags": [
+                5
+              ],
+              "logs_fase": [
+                {
+                  "data": "2026-02-23T16:36:56.569346-03:00",
+                  "de": "Aguardando Deploy",
+                  "para": "Em Testes",
+                  "usuario": "bruna.maria",
+                  "frase": "moveu o card de Aguardando Deploy para Em Testes"
+                },
+                {
+                  "data": "2026-02-25T13:01:33.004750-03:00",
+                  "de": "Em Testes",
+                  "para": "Em Andamento",
+                  "usuario": "allan.safra",
+                  "frase": "moveu o card de Em Testes para Em Andamento"
+                },
+                {
+                  "data": "2026-02-27T11:56:40.199461-03:00",
+                  "de": "Em Andamento",
+                  "para": "Em Testes",
+                  "usuario": "allan.safra",
+                  "frase": "moveu o card de Em Andamento para Em Testes"
+                }
+              ],
+              "tempo_por_fase": {
+                "Em Testes": 297.9142486111111,
+                "Em Andamento": 46.91866527777778
+              },
+              "dias_na_fase_atual": 10,
+              "maior_tempo_fase": {
+                "fase": "Em Testes",
+                "horas": 298
+              },
+              "dados_usuario": {
+                "id": 135,
+                "nome": "Bruna Maria"
+              },
+              "anomalias": [
+                {
+                  "tipo": "TRAVADO_ATENCAO",
+                  "severidade": "MEDIA",
+                  "valor": 10,
+                  "mensagem": "Em Em Testes há 10 dias",
+                  "acao": "Monitorar progresso do card"
+                },
+                {
+                  "tipo": "DEADLINE_ESTOURADO",
+                  "severidade": "MEDIA",
+                  "valor": 12,
+                  "mensagem": "Deadline (2026-02-26) estourado há 12 dias",
+                  "acao": "Repriorizar ou atualizar deadline"
+                },
+                {
+                  "tipo": "ESTOURO_ORCAMENTO_CRITICO",
+                  "severidade": "ALTA",
+                  "valor": 1125,
+                  "mensagem": "Estourou orçamento em 1125% (12.3h / 1h orçadas)",
+                  "acao": "Revisar escopo e parar work-in-progress se possível"
+                }
+              ],
+              "total_anomalias": 3,
+              "tem_alertas_criticos": true,
+              "metricas_deteccao": {
+                "reprovacoes": 1,
+                "reaberturas": 0,
+                "total_movimentacoes": 3,
+                "dias_sem_movimentacao": 10,
+                "alteracoes_estimativa": 0,
+                "tempo_orcado": 1,
+                "tempo_trabalhado": 12.25,
+                "pontos": 1,
+                "estouro_orcamento_percent": 1125
+              },
+              "times": [
+                {
+                  "equipe": "Gestão",
+                  "nome": "Allan Siqueira Safra Terra",
+                  "user_id": 50,
+                  "nivel": "Pleno",
+                  "cargo": "Coordenador de Projetos - Nível Pleno",
+                  "ativo_no_projeto": false,
+                  "horas_periodo": 0
+                }
+              ],
+              "equipes_envolvidas": [
+                "Gestão"
+              ],
+              "sprint_identificada": "Sprint 23/02 a 01/03",
+              "sprint_codigo": "2026-W09",
+              "sprint_info": {
+                "nome": "Sprint 23/02 a 01/03",
+                "codigo": "2026-W09",
+                "periodo": {
+                  "inicio": "2026-02-23T19:37:15.199Z",
+                  "fim": "2026-03-01T19:37:15.199Z"
+                },
+                "total_cards_sprint": 5
+              }
+            },
+            {
+              "id": 14331,
+              "titulo": "Ajuste: Relatório Editável",
+              "descricao_limpa": "Gab 5/11: Além da ordem de colunas... Tem algumas colunas que não estão pegando as informações dos locais corretos. -- Qtde Total: se tiver cnt, precisa pegar a quantidade total em cnt: Gab: n tá feito -- Qtde Pendente: se tiver cnt, precisa pegar a quantidade total em cnt Gab: n tá feito -- Forma de pgto: Nome fantasia de forma de pagamento, no momento não está trazendo informação nenhuma OK -- Produto fatura: Precisa pegar a mesma informação de (descrição + subdescrição)&gt;&gt; DELETAR DE ACORDO COM GAB Gab: n foi deletado -- Qtde Faturada: se tiver cnt, precisa pegar a quantidade total em cnt Gab: n tá feito -- Claim em Aberto: todos estão aparecendo como ''sim'', tá pegando de onde a informação? ou n ta pegando de lugar nenhum por enquanto? Gab: ??? -- AWB: n tá pegando do lugar correto ainda, é desse campo aqui ó: Gab: n tá feito [imagem] Roberto F. Rocha - 03/02: (-- Claim em Aberto: todos estão aparecendo como ''sim'', tá pegando de onde a informação? ou n ta pegando de lugar nenhum por enquanto? Gab: ???) Como funcionava anteriormente Na versão original do relatório, não existia uma coluna específica para claim em aberto. Por isso, a informação era inferida de forma indireta, baseada apenas na existência de valor pendente. Ou seja, sempre que havia valor pendente, o registro era considerado como claim em aberto, o que fazia com que quase todos os casos acabassem retornando como “SIM”, mesmo sem um indicador explícito para isso. Situação atual Atualmente, já existe uma coluna específica para claim em aberto (claims_em_aberto), e estou ajustando o relatório para que essa informação passe a ser obtida exclusivamente desse campo, sem utilizar regras auxiliares ou dependência de outros valores.",
+              "fase_atual": 5,
+              "fase_atual_nome": {
+                "nome": "Em Testes",
+                "ordem": 50,
+                "conclusao": false,
+                "testes": true,
+                "reprovacao": false,
+                "arquivamento": false
+              },
+              "responsaveis": [
+                {
+                  "id": 182,
+                  "nome": "Gabriela LDK"
+                },
+                {
+                  "id": 50,
+                  "nome": "Allan Safra"
+                }
+              ],
+              "tempo_trabalhado_horas": 4.483333333333333,
+              "orcado_horas": 3,
+              "pontos_totais": 2,
+              "em_andamento": true,
+              "data_criacao": "2025-11-05T17:15:01.231779-03:00",
+              "data_conclusao": null,
+              "data_prevista": null,
+              "data_desejada": "2026-02-04",
+              "sub_projeto": null,
+              "tags": [
+                5,
+                17
+              ],
+              "logs_fase": [],
+              "tempo_por_fase": {},
+              "dias_na_fase_atual": null,
+              "maior_tempo_fase": null,
+              "dados_usuario": {
+                "id": 50,
+                "nome": "Allan Safra"
+              },
+              "anomalias": [
+                {
+                  "tipo": "DEADLINE_ESTOURADO",
+                  "severidade": "ALTA",
+                  "valor": 34,
+                  "mensagem": "Deadline (2026-02-04) estourado há 34 dias",
+                  "acao": "Repriorizar ou atualizar deadline"
+                },
+                {
+                  "tipo": "ESTOURO_ORCAMENTO",
+                  "severidade": "MEDIA",
+                  "valor": 49,
+                  "mensagem": "Acima do orçamento em 49% (4.5h / 3h orçadas)",
+                  "acao": "Monitorar e comunicar ao time"
+                }
+              ],
+              "total_anomalias": 2,
+              "tem_alertas_criticos": true,
+              "metricas_deteccao": {
+                "reprovacoes": 0,
+                "reaberturas": 0,
+                "total_movimentacoes": 0,
+                "dias_sem_movimentacao": null,
+                "alteracoes_estimativa": 0,
+                "tempo_orcado": 3,
+                "tempo_trabalhado": 4.483333333333333,
+                "pontos": 2,
+                "estouro_orcamento_percent": 49
+              },
+              "times": [
+                {
+                  "equipe": "Externo",
+                  "nome": "Gabriela LDK",
+                  "user_id": 182,
+                  "nivel": null,
+                  "cargo": null,
+                  "ativo_no_projeto": null,
+                  "horas_periodo": 0
+                },
+                {
+                  "equipe": "Gestão",
+                  "nome": "Allan Siqueira Safra Terra",
+                  "user_id": 50,
+                  "nivel": "Pleno",
+                  "cargo": "Coordenador de Projetos - Nível Pleno",
+                  "ativo_no_projeto": false,
+                  "horas_periodo": 0
+                }
+              ],
+              "equipes_envolvidas": [
+                "Gestão"
+              ],
+              "sprint_identificada": "Sprint 03/11 a 09/11",
+              "sprint_codigo": "2025-W45",
+              "sprint_info": {
+                "nome": "Sprint 03/11 a 09/11",
+                "codigo": "2025-W45",
+                "periodo": {
+                  "inicio": "2025-11-03T20:15:01.231Z",
+                  "fim": "2025-11-09T20:15:01.231Z"
+                },
+                "total_cards_sprint": 1
+              }
+            }
+          ],
+          "fases": {
+            "1": {
+              "nome": "Backlog",
+              "ordem": 10,
+              "conclusao": false,
+              "testes": false,
+              "reprovacao": false,
+              "arquivamento": false
+            },
+            "3": {
+              "nome": "Na Fila",
+              "ordem": 30,
+              "conclusao": false,
+              "testes": false,
+              "reprovacao": false,
+              "arquivamento": false
+            },
+            "4": {
+              "nome": "Em Andamento",
+              "ordem": 40,
+              "conclusao": false,
+              "testes": false,
+              "reprovacao": false,
+              "arquivamento": false
+            },
+            "5": {
+              "nome": "Em Testes",
+              "ordem": 50,
+              "conclusao": false,
+              "testes": true,
+              "reprovacao": false,
+              "arquivamento": false
+            },
+            "6": {
+              "nome": "Concluído",
+              "ordem": 60,
+              "conclusao": true,
+              "testes": false,
+              "reprovacao": false,
+              "arquivamento": false
+            },
+            "7": {
+              "nome": "Cancelado",
+              "ordem": 70,
+              "conclusao": false,
+              "testes": false,
+              "reprovacao": false,
+              "arquivamento": false
+            },
+            "8": {
+              "nome": "Pendente Cliente",
+              "ordem": 80,
+              "conclusao": false,
+              "testes": false,
+              "reprovacao": false,
+              "arquivamento": false
+            },
+            "9": {
+              "nome": "Standby",
+              "ordem": 90,
+              "conclusao": false,
+              "testes": false,
+              "reprovacao": false,
+              "arquivamento": false
+            },
+            "10": {
+              "nome": "Sprint Atual",
+              "ordem": 35,
+              "conclusao": false,
+              "testes": false,
+              "reprovacao": false,
+              "arquivamento": false
+            },
+            "11": {
+              "nome": "Conclusão da Sprint",
+              "ordem": 55,
+              "conclusao": true,
+              "testes": false,
+              "reprovacao": false,
+              "arquivamento": false
+            },
+            "12": {
+              "nome": "Reprovado",
+              "ordem": 52,
+              "conclusao": false,
+              "testes": false,
+              "reprovacao": true,
+              "arquivamento": false
+            },
+            "13": {
+              "nome": "Aguardando Deploy",
+              "ordem": 45,
+              "conclusao": false,
+              "testes": false,
+              "reprovacao": false,
+              "arquivamento": false
+            }
+          },
+          "resumo": {
+            "total_cards": 18,
+            "por_status": {
+              "concluidos": 0,
+              "cancelados": 0,
+              "em_andamento": 2,
+              "em_testes": 11,
+              "aguardando_deploy": 2,
+              "pendentes": 3,
+              "outros": 0
+            },
+            "por_fase": {
+              "Na Fila": 2,
+              "Sprint Atual": 1,
+              "Em Andamento": 2,
+              "Aguardando Deploy": 2,
+              "Em Testes": 11
+            },
+            "alertas": {
+              "cards_travados": 0,
+              "cards_travados_ids": [],
+              "cards_com_anomalias": 15,
+              "cards_com_alertas_criticos": 9,
+              "cards_com_alertas_criticos_ids": [
+                15382,
+                15384,
+                15398,
+                15424,
+                15393,
+                15396,
+                11356,
+                15580,
+                14331
+              ]
+            },
+            "horas": {
+              "total_horas_periodo": 57.39,
+              "horas_por_equipe": {
+                "Frontend": 34.32,
+                "Backend": 23.07
+              },
+              "equipes_ativas": [
+                "Frontend",
+                "Backend"
+              ],
+              "total_pessoas_ativas": 2
+            },
+            "equipes_por_status": {
+              "concluidos": [],
+              "em_andamento": [
+                "Backend",
+                "Gestão"
+              ],
+              "em_testes": [
+                "Backend",
+                "Gestão"
+              ],
+              "aguardando_deploy": [
+                "Backend",
+                "Gestão"
+              ],
+              "pendentes": [
+                "Gestão"
+              ]
+            },
+            "entregas_com_horas": [],
+            "total_horas_entregas": 0
+          },
+          "sprints_identificadas": [
+            {
+              "nome": "Sprint 26/05 a 01/06",
+              "codigo": "2025-W22",
+              "periodo": {
+                "inicio": "2025-05-26T19:36:21.133Z",
+                "fim": "2025-06-01T19:36:21.133Z"
+              },
+              "cards": [
+                11356
+              ],
+              "total": 1
+            },
+            {
+              "nome": "Sprint 03/11 a 09/11",
+              "codigo": "2025-W45",
+              "periodo": {
+                "inicio": "2025-11-03T20:15:01.231Z",
+                "fim": "2025-11-09T20:15:01.231Z"
+              },
+              "cards": [
+                14331
+              ],
+              "total": 1
+            },
+            {
+              "nome": "Sprint 23/02 a 01/03",
+              "codigo": "2026-W09",
+              "periodo": {
+                "inicio": "2026-02-23T19:37:15.199Z",
+                "fim": "2026-03-01T19:37:15.199Z"
+              },
+              "cards": [
+                15424,
+                14341,
+                15393,
+                15396,
+                15580
+              ],
+              "total": 5
+            },
+            {
+              "nome": "Sprint 02/03 a 08/03",
+              "codigo": "2026-W10",
+              "periodo": {
+                "inicio": "2026-03-02T11:42:30.477Z",
+                "fim": "2026-03-08T11:42:30.477Z"
+              },
+              "cards": [
+                15528,
+                15488,
+                15492,
+                15391,
+                15527
+              ],
+              "total": 5
+            },
+            {
+              "nome": "Sprint 09/03 a 15/03",
+              "codigo": "2026-W11",
+              "periodo": {
+                "inicio": "2026-03-09T14:17:01.235Z",
+                "fim": "2026-03-15T14:17:01.235Z"
+              },
+              "cards": [
+                15599,
+                15382,
+                15384,
+                15398
+              ],
+              "total": 4
+            }
+          ],
+          "metadados_coleta": {
+            "periodo_analise_dias": 15,
+            "data_coleta": "2026-03-10T04:27:16.863Z",
+            "total_cards_coletados": 18
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "versionId": "08a7d230-b969-4836-b268-2ebc60232535",
+  "activeVersionId": null,
+  "versionCounter": 11,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-10T03:57:09.520Z",
+      "createdAt": "2026-03-10T03:57:09.520Z",
+      "role": "workflow:owner",
+      "workflowId": "hNZyAa31OWTjGB1gPjUV5",
+      "projectId": "aLeETedgrx3HypUV",
+      "project": {
+        "updatedAt": "2026-02-05T18:12:51.008Z",
+        "createdAt": "2026-02-05T17:11:33.764Z",
+        "id": "aLeETedgrx3HypUV",
+        "name": "Miguel Kubrusly <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-02-05T17:11:33.764Z",
+            "createdAt": "2026-02-05T17:11:33.764Z",
+            "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+            "projectId": "aLeETedgrx3HypUV",
+            "user": {
+              "updatedAt": "2026-03-10T03:07:07.287Z",
+              "createdAt": "2026-02-05T17:11:32.394Z",
+              "id": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+              "email": "infra@novadata.com.br",
+              "firstName": "Miguel",
+              "lastName": "Kubrusly",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-02-06T13:42:55.997Z",
+                "personalization_survey_n8n_version": "2.6.0",
+                "automationGoalDevops": [
+                  "data-syncing"
+                ],
+                "companyIndustryExtended": [
+                  "it-industry"
+                ],
+                "companySize": "<20",
+                "companyType": "other",
+                "role": "it",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "4oFgpwW3T5VYLBkmatmZt",
+                "userActivatedAt": 1772566324555,
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-03-10",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-06T21:08:59.858Z",
+      "createdAt": "2026-03-06T19:21:19.987Z",
+      "id": "LUuzlmYMIPHf7yaf",
+      "name": ">semanal"
+    },
+    {
+      "updatedAt": "2026-03-06T15:02:49.033Z",
+      "createdAt": "2026-03-06T15:02:49.033Z",
+      "id": "WefOyCNePUH6cMEC",
+      "name": "prod"
+    }
+  ],
+  "activeVersion": null
+}
