@@ -1,0 +1,946 @@
+{
+  "updatedAt": "2026-03-10T04:07:14.231Z",
+  "createdAt": "2026-03-10T03:13:38.040Z",
+  "id": "pz3ZCVvJ_EWChXN3uMgc_",
+  "name": "[MANU]Services.BackupWorkflowsGitHub.CRON_v1.1",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "d5b383fd-f1b0-40c2-84da-145fc5440bfe",
+      "name": "agendarExecucao",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        944,
+        1024
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst dateStr = now.toISOString().replace('T', ' ').substring(0, 19);\nreturn [{ json: { commitDate: dateStr } }];"
+      },
+      "id": "802a3f7b-ec16-47e0-8dbf-0dba4dd99ad1",
+      "name": "gerarTimestampCommit",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1168,
+        1024
+      ]
+    },
+    {
+      "parameters": {
+        "filters": {},
+        "requestOptions": {}
+      },
+      "id": "17e8c3c7-245c-4972-9ef6-d4a4c359f28a",
+      "name": "listarWorkflows",
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        1024
+      ],
+      "credentials": {
+        "n8nApi": {
+          "id": "***",
+          "name": "***"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "71ead988-adc9-41c5-9568-d7a47e6dba25",
+      "name": "iterarWorkflows",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1600,
+        1024
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "workflowId": "={{ $json.id }}",
+        "requestOptions": {}
+      },
+      "id": "4f2b2386-d49d-4d09-96f8-f3097b6bf394",
+      "name": "buscarWorkflowCompleto",
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        1872,
+        1184
+      ],
+      "credentials": {
+        "n8nApi": {
+          "id": "***",
+          "name": "***"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const workflow = $input.first().json;\nconst name = workflow.name || 'sem-nome';\n\n// === SLUGIFY ===\nconst slugify = (text) => {\n  return text.toString()\n    .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n    .replace(/[^a-zA-Z0-9\\s-_]/g, '')\n    .replace(/\\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');\n};\n\n// === RESOLVER AMBIENTE VIA TAGS ===\n// Tags reconhecidas como ambiente (case-insensitive)\nconst ENV_TAGS = ['dev', 'prod'];\n\nconst workflowTags = (workflow.tags || [])\n  .map(t => (typeof t === 'string' ? t : t.name || '').toLowerCase().trim())\n  .filter(Boolean);\n\nconst envTag = workflowTags.find(t => ENV_TAGS.includes(t));\nconst environment = envTag || 'sem-tag';\n\n// === SUBPASTA POR PRIMEIRO SEGMENTO DO NOME ===\nconst firstSegment = name.split(/[_\\-\\s]/)[0];\nconst folder = slugify(firstSegment) || 'GERAL';\nconst cleanName = slugify(name);\n\n// === SANITIZAR CREDENTIALS ===\nconst sanitized = JSON.parse(JSON.stringify(workflow));\nif (sanitized.nodes) {\n  sanitized.nodes.forEach(node => {\n    if (node.credentials) {\n      for (const key of Object.keys(node.credentials)) {\n        node.credentials[key] = { id: '***', name: '***' };\n      }\n    }\n  });\n}\n\n// === MONTAR PATH: backups/{env}/{subpasta}/{arquivo} ===\nconst filePath = `backups/${environment}/${folder}/${cleanName}__${workflow.id}.json`;\nconst content = JSON.stringify(sanitized, null, 2);\n\nreturn [{\n  json: {\n    filePath,\n    content,\n    workflowName: workflow.name,\n    workflowId: workflow.id,\n    environment,\n    tags: workflowTags\n  }\n}];"
+      },
+      "id": "46f460d0-dbd2-4b1c-a161-3921851a0680",
+      "name": "prepararArquivoBackup",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2048,
+        1184
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": "moraisinovaia",
+        "repository": "teste-backup-n8n",
+        "filePath": "={{ $json.filePath }}",
+        "asBinaryProperty": false,
+        "additionalParameters": {}
+      },
+      "id": "a5fb7f3b-ea76-41d2-9afa-19e11be84740",
+      "name": "verificarArquivoGitHub",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [
+        2272,
+        1184
+      ],
+      "webhookId": "2b8e0e1b-d263-45ee-9839-288c254cc8dc",
+      "credentials": {
+        "githubApi": {
+          "id": "***",
+          "name": "***"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "file-exists-check",
+              "leftValue": "={{ $json.sha }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "54898f07-fadd-486a-b1cd-5c055c964a72",
+      "name": "checarArquivoExiste",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2480,
+        1184
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "edit",
+        "owner": "moraisinovaia",
+        "repository": "teste-backup-n8n",
+        "filePath": "={{ $('prepararArquivoBackup').item.json.filePath }}",
+        "fileContent": "={{ $('prepararArquivoBackup').item.json.content }}",
+        "commitMessage": "=✏️ [{{ $('prepararArquivoBackup').item.json.environment }}] Atualizado: {{ $('prepararArquivoBackup').item.json.workflowName }} ({{ $('gerarTimestampCommit').first().json.commitDate }})"
+      },
+      "id": "004d56df-7b96-40b3-9a0b-f8cd9d3e72d1",
+      "name": "atualizarArquivoGitHub",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [
+        2704,
+        1072
+      ],
+      "webhookId": "435c9289-92e6-4693-849e-a727bfd5b2c4",
+      "credentials": {
+        "githubApi": {
+          "id": "***",
+          "name": "***"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": "moraisinovaia",
+        "repository": "teste-backup-n8n",
+        "filePath": "={{ $('prepararArquivoBackup').item.json.filePath }}",
+        "fileContent": "={{ $('prepararArquivoBackup').item.json.content }}",
+        "commitMessage": "=🆕 [{{ $('prepararArquivoBackup').item.json.environment }}] Criado: {{ $('prepararArquivoBackup').item.json.workflowName }} ({{ $('gerarTimestampCommit').first().json.commitDate }})"
+      },
+      "id": "7c9bac5c-efec-4164-b097-65bff69523c2",
+      "name": "criarArquivoGitHub",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [
+        2704,
+        1296
+      ],
+      "webhookId": "68ce5abd-c727-49f5-81f7-15283f72eff9",
+      "credentials": {
+        "githubApi": {
+          "id": "***",
+          "name": "***"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-status",
+              "name": "status",
+              "value": "={{ $json.content ? '✅ Backup OK' : '⚠️ Verificar' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "086aa6d2-1b6b-468a-bcd1-99b15178f749",
+      "name": "registrarStatusBackup",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2928,
+        1184
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "25246af5-7036-4c85-809e-122ec322daa5",
+      "name": "aguardarRateLimit",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3152,
+        1184
+      ],
+      "webhookId": "5746ad20-43f5-4dfa-adb9-6ddf5e59363e"
+    },
+    {
+      "parameters": {
+        "content": "# BackupWorkflowsGitHub v1.1\n\nProjeto: Manutenção\nGatilho: CRON (a cada hora)\nSegurança: n8n API Key + GitHub OAuth Token\nDocs: —\n\nDescrição: Backup automático de todos os workflows da instância para repositório GitHub, agora com separação por ambiente (dev/prod) via tags do n8n.\n\n## Estrutura de pastas no GitHub:\n```\nbackups/\n├── dev/\n│   ├── MANU/\n│   ├── LOG/\n│   └── .../\n├── prod/\n│   ├── MANU/\n│   ├── LOG/\n│   └── .../\n└── sem-tag/\n    ├── GERAL/\n    └── .../\n```\n\n## Regras de roteamento:\n- Tag `dev` → pasta dev/\n- Tag `prod` → pasta prod/\n- Sem tag → pasta sem-tag/\n- Ambas as tags → usa a primeira encontrada\n\n## Changelog:\n- v1.0: Versão inicial com backup por prefixo do nome\n- v1.1: Adicionado roteamento por tag dev/prod",
+        "height": 560,
+        "width": 672,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        144,
+        224
+      ],
+      "typeVersion": 1,
+      "id": "13ea438e-8753-4227-b3a5-f5d8bac039fe",
+      "name": "docWorkflow"
+    },
+    {
+      "parameters": {
+        "content": "## Lógica do Código — prepararArquivoBackup (v1.1)\n\n1. slugify()\n   Normaliza o nome do workflow para uso como caminho de arquivo:\n   - Remove acentos (normalize NFD)\n   - Remove caracteres especiais (mantém letras, números, hífen e underscore)\n   - Substitui espaços por hífen\n\n2. Resolver ambiente (NOVO em v1.1)\n   Lê o array `workflow.tags` e procura a primeira tag\n   que seja 'dev' ou 'prod' (case-insensitive).\n   - Tag encontrada → usa como pasta de ambiente\n   - Nenhuma tag reconhecida → cai em 'sem-tag'\n   Suporta tags como objeto {name:'dev'} ou string 'dev'.\n\n3. Subpasta por primeiro segmento\n   Pega o PRIMEIRO segmento do nome, quebrando no primeiro\n   _ - ou espaço encontrado.\n   Ex: \"LOG_cron_banco\" → subpasta \"LOG\"\n   Se nenhum segmento for encontrado, cai em \"GERAL\".\n\n4. Sanitização de Credentials\n   Clona o workflow e substitui id/name de cada credential\n   por '***', evitando vazamento ao GitHub.\n\n5. filePath (ATUALIZADO em v1.1)\n   backups/{ambiente}/{subpasta}/{nome-completo}__{id}.json\n   Exemplo: backups/prod/MANU/MANU-ServiceBackup__abc123.json",
+        "height": 580,
+        "width": 672,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        144,
+        832
+      ],
+      "typeVersion": 1,
+      "id": "d8d80742-de93-4cc5-97aa-fb4315b10b8f",
+      "name": "docCodigoPrepararBackup"
+    }
+  ],
+  "connections": {
+    "agendarExecucao": {
+      "main": [
+        [
+          {
+            "node": "gerarTimestampCommit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gerarTimestampCommit": {
+      "main": [
+        [
+          {
+            "node": "listarWorkflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "listarWorkflows": {
+      "main": [
+        [
+          {
+            "node": "iterarWorkflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "iterarWorkflows": {
+      "main": [
+        [],
+        [
+          {
+            "node": "buscarWorkflowCompleto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscarWorkflowCompleto": {
+      "main": [
+        [
+          {
+            "node": "prepararArquivoBackup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prepararArquivoBackup": {
+      "main": [
+        [
+          {
+            "node": "verificarArquivoGitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "verificarArquivoGitHub": {
+      "main": [
+        [
+          {
+            "node": "checarArquivoExiste",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "checarArquivoExiste": {
+      "main": [
+        [
+          {
+            "node": "atualizarArquivoGitHub",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "criarArquivoGitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "atualizarArquivoGitHub": {
+      "main": [
+        [
+          {
+            "node": "registrarStatusBackup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "criarArquivoGitHub": {
+      "main": [
+        [
+          {
+            "node": "registrarStatusBackup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "registrarStatusBackup": {
+      "main": [
+        [
+          {
+            "node": "aguardarRateLimit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "aguardarRateLimit": {
+      "main": [
+        [
+          {
+            "node": "iterarWorkflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "095b007c-6381-4cd6-9441-8b271d5b7130",
+  "activeVersionId": "095b007c-6381-4cd6-9441-8b271d5b7130",
+  "versionCounter": 14,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-03-10T03:13:38.040Z",
+      "createdAt": "2026-03-10T03:13:38.040Z",
+      "role": "workflow:owner",
+      "workflowId": "pz3ZCVvJ_EWChXN3uMgc_",
+      "projectId": "aLeETedgrx3HypUV",
+      "project": {
+        "updatedAt": "2026-02-05T18:12:51.008Z",
+        "createdAt": "2026-02-05T17:11:33.764Z",
+        "id": "aLeETedgrx3HypUV",
+        "name": "Miguel Kubrusly <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-02-05T17:11:33.764Z",
+            "createdAt": "2026-02-05T17:11:33.764Z",
+            "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+            "projectId": "aLeETedgrx3HypUV",
+            "user": {
+              "updatedAt": "2026-03-10T03:07:07.287Z",
+              "createdAt": "2026-02-05T17:11:32.394Z",
+              "id": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+              "email": "infra@novadata.com.br",
+              "firstName": "Miguel",
+              "lastName": "Kubrusly",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-02-06T13:42:55.997Z",
+                "personalization_survey_n8n_version": "2.6.0",
+                "automationGoalDevops": [
+                  "data-syncing"
+                ],
+                "companyIndustryExtended": [
+                  "it-industry"
+                ],
+                "companySize": "<20",
+                "companyType": "other",
+                "role": "it",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "4oFgpwW3T5VYLBkmatmZt",
+                "userActivatedAt": 1772566324555,
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-03-10",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-03-10T04:25:08.152Z",
+    "createdAt": "2026-03-10T04:07:14.224Z",
+    "versionId": "095b007c-6381-4cd6-9441-8b271d5b7130",
+    "workflowId": "pz3ZCVvJ_EWChXN3uMgc_",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "hours"
+              }
+            ]
+          }
+        },
+        "id": "d5b383fd-f1b0-40c2-84da-145fc5440bfe",
+        "name": "agendarExecucao",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          944,
+          1024
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const now = new Date();\nconst dateStr = now.toISOString().replace('T', ' ').substring(0, 19);\nreturn [{ json: { commitDate: dateStr } }];"
+        },
+        "id": "802a3f7b-ec16-47e0-8dbf-0dba4dd99ad1",
+        "name": "gerarTimestampCommit",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1168,
+          1024
+        ]
+      },
+      {
+        "parameters": {
+          "filters": {},
+          "requestOptions": {}
+        },
+        "id": "17e8c3c7-245c-4972-9ef6-d4a4c359f28a",
+        "name": "listarWorkflows",
+        "type": "n8n-nodes-base.n8n",
+        "typeVersion": 1,
+        "position": [
+          1392,
+          1024
+        ],
+        "credentials": {
+          "n8nApi": {
+            "id": "ldzXyjdhCozeUCAX",
+            "name": "[MANU]N8n_API_Key"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "id": "71ead988-adc9-41c5-9568-d7a47e6dba25",
+        "name": "iterarWorkflows",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          1600,
+          1024
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "get",
+          "workflowId": "={{ $json.id }}",
+          "requestOptions": {}
+        },
+        "id": "4f2b2386-d49d-4d09-96f8-f3097b6bf394",
+        "name": "buscarWorkflowCompleto",
+        "type": "n8n-nodes-base.n8n",
+        "typeVersion": 1,
+        "position": [
+          1872,
+          1184
+        ],
+        "credentials": {
+          "n8nApi": {
+            "id": "ldzXyjdhCozeUCAX",
+            "name": "[MANU]N8n_API_Key"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const workflow = $input.first().json;\nconst name = workflow.name || 'sem-nome';\n\n// === SLUGIFY ===\nconst slugify = (text) => {\n  return text.toString()\n    .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n    .replace(/[^a-zA-Z0-9\\s-_]/g, '')\n    .replace(/\\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');\n};\n\n// === RESOLVER AMBIENTE VIA TAGS ===\n// Tags reconhecidas como ambiente (case-insensitive)\nconst ENV_TAGS = ['dev', 'prod'];\n\nconst workflowTags = (workflow.tags || [])\n  .map(t => (typeof t === 'string' ? t : t.name || '').toLowerCase().trim())\n  .filter(Boolean);\n\nconst envTag = workflowTags.find(t => ENV_TAGS.includes(t));\nconst environment = envTag || 'sem-tag';\n\n// === SUBPASTA POR PRIMEIRO SEGMENTO DO NOME ===\nconst firstSegment = name.split(/[_\\-\\s]/)[0];\nconst folder = slugify(firstSegment) || 'GERAL';\nconst cleanName = slugify(name);\n\n// === SANITIZAR CREDENTIALS ===\nconst sanitized = JSON.parse(JSON.stringify(workflow));\nif (sanitized.nodes) {\n  sanitized.nodes.forEach(node => {\n    if (node.credentials) {\n      for (const key of Object.keys(node.credentials)) {\n        node.credentials[key] = { id: '***', name: '***' };\n      }\n    }\n  });\n}\n\n// === MONTAR PATH: backups/{env}/{subpasta}/{arquivo} ===\nconst filePath = `backups/${environment}/${folder}/${cleanName}__${workflow.id}.json`;\nconst content = JSON.stringify(sanitized, null, 2);\n\nreturn [{\n  json: {\n    filePath,\n    content,\n    workflowName: workflow.name,\n    workflowId: workflow.id,\n    environment,\n    tags: workflowTags\n  }\n}];"
+        },
+        "id": "46f460d0-dbd2-4b1c-a161-3921851a0680",
+        "name": "prepararArquivoBackup",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2048,
+          1184
+        ]
+      },
+      {
+        "parameters": {
+          "resource": "file",
+          "operation": "get",
+          "owner": "moraisinovaia",
+          "repository": "teste-backup-n8n",
+          "filePath": "={{ $json.filePath }}",
+          "asBinaryProperty": false,
+          "additionalParameters": {}
+        },
+        "id": "a5fb7f3b-ea76-41d2-9afa-19e11be84740",
+        "name": "verificarArquivoGitHub",
+        "type": "n8n-nodes-base.github",
+        "typeVersion": 1,
+        "position": [
+          2272,
+          1184
+        ],
+        "webhookId": "2b8e0e1b-d263-45ee-9839-288c254cc8dc",
+        "credentials": {
+          "githubApi": {
+            "id": "3ZhJXNGHjd8lxtb9",
+            "name": "[MANU]GitHub_OAuth"
+          }
+        },
+        "continueOnFail": true
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "id": "file-exists-check",
+                "leftValue": "={{ $json.sha }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "exists"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "54898f07-fadd-486a-b1cd-5c055c964a72",
+        "name": "checarArquivoExiste",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          2480,
+          1184
+        ]
+      },
+      {
+        "parameters": {
+          "resource": "file",
+          "operation": "edit",
+          "owner": "moraisinovaia",
+          "repository": "teste-backup-n8n",
+          "filePath": "={{ $('prepararArquivoBackup').item.json.filePath }}",
+          "fileContent": "={{ $('prepararArquivoBackup').item.json.content }}",
+          "commitMessage": "=✏️ [{{ $('prepararArquivoBackup').item.json.environment }}] Atualizado: {{ $('prepararArquivoBackup').item.json.workflowName }} ({{ $('gerarTimestampCommit').first().json.commitDate }})"
+        },
+        "id": "004d56df-7b96-40b3-9a0b-f8cd9d3e72d1",
+        "name": "atualizarArquivoGitHub",
+        "type": "n8n-nodes-base.github",
+        "typeVersion": 1,
+        "position": [
+          2704,
+          1072
+        ],
+        "webhookId": "435c9289-92e6-4693-849e-a727bfd5b2c4",
+        "credentials": {
+          "githubApi": {
+            "id": "3ZhJXNGHjd8lxtb9",
+            "name": "[MANU]GitHub_OAuth"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "resource": "file",
+          "owner": "moraisinovaia",
+          "repository": "teste-backup-n8n",
+          "filePath": "={{ $('prepararArquivoBackup').item.json.filePath }}",
+          "fileContent": "={{ $('prepararArquivoBackup').item.json.content }}",
+          "commitMessage": "=🆕 [{{ $('prepararArquivoBackup').item.json.environment }}] Criado: {{ $('prepararArquivoBackup').item.json.workflowName }} ({{ $('gerarTimestampCommit').first().json.commitDate }})"
+        },
+        "id": "7c9bac5c-efec-4164-b097-65bff69523c2",
+        "name": "criarArquivoGitHub",
+        "type": "n8n-nodes-base.github",
+        "typeVersion": 1,
+        "position": [
+          2704,
+          1296
+        ],
+        "webhookId": "68ce5abd-c727-49f5-81f7-15283f72eff9",
+        "credentials": {
+          "githubApi": {
+            "id": "3ZhJXNGHjd8lxtb9",
+            "name": "[MANU]GitHub_OAuth"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "set-status",
+                "name": "status",
+                "value": "={{ $json.content ? '✅ Backup OK' : '⚠️ Verificar' }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "086aa6d2-1b6b-468a-bcd1-99b15178f749",
+        "name": "registrarStatusBackup",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          2928,
+          1184
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "25246af5-7036-4c85-809e-122ec322daa5",
+        "name": "aguardarRateLimit",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          3152,
+          1184
+        ],
+        "webhookId": "5746ad20-43f5-4dfa-adb9-6ddf5e59363e"
+      },
+      {
+        "parameters": {
+          "content": "# BackupWorkflowsGitHub v1.1\n\nProjeto: Manutenção\nGatilho: CRON (a cada hora)\nSegurança: n8n API Key + GitHub OAuth Token\nDocs: —\n\nDescrição: Backup automático de todos os workflows da instância para repositório GitHub, agora com separação por ambiente (dev/prod) via tags do n8n.\n\n## Estrutura de pastas no GitHub:\n```\nbackups/\n├── dev/\n│   ├── MANU/\n│   ├── LOG/\n│   └── .../\n├── prod/\n│   ├── MANU/\n│   ├── LOG/\n│   └── .../\n└── sem-tag/\n    ├── GERAL/\n    └── .../\n```\n\n## Regras de roteamento:\n- Tag `dev` → pasta dev/\n- Tag `prod` → pasta prod/\n- Sem tag → pasta sem-tag/\n- Ambas as tags → usa a primeira encontrada\n\n## Changelog:\n- v1.0: Versão inicial com backup por prefixo do nome\n- v1.1: Adicionado roteamento por tag dev/prod",
+          "height": 560,
+          "width": 672,
+          "color": 4
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          144,
+          224
+        ],
+        "typeVersion": 1,
+        "id": "13ea438e-8753-4227-b3a5-f5d8bac039fe",
+        "name": "docWorkflow"
+      },
+      {
+        "parameters": {
+          "content": "## Lógica do Código — prepararArquivoBackup (v1.1)\n\n1. slugify()\n   Normaliza o nome do workflow para uso como caminho de arquivo:\n   - Remove acentos (normalize NFD)\n   - Remove caracteres especiais (mantém letras, números, hífen e underscore)\n   - Substitui espaços por hífen\n\n2. Resolver ambiente (NOVO em v1.1)\n   Lê o array `workflow.tags` e procura a primeira tag\n   que seja 'dev' ou 'prod' (case-insensitive).\n   - Tag encontrada → usa como pasta de ambiente\n   - Nenhuma tag reconhecida → cai em 'sem-tag'\n   Suporta tags como objeto {name:'dev'} ou string 'dev'.\n\n3. Subpasta por primeiro segmento\n   Pega o PRIMEIRO segmento do nome, quebrando no primeiro\n   _ - ou espaço encontrado.\n   Ex: \"LOG_cron_banco\" → subpasta \"LOG\"\n   Se nenhum segmento for encontrado, cai em \"GERAL\".\n\n4. Sanitização de Credentials\n   Clona o workflow e substitui id/name de cada credential\n   por '***', evitando vazamento ao GitHub.\n\n5. filePath (ATUALIZADO em v1.1)\n   backups/{ambiente}/{subpasta}/{nome-completo}__{id}.json\n   Exemplo: backups/prod/MANU/MANU-ServiceBackup__abc123.json",
+          "height": 580,
+          "width": 672,
+          "color": 6
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          144,
+          832
+        ],
+        "typeVersion": 1,
+        "id": "d8d80742-de93-4cc5-97aa-fb4315b10b8f",
+        "name": "docCodigoPrepararBackup"
+      }
+    ],
+    "connections": {
+      "agendarExecucao": {
+        "main": [
+          [
+            {
+              "node": "gerarTimestampCommit",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "gerarTimestampCommit": {
+        "main": [
+          [
+            {
+              "node": "listarWorkflows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "listarWorkflows": {
+        "main": [
+          [
+            {
+              "node": "iterarWorkflows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "iterarWorkflows": {
+        "main": [
+          [],
+          [
+            {
+              "node": "buscarWorkflowCompleto",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "buscarWorkflowCompleto": {
+        "main": [
+          [
+            {
+              "node": "prepararArquivoBackup",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "prepararArquivoBackup": {
+        "main": [
+          [
+            {
+              "node": "verificarArquivoGitHub",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "verificarArquivoGitHub": {
+        "main": [
+          [
+            {
+              "node": "checarArquivoExiste",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "checarArquivoExiste": {
+        "main": [
+          [
+            {
+              "node": "atualizarArquivoGitHub",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "criarArquivoGitHub",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "atualizarArquivoGitHub": {
+        "main": [
+          [
+            {
+              "node": "registrarStatusBackup",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "criarArquivoGitHub": {
+        "main": [
+          [
+            {
+              "node": "registrarStatusBackup",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "registrarStatusBackup": {
+        "main": [
+          [
+            {
+              "node": "aguardarRateLimit",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "aguardarRateLimit": {
+        "main": [
+          [
+            {
+              "node": "iterarWorkflows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Miguel Kubrusly",
+    "name": "Version 095b007c",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-10T04:25:08.143Z",
+        "id": 111,
+        "workflowId": "pz3ZCVvJ_EWChXN3uMgc_",
+        "versionId": "095b007c-6381-4cd6-9441-8b271d5b7130",
+        "event": "activated",
+        "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e"
+      }
+    ]
+  }
+}
