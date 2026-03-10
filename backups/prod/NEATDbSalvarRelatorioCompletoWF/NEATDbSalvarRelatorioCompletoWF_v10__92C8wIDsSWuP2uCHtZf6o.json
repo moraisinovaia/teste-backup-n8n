@@ -1,0 +1,1188 @@
+{
+  "updatedAt": "2026-03-10T03:52:34.066Z",
+  "createdAt": "2026-03-10T03:52:34.066Z",
+  "id": "92C8wIDsSWuP2uCHtZf6o",
+  "name": "[NEAT]Db.SalvarRelatorioCompleto.WF_v1.0",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "dados_projeto",
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "id": "228dd4e7-cc3f-4787-8f3f-96ce3d56cc1d",
+      "typeVersion": 1.1,
+      "name": "receberDadosRelatorio",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        -2080,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=http://68.183.62.7:8001/api/relatorios-neat/proximo-periodo/?projeto_id={{ $json.projeto}}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        240,
+        688
+      ],
+      "id": "d5a60669-2f93-4113-86b4-1612e2439299",
+      "name": "buscarDataUltimoLog"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://68.183.62.7:8001/api/projetos/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $item(0).$node[\"loginBD\"].json[\"access\"] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "id_ref",
+              "value": "={{ $item(0).$node[\"WF__EnviarParaDjango\"].json.dados_projeto[\"projeto_id\"] }}"
+            },
+            {
+              "name": "nome",
+              "value": "={{ $item(0).$node[\"WF__EnviarParaDjango\"].json.dados_projeto[\"projeto_nome\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1264,
+        496
+      ],
+      "id": "f0347ef5-cebf-48f4-875e-c9ed07965339",
+      "name": "salvarProjetoBD"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://68.183.62.7:8001/api/relatorios-neat/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $node[\"loginBD\"].json.access }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "projeto",
+              "value": "={{ $json.projeto }}"
+            },
+            {
+              "name": "data_primeiro_log",
+              "value": "={{ $json.data_primeiro_log }}"
+            },
+            {
+              "name": "data_ultimo_log",
+              "value": "={{ $json.data_ultimo_log }}"
+            },
+            {
+              "name": "modelo_llm",
+              "value": "={{ $json.modelo_llm }}"
+            },
+            {
+              "name": "relatorio",
+              "value": "={{ $json.relatorio }}"
+            },
+            {
+              "name": "tokens_entrada",
+              "value": "={{ $json.tokens_entrada }}"
+            },
+            {
+              "name": "tokens_saida",
+              "value": "={{ $json.tokens_saida }}"
+            },
+            {
+              "name": "erro",
+              "value": "={{ $json.erro }}"
+            },
+            {
+              "name": "projeto_nome",
+              "value": "={{ $json.projeto_nome }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -240,
+        496
+      ],
+      "id": "0c91451f-0f4e-404c-910d-a8ca6c7b802c",
+      "name": "salvarRelatorioBD"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b7c2788a-861d-4867-88b2-d71af7b12f9f",
+              "name": "=projeto",
+              "value": "={{ $node[\"salvarProjetoBD\"].json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "238656b6-1f9e-4fcb-b7e7-ea637f59cb90",
+              "name": "=data_primeiro_log",
+              "value": "={{ $node[\"WF__EnviarParaDjango\"].json.dados_projeto.data_inicio }}\n",
+              "type": "string"
+            },
+            {
+              "id": "04f6b4de-6c53-406c-ab6a-a574fbf28060",
+              "name": "data_ultimo_log",
+              "value": "={{ $node[\"WF__EnviarParaDjango\"].json.dados_projeto.data_fim }}",
+              "type": "string"
+            },
+            {
+              "id": "f6869970-3993-4ccb-a5dd-8e57f969600a",
+              "name": "modelo_llm",
+              "value": "={{ $node[\"WF__EnviarParaDjango\"].json.dados_projeto.model }}",
+              "type": "string"
+            },
+            {
+              "id": "8618686a-bbf8-4b3c-b2d3-9ef97ea57432",
+              "name": "=tokens_entrada",
+              "value": "={{ $node[\"WF__EnviarParaDjango\"].json.dados_projeto.input_tokens }}",
+              "type": "string"
+            },
+            {
+              "id": "2e9f52ab-c8a9-493a-97b4-4343ba98138d",
+              "name": "tokens_saida",
+              "value": "={{ $node[\"WF__EnviarParaDjango\"].json.dados_projeto.output_tokens }}",
+              "type": "number"
+            },
+            {
+              "id": "2c9d5be3-87d5-4aa4-9ec8-78d7c4370a8e",
+              "name": "relatorio",
+              "value": "={{ $node[\"WF__EnviarParaDjango\"].json.dados_projeto.html}}",
+              "type": "string"
+            },
+            {
+              "id": "eefeee20-a54c-4fdb-9789-a84df9d4bd65",
+              "name": "erro",
+              "value": "={{ $node[\"WF__EnviarParaDjango\"].json.dados_projeto.erro }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -496,
+        496
+      ],
+      "id": "57c08f7c-b1ff-4ba8-b517-31d734c9fd33",
+      "name": "formatarDadosProjeto"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://68.183.62.7:8001/api/responsaveis/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $item(0).$node[\"loginBD\"].json.access }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "nome_responsavel"
+            },
+            {
+              "name": "equipe",
+              "value": "={{ $json.equipe_id }}"
+            },
+            {
+              "name": "id_ref",
+              "value": "={{ $json.id_ref }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -752,
+        496
+      ],
+      "id": "cc65e3a2-5569-4cd9-af6c-2d0ca3820035",
+      "name": "salvarResponsavelBD"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://68.183.62.7:8001/api/tempos-alocados/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $item(0).$node[\"loginBD\"].json.access }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "equipe",
+              "value": "={{ $json.equipe}}"
+            },
+            {
+              "name": "projeto",
+              "value": "={{ $json.projeto }}"
+            },
+            {
+              "name": "relatorio",
+              "value": "={{ $json.relatorio }}"
+            },
+            {
+              "name": "tempo_gasto"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        496,
+        400
+      ],
+      "id": "afa2be5a-d76d-4541-9cac-90fbc917d174",
+      "name": "tempoAlocadoBD"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6557e236-30a8-4e63-b968-d379caa1054c",
+              "name": "equipe",
+              "value": "={{ $node[\"salvarResponsavelBD\"].json.equipe_id }}",
+              "type": "string"
+            },
+            {
+              "id": "e22e8970-6e1d-42d0-a938-04fc2da67fd8",
+              "name": "projeto",
+              "value": "={{ $node[\"salvarProjetoBD\"].json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "fe2db936-f80d-4736-8a59-b304be935d7f",
+              "name": "relatorio",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        400
+      ],
+      "id": "527ea288-990c-4505-bb1f-c23a70339754",
+      "name": "formatarDadosResponsavel"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://68.183.62.7:8001/api/jwt/create/",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"username\": \"admin\",\n  \"password\": \"amelhorsenhadomundo\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1776,
+        496
+      ],
+      "id": "361c9e5a-44f9-4406-a977-e8ebfcc6bc44",
+      "name": "autenticarDjango"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d03b9e4b-28b2-40f5-aafb-a03f61ca3bee",
+              "name": "equipe_id",
+              "value": "={{ $node[\"salvarEquipeBD\"].json.id}}",
+              "type": "string"
+            },
+            {
+              "id": "3dfb8fae-0cd4-4824-991b-959212cf4c63",
+              "name": "id_ref",
+              "value": "={{ $json.id_ref }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -992,
+        496
+      ],
+      "id": "a7fb254f-133d-44bc-a85e-86f94316ea99",
+      "name": "formatarDadosEquipe"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://68.183.62.7:8001/api/equipes/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $item(0).$node[\"loginBD\"].json[\"access\"] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "nome",
+              "value": "={{ $item(0).$node[\"WF__EnviarParaDjango\"].json.dados_projeto[\"projeto_nome\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1536,
+        496
+      ],
+      "id": "0197e119-91f3-435b-8acb-d0cc8d093f68",
+      "name": "salvarEquipeBD"
+    },
+    {
+      "parameters": {
+        "content": "# SalvarRelatorioCompleto\n\nProjeto: NEAT\nGatilho: WF — chamado por [NEAT]Services.GerarRelatorioIA\nSegurança: Nenhuma (execução interna)\nDocs: —\nDescrição: Recebe dados do relatório gerado pela IA, autentica no Django e salva projeto, relatório, responsáveis, equipes e tempo alocado no banco via API REST.",
+        "height": 280,
+        "width": 520,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c7102cfe-9cfd-4111-9c88-7522c69c82fd",
+      "name": "docWorkflow"
+    }
+  ],
+  "connections": {
+    "salvarRelatorioBD": {
+      "main": [
+        [
+          {
+            "node": "formatarDadosResponsavel",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "buscarDataUltimoLog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "salvarResponsavelBD": {
+      "main": [
+        [
+          {
+            "node": "formatarDadosProjeto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "salvarProjetoBD": {
+      "main": [
+        [
+          {
+            "node": "formatarDadosEquipe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "salvarEquipeBD": {
+      "main": [
+        [
+          {
+            "node": "salvarProjetoBD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "receberDadosRelatorio": {
+      "main": [
+        [
+          {
+            "node": "autenticarDjango",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "formatarDadosProjeto": {
+      "main": [
+        [
+          {
+            "node": "salvarRelatorioBD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "formatarDadosResponsavel": {
+      "main": [
+        [
+          {
+            "node": "tempoAlocadoBD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "formatarDadosEquipe": {
+      "main": [
+        [
+          {
+            "node": "salvarResponsavelBD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "autenticarDjango": {
+      "main": [
+        [
+          {
+            "node": "salvarEquipeBD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "receberDadosRelatorio": [
+      {
+        "json": {
+          "dados_projeto": {
+            "html": "<!DOCTYPE html>\n<html lang=\"pt-BR\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Relatorio Semanal - Sustentação LDK</title>\n    <style>\n        body {\n            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n            line-height: 1.6;\n            color: #333;\n            max-width: 800px;\n            margin: 0 auto;\n            padding: 20px;\n            background-color: #f5f5f5;\n        }\n        .container {\n            background-color: white;\n            padding: 40px;\n            border-radius: 8px;\n            box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n        }\n        .header {\n            border-bottom: 3px solid #2563eb;\n            padding-bottom: 20px;\n            margin-bottom: 30px;\n        }\n        .header h1 {\n            color: #1e40af;\n            margin: 0 0 10px 0;\n            font-size: 28px;\n        }\n        .header .meta {\n            color: #64748b;\n            font-size: 14px;\n        }\n        .metricas {\n            display: grid;\n            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));\n            gap: 15px;\n            margin: 30px 0;\n        }\n        .metrica-card {\n            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n            color: white;\n            padding: 20px;\n            border-radius: 8px;\n            text-align: center;\n        }\n        .metrica-card .valor {\n            font-size: 32px;\n            font-weight: bold;\n            margin: 10px 0;\n        }\n        .metrica-card .label {\n            font-size: 13px;\n            opacity: 0.9;\n        }\n        .narrativa {\n            background-color: #f8fafc;\n            padding: 25px 30px;\n            border-left: 4px solid #2563eb;\n            margin: 30px 0;\n            line-height: 1.8;\n        }\n        .narrativa .md-h3 {\n            color: #1e40af;\n            margin: 30px 0 15px 0;\n            font-size: 20px;\n            border-bottom: 2px solid #e2e8f0;\n            padding-bottom: 8px;\n        }\n        .narrativa .md-h4 {\n            color: #1e40af;\n            margin: 25px 0 12px 0;\n            font-size: 18px;\n            border-bottom: 1px solid #e2e8f0;\n            padding-bottom: 6px;\n        }\n        .narrativa .md-h5 {\n            color: #4b5563;\n            margin: 15px 0 10px 0;\n            font-size: 15px;\n        }\n        .narrativa ul, .narrativa ol {\n            margin: 10px 0;\n            padding-left: 24px;\n        }\n        .narrativa ul ul, .narrativa ol ol,\n        .narrativa ul ol, .narrativa ol ul {\n            margin: 4px 0;\n        }\n        .narrativa li {\n            margin: 6px 0;\n        }\n        .narrativa p {\n            margin: 10px 0;\n        }\n        .narrativa strong {\n            color: #1e3a5f;\n        }\n        .narrativa code {\n            background-color: #e2e8f0;\n            padding: 2px 6px;\n            border-radius: 3px;\n            font-size: 0.9em;\n        }\n        .footer {\n            margin-top: 40px;\n            padding-top: 20px;\n            border-top: 1px solid #e2e8f0;\n            color: #64748b;\n            font-size: 12px;\n            text-align: center;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <h1>Relatorio Semanal</h1>\n            <div class=\"meta\">\n                <strong>Projeto:</strong> Sustentação LDK (ID: 594)<br>\n                <strong>Periodo:</strong> 26/01/2026 a 10/02/2026<br>\n                <strong>Gerado em:</strong> 04 de março de 2026\n            </div>\n        </div>\n\n        <div class=\"metricas\">\n            <div class=\"metrica-card\">\n                <div class=\"label\">Concluidos</div>\n                <div class=\"valor\">21</div>\n            </div>\n            <div class=\"metrica-card\">\n                <div class=\"label\">Em Andamento</div>\n                <div class=\"valor\">1</div>\n            </div>\n            <div class=\"metrica-card\">\n                <div class=\"label\">Em Testes</div>\n                <div class=\"valor\">2</div>\n            </div>\n            <div class=\"metrica-card\">\n                <div class=\"label\">Pendentes</div>\n                <div class=\"valor\">7</div>\n            </div>\n            <div class=\"metrica-card\">\n                <div class=\"label\">Alertas Criticos</div>\n                <div class=\"valor\">6</div>\n            </div>\n            <div class=\"metrica-card\">\n                <div class=\"label\">Total de Cards</div>\n                <div class=\"valor\">43</div>\n            </div>\n        </div>\n\n        <div class=\"narrativa\">\n            <p>Conexão estabelecida! Estou pronto para ajudar com qualquer pergunta ou tópico que você gostaria de discutir. Como posso ajudar hoje?</p>\n        </div>\n\n        <div class=\"footer\">\n            Relatorio gerado automaticamente pelo sistema de acompanhamento Neat.<br>\n            Para mais informacoes, acesse: <a href=\"https://hub.novadata.com.br\">hub.novadata.com.br</a>\n        </div>\n    </div>\n</body>\n</html>",
+            "assunto": "Relatorio Semanal - Sustentação LDK - 04 de março de 2026",
+            "projeto_nome": "Sustentação LDK",
+            "projeto_id": 594,
+            "data_inicio": "2026-01-26T17:26:31.291Z",
+            "data_fim": "2026-02-10T17:26:31.291Z",
+            "model": "llama-3.3-70b-versatile",
+            "tokens_estimado": 5826,
+            "total_concluidos": 21,
+            "total_em_testes": 2,
+            "input_tokens": 40,
+            "output_tokens": 40,
+            "total_tokens": 80
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "versionId": "064e3b8c-a345-441f-8773-7e2457efdb7d",
+  "activeVersionId": "064e3b8c-a345-441f-8773-7e2457efdb7d",
+  "versionCounter": 4,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-10T03:52:34.066Z",
+      "createdAt": "2026-03-10T03:52:34.066Z",
+      "role": "workflow:owner",
+      "workflowId": "92C8wIDsSWuP2uCHtZf6o",
+      "projectId": "aLeETedgrx3HypUV",
+      "project": {
+        "updatedAt": "2026-02-05T18:12:51.008Z",
+        "createdAt": "2026-02-05T17:11:33.764Z",
+        "id": "aLeETedgrx3HypUV",
+        "name": "Miguel Kubrusly <infra@novadata.com.br>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-02-05T17:11:33.764Z",
+            "createdAt": "2026-02-05T17:11:33.764Z",
+            "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+            "projectId": "aLeETedgrx3HypUV",
+            "user": {
+              "updatedAt": "2026-03-10T03:07:07.287Z",
+              "createdAt": "2026-02-05T17:11:32.394Z",
+              "id": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e",
+              "email": "infra@novadata.com.br",
+              "firstName": "Miguel",
+              "lastName": "Kubrusly",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-02-06T13:42:55.997Z",
+                "personalization_survey_n8n_version": "2.6.0",
+                "automationGoalDevops": [
+                  "data-syncing"
+                ],
+                "companyIndustryExtended": [
+                  "it-industry"
+                ],
+                "companySize": "<20",
+                "companyType": "other",
+                "role": "it",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "firstSuccessfulWorkflowId": "4oFgpwW3T5VYLBkmatmZt",
+                "userActivatedAt": 1772566324555,
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-03-10",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-10T03:52:32.420Z",
+      "createdAt": "2026-03-10T03:52:32.420Z",
+      "id": "fPwVMFjt0ABvWYTU",
+      "name": "@django"
+    },
+    {
+      "updatedAt": "2026-03-06T15:02:49.033Z",
+      "createdAt": "2026-03-06T15:02:49.033Z",
+      "id": "WefOyCNePUH6cMEC",
+      "name": "prod"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-03-10T03:52:39.258Z",
+    "createdAt": "2026-03-10T03:52:34.066Z",
+    "versionId": "064e3b8c-a345-441f-8773-7e2457efdb7d",
+    "workflowId": "92C8wIDsSWuP2uCHtZf6o",
+    "nodes": [
+      {
+        "parameters": {
+          "workflowInputs": {
+            "values": [
+              {
+                "name": "dados_projeto",
+                "type": "object"
+              }
+            ]
+          }
+        },
+        "id": "228dd4e7-cc3f-4787-8f3f-96ce3d56cc1d",
+        "typeVersion": 1.1,
+        "name": "receberDadosRelatorio",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          -2080,
+          496
+        ]
+      },
+      {
+        "parameters": {
+          "url": "=http://68.183.62.7:8001/api/relatorios-neat/proximo-periodo/?projeto_id={{ $json.projeto}}\n",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          240,
+          688
+        ],
+        "id": "d5a60669-2f93-4113-86b4-1612e2439299",
+        "name": "buscarDataUltimoLog"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "http://68.183.62.7:8001/api/projetos/",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $item(0).$node[\"loginBD\"].json[\"access\"] }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "id_ref",
+                "value": "={{ $item(0).$node[\"WF__EnviarParaDjango\"].json.dados_projeto[\"projeto_id\"] }}"
+              },
+              {
+                "name": "nome",
+                "value": "={{ $item(0).$node[\"WF__EnviarParaDjango\"].json.dados_projeto[\"projeto_nome\"] }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          -1264,
+          496
+        ],
+        "id": "f0347ef5-cebf-48f4-875e-c9ed07965339",
+        "name": "salvarProjetoBD"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "http://68.183.62.7:8001/api/relatorios-neat/",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $node[\"loginBD\"].json.access }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "projeto",
+                "value": "={{ $json.projeto }}"
+              },
+              {
+                "name": "data_primeiro_log",
+                "value": "={{ $json.data_primeiro_log }}"
+              },
+              {
+                "name": "data_ultimo_log",
+                "value": "={{ $json.data_ultimo_log }}"
+              },
+              {
+                "name": "modelo_llm",
+                "value": "={{ $json.modelo_llm }}"
+              },
+              {
+                "name": "relatorio",
+                "value": "={{ $json.relatorio }}"
+              },
+              {
+                "name": "tokens_entrada",
+                "value": "={{ $json.tokens_entrada }}"
+              },
+              {
+                "name": "tokens_saida",
+                "value": "={{ $json.tokens_saida }}"
+              },
+              {
+                "name": "erro",
+                "value": "={{ $json.erro }}"
+              },
+              {
+                "name": "projeto_nome",
+                "value": "={{ $json.projeto_nome }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          -240,
+          496
+        ],
+        "id": "0c91451f-0f4e-404c-910d-a8ca6c7b802c",
+        "name": "salvarRelatorioBD"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "b7c2788a-861d-4867-88b2-d71af7b12f9f",
+                "name": "=projeto",
+                "value": "={{ $node[\"salvarProjetoBD\"].json.id }}",
+                "type": "string"
+              },
+              {
+                "id": "238656b6-1f9e-4fcb-b7e7-ea637f59cb90",
+                "name": "=data_primeiro_log",
+                "value": "={{ $node[\"WF__EnviarParaDjango\"].json.dados_projeto.data_inicio }}\n",
+                "type": "string"
+              },
+              {
+                "id": "04f6b4de-6c53-406c-ab6a-a574fbf28060",
+                "name": "data_ultimo_log",
+                "value": "={{ $node[\"WF__EnviarParaDjango\"].json.dados_projeto.data_fim }}",
+                "type": "string"
+              },
+              {
+                "id": "f6869970-3993-4ccb-a5dd-8e57f969600a",
+                "name": "modelo_llm",
+                "value": "={{ $node[\"WF__EnviarParaDjango\"].json.dados_projeto.model }}",
+                "type": "string"
+              },
+              {
+                "id": "8618686a-bbf8-4b3c-b2d3-9ef97ea57432",
+                "name": "=tokens_entrada",
+                "value": "={{ $node[\"WF__EnviarParaDjango\"].json.dados_projeto.input_tokens }}",
+                "type": "string"
+              },
+              {
+                "id": "2e9f52ab-c8a9-493a-97b4-4343ba98138d",
+                "name": "tokens_saida",
+                "value": "={{ $node[\"WF__EnviarParaDjango\"].json.dados_projeto.output_tokens }}",
+                "type": "number"
+              },
+              {
+                "id": "2c9d5be3-87d5-4aa4-9ec8-78d7c4370a8e",
+                "name": "relatorio",
+                "value": "={{ $node[\"WF__EnviarParaDjango\"].json.dados_projeto.html}}",
+                "type": "string"
+              },
+              {
+                "id": "eefeee20-a54c-4fdb-9789-a84df9d4bd65",
+                "name": "erro",
+                "value": "={{ $node[\"WF__EnviarParaDjango\"].json.dados_projeto.erro }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          -496,
+          496
+        ],
+        "id": "57c08f7c-b1ff-4ba8-b517-31d734c9fd33",
+        "name": "formatarDadosProjeto"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "http://68.183.62.7:8001/api/responsaveis/",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $item(0).$node[\"loginBD\"].json.access }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "nome_responsavel"
+              },
+              {
+                "name": "equipe",
+                "value": "={{ $json.equipe_id }}"
+              },
+              {
+                "name": "id_ref",
+                "value": "={{ $json.id_ref }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          -752,
+          496
+        ],
+        "id": "cc65e3a2-5569-4cd9-af6c-2d0ca3820035",
+        "name": "salvarResponsavelBD"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "http://68.183.62.7:8001/api/tempos-alocados/",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $item(0).$node[\"loginBD\"].json.access }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "equipe",
+                "value": "={{ $json.equipe}}"
+              },
+              {
+                "name": "projeto",
+                "value": "={{ $json.projeto }}"
+              },
+              {
+                "name": "relatorio",
+                "value": "={{ $json.relatorio }}"
+              },
+              {
+                "name": "tempo_gasto"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          496,
+          400
+        ],
+        "id": "afa2be5a-d76d-4541-9cac-90fbc917d174",
+        "name": "tempoAlocadoBD"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "6557e236-30a8-4e63-b968-d379caa1054c",
+                "name": "equipe",
+                "value": "={{ $node[\"salvarResponsavelBD\"].json.equipe_id }}",
+                "type": "string"
+              },
+              {
+                "id": "e22e8970-6e1d-42d0-a938-04fc2da67fd8",
+                "name": "projeto",
+                "value": "={{ $node[\"salvarProjetoBD\"].json.id }}",
+                "type": "string"
+              },
+              {
+                "id": "fe2db936-f80d-4736-8a59-b304be935d7f",
+                "name": "relatorio",
+                "value": "={{ $json.id }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          208,
+          400
+        ],
+        "id": "527ea288-990c-4505-bb1f-c23a70339754",
+        "name": "formatarDadosResponsavel"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "http://68.183.62.7:8001/api/jwt/create/",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "{\n  \"username\": \"admin\",\n  \"password\": \"amelhorsenhadomundo\"\n}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          -1776,
+          496
+        ],
+        "id": "361c9e5a-44f9-4406-a977-e8ebfcc6bc44",
+        "name": "autenticarDjango"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "d03b9e4b-28b2-40f5-aafb-a03f61ca3bee",
+                "name": "equipe_id",
+                "value": "={{ $node[\"salvarEquipeBD\"].json.id}}",
+                "type": "string"
+              },
+              {
+                "id": "3dfb8fae-0cd4-4824-991b-959212cf4c63",
+                "name": "id_ref",
+                "value": "={{ $json.id_ref }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          -992,
+          496
+        ],
+        "id": "a7fb254f-133d-44bc-a85e-86f94316ea99",
+        "name": "formatarDadosEquipe"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "http://68.183.62.7:8001/api/equipes/",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $item(0).$node[\"loginBD\"].json[\"access\"] }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "nome",
+                "value": "={{ $item(0).$node[\"WF__EnviarParaDjango\"].json.dados_projeto[\"projeto_nome\"] }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          -1536,
+          496
+        ],
+        "id": "0197e119-91f3-435b-8acb-d0cc8d093f68",
+        "name": "salvarEquipeBD"
+      },
+      {
+        "parameters": {
+          "content": "# SalvarRelatorioCompleto\n\nProjeto: NEAT\nGatilho: WF — chamado por [NEAT]Services.GerarRelatorioIA\nSegurança: Nenhuma (execução interna)\nDocs: —\nDescrição: Recebe dados do relatório gerado pela IA, autentica no Django e salva projeto, relatório, responsáveis, equipes e tempo alocado no banco via API REST.",
+          "height": 280,
+          "width": 520,
+          "color": 5
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          0,
+          0
+        ],
+        "id": "c7102cfe-9cfd-4111-9c88-7522c69c82fd",
+        "name": "docWorkflow"
+      }
+    ],
+    "connections": {
+      "salvarRelatorioBD": {
+        "main": [
+          [
+            {
+              "node": "formatarDadosResponsavel",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "buscarDataUltimoLog",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "salvarResponsavelBD": {
+        "main": [
+          [
+            {
+              "node": "formatarDadosProjeto",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "salvarProjetoBD": {
+        "main": [
+          [
+            {
+              "node": "formatarDadosEquipe",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "salvarEquipeBD": {
+        "main": [
+          [
+            {
+              "node": "salvarProjetoBD",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "receberDadosRelatorio": {
+        "main": [
+          [
+            {
+              "node": "autenticarDjango",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "formatarDadosProjeto": {
+        "main": [
+          [
+            {
+              "node": "salvarRelatorioBD",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "formatarDadosResponsavel": {
+        "main": [
+          [
+            {
+              "node": "tempoAlocadoBD",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "formatarDadosEquipe": {
+        "main": [
+          [
+            {
+              "node": "salvarResponsavelBD",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "autenticarDjango": {
+        "main": [
+          [
+            {
+              "node": "salvarEquipeBD",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Miguel Kubrusly",
+    "name": "Version 064e3b8c",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-10T03:52:39.256Z",
+        "id": 106,
+        "workflowId": "92C8wIDsSWuP2uCHtZf6o",
+        "versionId": "064e3b8c-a345-441f-8773-7e2457efdb7d",
+        "event": "activated",
+        "userId": "34f5a040-91f6-4bf0-b7f8-390e60ffa17e"
+      }
+    ]
+  }
+}
